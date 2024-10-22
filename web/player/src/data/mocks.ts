@@ -1,10 +1,21 @@
-import { Playable, PlaybackStatus, RedinessStatus, SourceType } from "./model";
+import { User, Playable, PlaybackStatus, RedinessStatus, SourceType } from "./model";
+
+export const Users = {
+    getCurrent: async () => {
+        // Simulate an asynchronous operation (e.g., fetching from a database)
+        return new Promise<User>((resolve) => {
+            Promise.resolve().then(() => {
+                resolve(new User("timurua@gmail.com ", "John Doe", ["Music", "Technology"]));
+            })
+        });
+    }
+}
 
 export const Playables = {
-    list: async () => {
+    list: async (userEmail: string) => {
         // Simulate an asynchronous operation (e.g., fetching from a database)
         return new Promise<Playable[]>((resolve) => {
-            setTimeout(() => {
+            Promise.resolve().then(() => {
                 resolve([
                     new Playable(
                         "1",
@@ -31,7 +42,7 @@ export const Playables = {
                         "music - 3",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2022/08/29/08/47/sky-7418364__340.jpg",
-                        "https://cdn.pixabay.com/audio/2022/08/03/audio_54ca0ffa52.mp3",                        
+                        "https://cdn.pixabay.com/audio/2022/08/03/audio_54ca0ffa52.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
                         ["Music", "Technology"],
@@ -58,7 +69,7 @@ export const Playables = {
                         SourceType.Audio,),
 
                 ]);
-            }, 1000); // Simulate a 1 second delay
+            }); // Simulate a 1 second delay
         });
     }
 }

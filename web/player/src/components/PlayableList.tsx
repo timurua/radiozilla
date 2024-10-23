@@ -88,6 +88,7 @@ export function PlayableList() {
 function PlayableListImpl() {
     const playableList = useRecoilValue(playablesState);
     const playableSorting = useRecoilValue(playableSortingState);
+    const currentPlayableID = useRecoilValue(currentPlayableIDState);
     const setCurrentPlayableID = useSetRecoilState(currentPlayableIDState);
 
     let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
@@ -107,7 +108,7 @@ function PlayableListImpl() {
                         <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
                             {playables.map((playable) => (
-                                <ListGroup.Item key={playable.id} className="d-flex align-items-center text-light bg-dark" onClick={() => setCurrent(playable)}>
+                                <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayableID === playable.id)?"bg-secondary rounded":"bg-dark")} onClick={() => setCurrent(playable)}>
                                     <Image src={playable.imageUrl} rounded className="me-3" width={50}
                                         height={50} />
                                     <div>

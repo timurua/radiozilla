@@ -1,16 +1,17 @@
 import { useRecoilValue } from 'recoil';
-import { currentPlayableState } from '../state/main';
+import { currentPlayableState, playingModeState } from '../state/main';
 import React, { useRef, useState } from 'react';
 
 import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
-import { Playable } from '../data/model';
+import { Playable, PlayingMode } from '../data/model';
 
 interface AudioPlayerProps {
   playable: Playable | null;
+  mode: PlayingMode;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable, mode }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -62,7 +63,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
         onTimeUpdate={handleTimeUpdate}
       />
       {
-        !playable ? null : (
+        playable && mode !== PlayingMode.Idle ? (
           <div className="d-flex align-items-center text-light bg-dark">
             <Image src={playable.imageUrl} rounded className="me-3" width={50}
               height={50} />
@@ -70,7 +71,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
               <div>{playable.name}</div>
               <small>{playable.writer}</small>
             </div>
-          </div>)
+          </div>) : null
       }
       <div className="d-flex justify-content-center m-3">
         <ButtonGroup>
@@ -97,21 +98,20 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
 
 export function PlayablePlayer() {
   return (
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <PlayablePlayerImpl />
-      </React.Suspense>
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <PlayablePlayerImpl />
+    </React.Suspense>
   )
 }
 
 export function PlayablePlayerImpl() {
 
-  const playable = useRecoilValue<Playable|null>(currentPlayableState);
+  const playable = useRecoilValue<Playable | null>(currentPlayableState);
+  const playingMode = useRecoilValue(playingModeState);
 
   return (
     <div>
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <AudioPlayer playable={playable} />
-      </React.Suspense>
+      <AudioPlayer playable={playable} mode={playingMode} />
     </div>
   );
 }

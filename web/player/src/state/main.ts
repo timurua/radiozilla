@@ -16,7 +16,7 @@ const currentUserState = selector({
 const currentUserPlayablesState = selector({
     key: 'CurrentUserPlayables',
     get: async ({ get }) => {
-        const user = get(currentUserState);
+        const user = await get(currentUserState);
         return await Playables.list(user.email);
     },
 });

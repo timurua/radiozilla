@@ -23,22 +23,18 @@ function Player() {
   return (
     <div className="App" style={{ backgroundColor: '#1a1a1a', color: 'white', minHeight: '100vh' }}>
       {/* Header */}
-      <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3">
-        <Navbar.Brand href="#">Music</Navbar.Brand>
+
+      <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
+        <Navbar.Brand href="#">Podcasts</Navbar.Brand>
         <div>
           <BsBell size={20} className="mx-2" />
           <BsSearch size={20} />
         </div>
       </Navbar>
 
-      <Container className="mt-3">
-        {/* Buttons Row */}
-
-        <PlayableSortingSelector />
-        <PlayablePlayer />
-        <PlayableList />
-          {/* Channels */}  
-      </Container>
+      <PlayableSortingSelector />
+      <PlayablePlayer />
+      <PlayableList/>
 
       {/* Bottom Navigation */}
       <Navbar fixed="bottom" bg="dark" variant="dark">

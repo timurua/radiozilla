@@ -2,7 +2,7 @@ import { atom, selector } from "recoil";
 import { Users, Playables } from "../data/mocks";
 import { PlayableSorting } from "../data/model";
 
-const currentUserEmailState = atom({
+export const currentUserEmailState = atom({
     key: 'CurrentUserEmail',
     default: 'timurua@gmail.com',
 });
@@ -12,14 +12,14 @@ export const currentPlayableSortingState = atom({
     default: PlayableSorting.Date,
 });
 
-const currentUserState = selector({
+export const currentUserState = selector({
     key: 'CurrentUser',
     get: async () => {
         return await Users.getCurrent();
     },
 });
 
-const currentUserPlayablesState = selector({
+export const currentPlayablesState = selector({
     key: 'CurrentUserPlayables',
     get: async ({ get }) => {
         const user = await get(currentUserState);
@@ -27,8 +27,17 @@ const currentUserPlayablesState = selector({
     },
 });
 
-export {
-    currentUserEmailState,
-    currentUserState,
-    currentUserPlayablesState
-};
+export const currentPlayingPlayableIDState = atom({
+    key: 'CurrentPlayingPlayableID',
+    default: '',
+});
+
+export const currentPlayingPlayableState = selector({
+    key: 'CurrentPlayingPlayable',
+    get: async ({ get }) => {
+        const playables = await get(currentPlayablesState);
+        const playingPlayableID = get(currentPlayingPlayableIDState);
+        return playables.find(playable => playable.id === playingPlayableID);
+    }
+});
+

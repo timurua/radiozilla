@@ -10,9 +10,9 @@ export class User {
 }
 
 export enum PlayableSorting {
-  Date,
-  Topic,
-  Preferences
+  Date = "Date",
+  Topic = "Topic",
+  Preferences = "Preferences"
 }
 
 export enum RedinessStatus {

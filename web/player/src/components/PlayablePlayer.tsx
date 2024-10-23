@@ -1,5 +1,5 @@
 import { useRecoilValue } from 'recoil';
-import { currentPlayingPlayableState } from '../state/main';
+import { currentPlayableState } from '../state/main';
 import React, { useRef, useState } from 'react';
 
 import { Button, ButtonGroup, Container, ProgressBar } from 'react-bootstrap';
@@ -53,27 +53,27 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
   };
 
   return (
-    <Container className="audio-player" style={{ width: '300px', backgroundColor: '#333', padding: '10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <Container className="audio-player">
       <audio
         ref={audioRef}
         src={audioSrc}
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
       />
-      <div>
+      <div className="d-flex justify-content-center m-3">
         <ButtonGroup>
-          <Button variant="secondary" onClick={handleRewind}>
+          <Button variant="dark" onClick={handleRewind}>
             <BsRewindFill />
           </Button>
-          <Button variant="secondary" onClick={togglePlayPause}>
-            {isPlaying ? (<BsPause/>) : (<BsPlayFill />)}
+          <Button variant="dark" onClick={togglePlayPause}>
+            {isPlaying ? (<BsPause/>) : (<BsPlayFill/>)}
           </Button>
-          <Button variant="secondary" onClick={handleForward}>
+          <Button variant="dark" onClick={handleForward}>
             <BsFastForwardFill />
           </Button>
         </ButtonGroup>
       </div>
-      <div style={{ flex: 1 }}>
+      <div>
         <ProgressBar now={(currentTime / duration) * 100} variant="info" style={{ height: '5px', marginBottom: '5px' }} />
         <div style={{ color: 'white', fontSize: '12px', textAlign: 'center' }}>
           {formatTime(currentTime)} / {formatTime(duration)}
@@ -85,12 +85,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
 
 export function PlayablePlayer() {
 
-  const currentPlayingPlayable = useRecoilValue(currentPlayingPlayableState);
+  const playingPlayable = useRecoilValue(currentPlayableState);
 
   return (
     <div>
       <React.Suspense fallback={<div>Loading...</div>}>
-        <AudioPlayer audioSrc={currentPlayingPlayable?.audioUrl || ""} />
+        <AudioPlayer audioSrc={playingPlayable?.audioUrl || ""} />
       </React.Suspense>
     </div>
   );

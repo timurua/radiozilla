@@ -1,7 +1,7 @@
 import { Image, ListGroup } from "react-bootstrap";
-import { Playable } from "../data/model";
+import { Playable, PlayableSorting } from "../data/model";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import { currentPlayableSortingState, currentPlayablesState, currentPlayingPlayableIDState, currentPlayingPlayableState } from "../state/main";
+import { playableSortingState, playablesState, currentPlayableIDState, currentPlayableState } from "../state/main";
 
 // Static method to bucket playables by date
 function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
@@ -38,6 +38,34 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
     return buckets;
 }
 
+function buucketByTopic(playables: Playable[]): Map<string, Playable[]> {
+    const buckets = new Map<string, Playable[]>();
+
+    playables.forEach((playable) => {
+        playable.topics.forEach((topic) => {
+            if (!buckets.has(topic)) {
+                buckets.set(topic, []);
+            }
+
+            buckets.get(topic)!.push(playable);
+        });
+    });
+
+    return buckets;
+}
+
+function removeEmptyBuckets(map: Map<string, Playable[]>): Map<string, Playable[]> {
+    const filteredMap = new Map<string, Playable[]>();
+
+    map.forEach((value, key) => {
+        if (value.length > 0) {
+            filteredMap.set(key, value);
+        }
+    });
+
+    return filteredMap;
+}
+
 
 // Helper function to check if two dates are the same day
 function isSameDay(date1: Date, date2: Date): boolean {
@@ -49,22 +77,22 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export function PlayableList() {
-    const currentPlayableList = useRecoilValue(currentPlayablesState);
-    const currentPlayableSorting = useRecoilValue(currentPlayableSortingState);
-    const currentPlayingPlayable = useRecoilValue(currentPlayingPlayableState);
-    const setCurrentPlayingPlayableID = useSetRecoilState(currentPlayingPlayableIDState);
+    const playableList = useRecoilValue(playablesState);
+    const playableSorting = useRecoilValue(playableSortingState);
+    const setPlayingPlayableID = useSetRecoilState(currentPlayableIDState);
 
-    const bucketedPlayableList = bucketByDate(currentPlayableList);
+    let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
+    bucketedPlayableList = removeEmptyBuckets(bucketedPlayableList);
 
     return (
         <>
             {
                 Array.from(bucketedPlayableList).map(([name, playables]) => (
-                    <>
-                        <h5 className="mt-4">{name}</h5>
+                    <div key={name}>
+                        <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
                             {playables.map((playable) => (
-                                <ListGroup.Item key={playable.id} className="d-flex align-items-center text-light bg-dark" onClick={() => setCurrentPlayingPlayableID(playable.id)}>
+                                <ListGroup.Item key={playable.id} className="d-flex align-items-center text-light bg-dark" onClick={() => setPlayingPlayableID(playable.id)}>
                                     <Image src={playable.imageUrl} rounded className="me-3" width={50}
                                         height={50} />
                                     <div>
@@ -74,7 +102,7 @@ export function PlayableList() {
                                 </ListGroup.Item>))}
 
                         </ListGroup>
-                    </>
+                    </div>
                 ))
             }
 

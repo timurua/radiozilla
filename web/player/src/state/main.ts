@@ -2,41 +2,58 @@ import { atom, selector } from "recoil";
 import { Users, Playables } from "../data/mocks";
 import { PlayableSorting } from "../data/model";
 
-export const currentUserEmailState = atom({
+export const userEmailState = atom({
     key: 'CurrentUserEmail',
     default: 'timurua@gmail.com',
 });
 
-export const currentPlayableSortingState = atom({
-    key: 'CurrentPlayableSorting',
-    default: PlayableSorting.Date,
-});
-
-export const currentUserState = selector({
+export const userState = selector({
     key: 'CurrentUser',
-    get: async () => {
+    get: async ({get}) => {
+        const userEmail = await get(userEmailState);
         return await Users.getCurrent();
     },
 });
 
-export const currentPlayablesState = selector({
+export const playableSortingState = atom({
+    key: 'CurrentPlayableSorting',
+    default: PlayableSorting.Date,
+});
+
+export const playablesState = selector({
     key: 'CurrentUserPlayables',
     get: async ({ get }) => {
-        const user = await get(currentUserState);
+        const user = await get(userState);
         return await Playables.list(user.email);
     },
 });
 
-export const currentPlayingPlayableIDState = atom({
-    key: 'CurrentPlayingPlayableID',
+export enum PlayingMode {
+    Idle,
+    Playing,
+    Paused,
+}
+
+export const playingModeState = atom({
+    key: 'PlayingMode',
+    default: PlayingMode.Idle,
+});
+
+export const currentPlayableIDState = atom({
+    key: 'CurrentPlayableID',
     default: '',
 });
 
-export const currentPlayingPlayableState = selector({
-    key: 'CurrentPlayingPlayable',
+export const currentPlayableState = selector({
+    key: 'CurrentPlayable',
     get: async ({ get }) => {
-        const playables = await get(currentPlayablesState);
-        const playingPlayableID = get(currentPlayingPlayableIDState);
+        const playables = await get(playablesState);
+        const playingPlayableID = get(currentPlayableIDState);
+        if(!playingPlayableID){
+            if(playables.length > 0){
+                return playables[0];
+            }
+        }
         return playables.find(playable => playable.id === playingPlayableID);
     }
 });

@@ -21,14 +21,14 @@ import { PlayableSortingSelector } from '../components/PlayableSortingSelector';
 
 function Player() {
   return (
-    <div className="App" style={{ backgroundColor: '#1a1a1a', color: 'white', minHeight: '100vh' }}>
+    <div className="min-vh-100">
       {/* Header */}
 
       <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
         <Navbar.Brand href="#">Podcasts</Navbar.Brand>
         <div>
-          <BsBell size={20} className="mx-2" />
-          <BsSearch size={20} />
+          <BsBell size={20} className="mx-2 text-light" />
+          <BsSearch size={20} className="mx-2 text-light"/>
         </div>
       </Navbar>
 
@@ -42,19 +42,19 @@ function Player() {
           <Nav.Item>
             <Nav.Link href="#" className="text-center text-light">
               <BsHouseDoor size={20} />
-              <div style={{ fontSize: '0.75rem' }}>Home</div>
+              <div>Home</div>
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
             <Nav.Link href="#" className="text-center text-light">
               <BsCompass size={20} />
-              <div style={{ fontSize: '0.75rem' }}>Explore</div>
+              <div>Explore</div>
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
             <Nav.Link href="#" className="text-center text-light">
               <BsMusicNoteList size={20} />
-              <div style={{ fontSize: '0.75rem' }}>Library</div>
+              <div>Library</div>
             </Nav.Link>
           </Nav.Item>
         </Nav>

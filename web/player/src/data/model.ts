@@ -12,7 +12,6 @@ export class User {
 export enum PlayableSorting {
   Date = "Date",
   Topic = "Topic",
-  Preferences = "Preferences"
 }
 
 export enum RedinessStatus {

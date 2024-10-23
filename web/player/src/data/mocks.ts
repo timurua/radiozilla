@@ -32,7 +32,7 @@ export const Playables = {
                         "https://cdn.pixabay.com/audio/2022/08/23/audio_d16737dc28.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
-                        ["Music", "Technology"],
+                        ["Technology"],
                         SourceType.Audio,),
                     new Playable(
                         "2",
@@ -43,7 +43,7 @@ export const Playables = {
                         "https://cdn.pixabay.com/audio/2022/08/04/audio_2dde668d05.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
-                        ["Music", "Technology"],
+                        ["Technology"],
                         SourceType.Audio,),
                     new Playable(
                         "3",
@@ -54,7 +54,7 @@ export const Playables = {
                         "https://cdn.pixabay.com/audio/2022/08/03/audio_54ca0ffa52.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
-                        ["Music", "Technology"],
+                        ["Music"],
                         SourceType.Audio,),
                     new Playable(
                         "4",
@@ -65,7 +65,7 @@ export const Playables = {
                         "https://cdn.pixabay.com/audio/2022/07/25/audio_3266b47d61.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
-                        ["Music", "Technology"],
+                        ["Music"],
                         SourceType.Audio,),
                     new Playable(
                         "5",
@@ -76,7 +76,7 @@ export const Playables = {
                         "https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3",
                         PlaybackStatus.Idle,
                         RedinessStatus.Ready,
-                        ["Music", "Technology"],
+                        ["Technology"],
                         SourceType.Audio,),
 
                 ]);

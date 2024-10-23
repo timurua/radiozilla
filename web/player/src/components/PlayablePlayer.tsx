@@ -96,8 +96,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
 };
 
 export function PlayablePlayer() {
+  return (
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <PlayablePlayerImpl />
+      </React.Suspense>
+  )
+}
 
-  const playable = useRecoilValue(currentPlayableState);
+export function PlayablePlayerImpl() {
+
+  const playable = useRecoilValue<Playable|null>(currentPlayableState);
 
   return (
     <div>

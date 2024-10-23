@@ -2,6 +2,7 @@ import { Image, ListGroup } from "react-bootstrap";
 import { Playable, PlayableSorting } from "../data/model";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { playableSortingState, playablesState, currentPlayableIDState, currentPlayableState } from "../state/main";
+import { startTransition, Suspense } from "react";
 
 // Static method to bucket playables by date
 function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
@@ -77,22 +78,36 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export function PlayableList() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PlayableListImpl />
+        </Suspense>
+    );
+}
+
+function PlayableListImpl() {
     const playableList = useRecoilValue(playablesState);
     const playableSorting = useRecoilValue(playableSortingState);
-    const setPlayingPlayableID = useSetRecoilState(currentPlayableIDState);
+    const setCurrentPlayableID = useSetRecoilState(currentPlayableIDState);
 
     let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
     bucketedPlayableList = removeEmptyBuckets(bucketedPlayableList);
 
+    function setCurrent(playable: Playable) {
+        startTransition(() => {
+            setCurrentPlayableID(playable.id)
+        });
+    }
+
     return (
-        <>
+        <Suspense fallback={<div>Loading...</div>}>
             {
                 Array.from(bucketedPlayableList).map(([name, playables]) => (
                     <div key={name}>
                         <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
                             {playables.map((playable) => (
-                                <ListGroup.Item key={playable.id} className="d-flex align-items-center text-light bg-dark" onClick={() => setPlayingPlayableID(playable.id)}>
+                                <ListGroup.Item key={playable.id} className="d-flex align-items-center text-light bg-dark" onClick={() => setCurrent(playable)}>
                                     <Image src={playable.imageUrl} rounded className="me-3" width={50}
                                         height={50} />
                                     <div>
@@ -106,6 +121,6 @@ export function PlayableList() {
                 ))
             }
 
-        </>
+        </Suspense>
     );
 }

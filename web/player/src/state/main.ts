@@ -1,6 +1,6 @@
 import { atom, selector } from "recoil";
 import { Users, Playables } from "../data/mocks";
-import { PlayableSorting } from "../data/model";
+import { Playable, PlayableSorting } from "../data/model";
 
 export const userEmailState = atom({
     key: 'CurrentUserEmail',
@@ -21,7 +21,7 @@ export const playableSortingState = atom({
 });
 
 export const playablesState = selector({
-    key: 'CurrentUserPlayables',
+    key: 'Playables',
     get: async ({ get }) => {
         const user = await get(userState);
         return await Playables.list(user.email);
@@ -44,7 +44,7 @@ export const currentPlayableIDState = atom({
     default: '',
 });
 
-export const currentPlayableState = selector({
+export const currentPlayableState = selector<Playable|null>({
     key: 'CurrentPlayable',
     get: async ({ get }) => {
         const playables = await get(playablesState);
@@ -54,7 +54,7 @@ export const currentPlayableState = selector({
                 return playables[0];
             }
         }
-        return playables.find(playable => playable.id === playingPlayableID);
+        return playables.find(playable => playable.id === playingPlayableID) || null;
     }
 });
 

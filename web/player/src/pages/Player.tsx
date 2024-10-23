@@ -17,6 +17,7 @@ import { Button, Container, Row, Col, Navbar, Nav, ListGroup, Image, Stack } fro
 import { BsBell, BsSearch, BsHouseDoor, BsCompass, BsMusicNoteList } from 'react-icons/bs';
 import { PlayablePlayer } from '../components/PlayablePlayer';
 import { PlayableList } from '../components/PlayableList';
+import { PlayableSortingSelector } from '../components/PlayableSortingSelector';
 
 function Player() {
   return (
@@ -32,18 +33,8 @@ function Player() {
 
       <Container className="mt-3">
         {/* Buttons Row */}
-        <Row className="text-center mb-4">
-          <Col>
-            <Button variant="outline-light" size="sm">Podcasts</Button>
-          </Col>
-          <Col>
-            <Button variant="outline-light" size="sm">Relax</Button>
-          </Col>
-          <Col>
-            <Button variant="outline-light" size="sm">Energize</Button>
-          </Col>
-        </Row>
 
+        <PlayableSortingSelector />
         <PlayablePlayer />
         <PlayableList />
           {/* Channels */}  

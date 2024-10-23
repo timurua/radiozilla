@@ -11,6 +11,12 @@ export const Users = {
     }
 }
 
+function getDateWithOffset(daysOffset: number): Date {
+    const date = new Date();
+    date.setDate(date.getDate() - daysOffset);
+    return date;
+  }
+
 export const Playables = {
     list: async (userEmail: string) => {
         // Simulate an asynchronous operation (e.g., fetching from a database)
@@ -19,6 +25,7 @@ export const Playables = {
                 resolve([
                     new Playable(
                         "1",
+                        getDateWithOffset(0),
                         "music - 1",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2021/11/04/05/33/dome-6767422_960_720.jpg",
@@ -29,6 +36,7 @@ export const Playables = {
                         SourceType.Audio,),
                     new Playable(
                         "2",
+                        getDateWithOffset(0),
                         "music - 2",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2021/09/06/16/45/nature-6602056__340.jpg",
@@ -39,6 +47,7 @@ export const Playables = {
                         SourceType.Audio,),
                     new Playable(
                         "3",
+                        getDateWithOffset(1),
                         "music - 3",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2022/08/29/08/47/sky-7418364__340.jpg",
@@ -48,7 +57,8 @@ export const Playables = {
                         ["Music", "Technology"],
                         SourceType.Audio,),
                     new Playable(
-                        "1",
+                        "4",
+                        getDateWithOffset(1),
                         "music - 1",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2015/09/22/01/30/lights-951000__340.jpg",
@@ -58,7 +68,8 @@ export const Playables = {
                         ["Music", "Technology"],
                         SourceType.Audio,),
                     new Playable(
-                        "1",
+                        "5",
+                        getDateWithOffset(7),
                         "music - 1",
                         "react-modern-audio-player",
                         "https://cdn.pixabay.com/photo/2022/08/28/18/03/dog-7417233__340.jpg",

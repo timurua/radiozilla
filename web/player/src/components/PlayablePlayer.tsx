@@ -2,14 +2,15 @@ import { useRecoilValue } from 'recoil';
 import { currentPlayableState } from '../state/main';
 import React, { useRef, useState } from 'react';
 
-import { Button, ButtonGroup, Container, ProgressBar } from 'react-bootstrap';
+import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
+import { Playable } from '../data/model';
 
 interface AudioPlayerProps {
-  audioSrc: string;
+  playable: Playable | null;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ playable }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -56,20 +57,31 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
     <Container className="audio-player">
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={playable?.audioUrl}
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
       />
+      {
+        !playable ? null : (
+          <div className="d-flex align-items-center text-light bg-dark">
+            <Image src={playable.imageUrl} rounded className="me-3" width={50}
+              height={50} />
+            <div>
+              <div>{playable.name}</div>
+              <small>{playable.writer}</small>
+            </div>
+          </div>)
+      }
       <div className="d-flex justify-content-center m-3">
         <ButtonGroup>
           <Button variant="dark" onClick={handleRewind}>
-            <BsRewindFill />
+            <BsRewindFill size={30} />
           </Button>
           <Button variant="dark" onClick={togglePlayPause}>
-            {isPlaying ? (<BsPause/>) : (<BsPlayFill/>)}
+            {isPlaying ? (<BsPause size={60} />) : (<BsPlayFill size={60} />)}
           </Button>
           <Button variant="dark" onClick={handleForward}>
-            <BsFastForwardFill />
+            <BsFastForwardFill size={30} />
           </Button>
         </ButtonGroup>
       </div>
@@ -85,12 +97,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc }) => {
 
 export function PlayablePlayer() {
 
-  const playingPlayable = useRecoilValue(currentPlayableState);
+  const playable = useRecoilValue(currentPlayableState);
 
   return (
     <div>
       <React.Suspense fallback={<div>Loading...</div>}>
-        <AudioPlayer audioSrc={playingPlayable?.audioUrl || ""} />
+        <AudioPlayer playable={playable} />
       </React.Suspense>
     </div>
   );

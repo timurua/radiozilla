@@ -1,4 +1,4 @@
-import { Button, Row, Col } from "react-bootstrap";
+import { Button, Row, Col, ButtonGroup } from "react-bootstrap";
 import { PlayableSorting } from "../data/model"
 import { playableSortingState } from "../state/main";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -16,12 +16,11 @@ export function PlayableSortingSelector() {
 
 
     return (
-        <Row className="text-center mb-4 pt-4">
+        
+        <ButtonGroup className="text-center mb-4 pt-4 d-flex justify-content-center">
             {sortings.map((sorting) => (
-                <Col key={sorting}>
-                    <Button variant={playableSorting === sorting ? "outline-light active" : "outline-light"} size="sm" onClick={()=> setSorting(sorting)}>{sorting}</Button>
-                </Col>
+                <Button key={sorting} variant={playableSorting === sorting ? "outline-light active" : "outline-light"} size="sm" onClick={() => setSorting(sorting)}>{sorting}</Button>
             ))}
-        </Row>
+        </ButtonGroup>
     );
 }

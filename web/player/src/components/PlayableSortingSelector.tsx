@@ -1,4 +1,4 @@
-import { Button, Row, Col, ButtonGroup } from "react-bootstrap";
+import { Button, ButtonGroup } from "react-bootstrap";
 import { PlayableSorting } from "../data/model"
 import { playableSortingState } from "../state/main";
 import { useRecoilValue, useSetRecoilState } from "recoil";

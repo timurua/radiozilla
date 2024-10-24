@@ -15,7 +15,7 @@ function getDateWithOffset(daysOffset: number): Date {
     const date = new Date();
     date.setDate(date.getDate() - daysOffset);
     return date;
-  }
+}
 
 export const Playables = {
     list: async (userEmail: string) => {
@@ -69,6 +69,28 @@ export const Playables = {
                         SourceType.Audio,),
                     new Playable(
                         "5",
+                        getDateWithOffset(7),
+                        "music - 1",
+                        "react-modern-audio-player",
+                        "https://cdn.pixabay.com/photo/2022/08/28/18/03/dog-7417233__340.jpg",
+                        "https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3",
+                        PlaybackStatus.Idle,
+                        RedinessStatus.Ready,
+                        ["Technology"],
+                        SourceType.Audio,),
+                    new Playable(
+                        "6",
+                        getDateWithOffset(1),
+                        "music - 1",
+                        "react-modern-audio-player",
+                        "https://cdn.pixabay.com/photo/2015/09/22/01/30/lights-951000__340.jpg",
+                        "https://cdn.pixabay.com/audio/2022/07/25/audio_3266b47d61.mp3",
+                        PlaybackStatus.Idle,
+                        RedinessStatus.Ready,
+                        ["Music"],
+                        SourceType.Audio,),
+                    new Playable(
+                        "7",
                         getDateWithOffset(7),
                         "music - 1",
                         "react-modern-audio-player",

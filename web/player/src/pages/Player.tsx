@@ -1,40 +1,64 @@
-// import React from 'react';
-
-// const Player: React.FC = () => {
-//   return (
-//     <div>
-//       <h1>Player Page</h1>
-//       <p>This is the player page.</p>
-//     </div>
-//   );
-// };
-
-// export default Player;
-
-
-import React from 'react';
-import { Button, Container, Row, Col, Navbar, Nav, ListGroup, Image, Stack } from 'react-bootstrap';
+import React, { useEffect, useState, useRef } from 'react';
+import { Navbar, Nav } from 'react-bootstrap';
 import { BsBell, BsSearch, BsHouseDoor, BsCompass, BsMusicNoteList } from 'react-icons/bs';
-import { PlayablePlayer } from '../components/PlayablePlayer';
-import { PlayableList } from '../components/PlayableList';
-import { PlayableSortingSelector } from '../components/PlayableSortingSelector';
+import { PlayablePlayer} from '../components/PlayablePlayer';
+import {PlayableList} from '../components/PlayableList';
+import {PlayableSortingSelector} from '../components/PlayableSortingSelector';
 
 function Player() {
+  const [playerMinimized, setPlayerMinimized] = useState(false);
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const sortingSelectorRef = useRef(null);
+  const navbarRef = useRef(null);
+
+  useEffect(() => {
+    if (navbarRef.current) {
+      setNavbarHeight(navbarRef.current.getBoundingClientRect().height);
+    }
+
+    const handleScroll = () => {
+      if (sortingSelectorRef.current && navbarRef.current) {
+        const navbarHeight = navbarRef.current.getBoundingClientRect().height;
+        const sortingSelectorRect = sortingSelectorRef.current.getBoundingClientRect();
+
+        if (sortingSelectorRect.bottom <= (navbarHeight - 25)) {
+          // PlayableSortingSelector has scrolled out of view
+          setPlayerMinimized(true);
+        } else {
+          setPlayerMinimized(false);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Call handler immediately to set initial state
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <div className="min-vh-100">
       {/* Header */}
+      <div ref={navbarRef}>
+        <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
+          <Navbar.Brand href="#">Podcasts</Navbar.Brand>
+          <div>
+            <BsBell size={20} className="mx-2 text-light" />
+            <BsSearch size={20} className="mx-2 text-light" />
+          </div>
+        </Navbar>
+      </div>
 
-      <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
-        <Navbar.Brand href="#">Podcasts</Navbar.Brand>
-        <div>
-          <BsBell size={20} className="mx-2 text-light" />
-          <BsSearch size={20} className="mx-2 text-light"/>
-        </div>
-      </Navbar>
+      <div ref={sortingSelectorRef}>
+        <PlayableSortingSelector />
+      </div>
 
-      <PlayableSortingSelector />
-      <PlayablePlayer />
-      <PlayableList/>
+      <PlayablePlayer minimized={playerMinimized} navbarHeight={navbarHeight} />
+
+      <PlayableList />
 
       {/* Bottom Navigation */}
       <Navbar fixed="bottom" bg="dark" variant="dark">
@@ -64,4 +88,3 @@ function Player() {
 }
 
 export default Player;
-

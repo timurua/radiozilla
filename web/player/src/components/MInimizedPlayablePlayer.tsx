@@ -1,9 +1,10 @@
 import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { currentPlayableState, playingModeState } from '../state/main';
 import React, { useRef, useState } from 'react';
 
 import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
-import { Playable } from '../data/model';
+import { Playable, PlayingMode } from '../data/model';
 import { useAudio } from '../providers/AudioProvider';
 
 interface AudioPlayerProps {
@@ -12,22 +13,22 @@ interface AudioPlayerProps {
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) => {
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const playable = useRecoilValue<Playable | null>(currentPlayableState);
+  const mode = useRecoilValue(playingModeState);
+  const setMode = useSetRecoilState(playingModeState)
   const {
     play,
     pause,
-    playable,
-    setPlayable,
+    setSrc,
     isPlaying,
     isPaused,
     hasEnded,
-    currentTime,
-    duration,
     subscribeToPlay,
     subscribeToPause,
-    subscribeToEnded,
-    subscribeToLoadedMetadata,
-    subscribeToTimeUpdate,
-    setCurrentTime } = useAudio();
+    subscribeToEnded, } = useAudio();
 
   const minimizedStyle: React.CSSProperties = minimized
     ? {
@@ -43,22 +44,34 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
 
 
   const togglePlayPause = () => {
-    if (isPlaying) {
-      pause();
+    if (mode === PlayingMode.Playing) {
+      audioRef.current?.pause();
+      setMode(PlayingMode.Paused)
     } else {
-      play();
+      audioRef.current?.play();
+      setMode(PlayingMode.Playing)
     }
   };
 
+  const handleLoadedMetadata = () => {
+    const audioDuration = audioRef.current?.duration || 0;
+    setDuration(audioDuration);
+  };
+
+  const handleTimeUpdate = () => {
+    const current = audioRef.current?.currentTime || 0;
+    setCurrentTime(current);
+  };
+
   const handleRewind = () => {
-    if (currentTime) {
-      setCurrentTime(Math.max(0, currentTime - 10));
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(0, currentTime - 10);
     }
   };
 
   const handleForward = () => {
-    if (currentTime) {
-      setCurrentTime(Math.min(duration, currentTime + 10));
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(duration, currentTime + 10);
     }
   };
 
@@ -77,7 +90,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
     <div style={minimizedStyle} className='bg-dark'>
       <Container className="audio-player bg-dark">
         {
-          !minimized && isPlaying || isPaused ? (
+          !minimized && playable && mode !== PlayingMode.Idle ? (
             <div className="d-flex align-items-center text-light bg-dark">
               <Image src={playable.imageUrl} rounded className="me-3" width={50}
                 height={50} />
@@ -93,7 +106,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
               <BsRewindFill size={minimized ? 20 : 30} />
             </Button>
             <Button variant="dark" onClick={togglePlayPause}>
-              {isPlaying ? (<BsPause size={minimized ? 30 : 60} />) : (<BsPlayFill size={minimized ? 30 : 60} />)}
+              {mode === PlayingMode.Playing ? (<BsPause size={minimized ? 30 : 60} />) : (<BsPlayFill size={minimized ? 30 : 60} />)}
             </Button>
             <Button variant="dark" onClick={handleForward}>
               <BsFastForwardFill size={minimized ? 20 : 30} />

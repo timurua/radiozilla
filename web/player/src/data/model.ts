@@ -9,12 +9,6 @@ export class User {
 
 }
 
-export enum PlayingMode {
-  Idle,
-  Playing,
-  Paused,
-}
-
 export enum PlayableSorting {
   Date = "Date",
   Topic = "Topic",

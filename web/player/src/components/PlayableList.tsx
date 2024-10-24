@@ -3,6 +3,7 @@ import { Playable, PlayableSorting } from "../data/model";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { playableSortingState, playablesState, currentPlayableIDState, currentPlayableState } from "../state/main";
 import { startTransition, Suspense } from "react";
+import { useAudio } from "../providers/AudioProvider";
 
 // Static method to bucket playables by date
 function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
@@ -89,14 +90,18 @@ function PlayableListImpl() {
     const playableList = useRecoilValue(playablesState);
     const playableSorting = useRecoilValue(playableSortingState);
     const currentPlayableID = useRecoilValue(currentPlayableIDState);
-    const setCurrentPlayableID = useSetRecoilState(currentPlayableIDState);
+
+    const {
+        play,
+        setPlayable } = useAudio();
 
     let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
     bucketedPlayableList = removeEmptyBuckets(bucketedPlayableList);
 
-    function setCurrent(playable: Playable) {
+    function playPlayable(playable: Playable) {
         startTransition(() => {
-            setCurrentPlayableID(playable.id)
+            setPlayable(playable);
+            play();
         });
     }
 
@@ -108,7 +113,7 @@ function PlayableListImpl() {
                         <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
                             {playables.map((playable) => (
-                                <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayableID === playable.id)?"bg-secondary rounded":"bg-dark")} onClick={() => setCurrent(playable)}>
+                                <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayableID === playable.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playPlayable(playable)}>
                                     <Image src={playable.imageUrl} rounded className="me-3" width={50}
                                         height={50} />
                                     <div>

@@ -28,41 +28,4 @@ export const playablesState = selector({
     },
 });
 
-export const playingModeState = atom({
-    key: 'PlayingMode',
-    default: PlayingMode.Idle,
-});
-
-export const currentPlayableIDState = atom({
-    key: 'CurrentPlayableID',
-    default: '',
-});
-
-export const currentPlayableState = selector<Playable|null>({
-    key: 'CurrentPlayable',
-    get: async ({ get }) => {
-        const playables = await get(playablesState);
-        const playingPlayableID = get(currentPlayableIDState);
-        if(!playingPlayableID){
-            if(playables.length > 0){
-                return playables[0];
-            }
-        }
-        return playables.find(playable => playable.id === playingPlayableID) || null;
-    }
-});
-
-export const restPlayablesState = selector<Playable|null>({
-    key: 'RestPlayables',
-    get: async ({ get }) => {
-        const playables = await get(playablesState);
-        const playingPlayableID = get(currentPlayableIDState);
-        if(!playingPlayableID){
-            if(playables.length > 0){
-                return playables[0];
-            }
-        }
-        return playables.find(playable => playable.id === playingPlayableID) || null;
-    }
-});
 

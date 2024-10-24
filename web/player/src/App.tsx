@@ -10,11 +10,13 @@ import {
 // Import your components
 import Player from './pages/Player';
 import Profile from './pages/Profile';
+import { AudioProvider } from './providers/AudioProvider';
 
 const App: React.FC = () => {
   return (
     <RecoilRoot>
       <BrowserRouter>
+        <AudioProvider>
         <div>
 
           {/* Main Content */}
@@ -26,8 +28,10 @@ const App: React.FC = () => {
             </Routes>
           </Container>
         </div>
+        </AudioProvider>
       </BrowserRouter>
     </RecoilRoot>
+    
   );
 };
 

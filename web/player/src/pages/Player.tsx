@@ -21,7 +21,7 @@ function Player() {
         const navbarHeight = navbarRef.current.getBoundingClientRect().height;
         const sortingSelectorRect = sortingSelectorRef.current.getBoundingClientRect();
 
-        if (sortingSelectorRect.bottom <= (navbarHeight - 25)) {
+        if (sortingSelectorRect.bottom <= (navbarHeight)) {
           // PlayableSortingSelector has scrolled out of view
           setPlayerMinimized(true);
         } else {

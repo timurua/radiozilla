@@ -16,17 +16,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
     play,
     pause,
     playable,
-    setPlayable,
     isPlaying,
     isPaused,
-    hasEnded,
     currentTime,
     duration,
-    subscribeToPlay,
-    subscribeToPause,
-    subscribeToEnded,
-    subscribeToLoadedMetadata,
-    subscribeToTimeUpdate,
     setCurrentTime } = useAudio();
 
   const minimizedStyle: React.CSSProperties = minimized
@@ -62,11 +55,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
     }
   };
 
-  const handleEnd = () => {
-    if (audioRef.current) {
-    }
-  }
-
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -77,7 +65,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ minimized, navbarHeight }) =>
     <div style={minimizedStyle} className='bg-dark'>
       <Container className="audio-player bg-dark">
         {
-          !minimized && isPlaying || isPaused ? (
+          playable && !minimized && isPlaying || isPaused ? (
             <div className="d-flex align-items-center text-light bg-dark">
               <Image src={playable.imageUrl} rounded className="me-3" width={50}
                 height={50} />

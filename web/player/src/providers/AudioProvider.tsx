@@ -13,6 +13,8 @@ interface AudioContextProps {
     pause: () => void;
     playable: Playable|null;
     setPlayable: (playable: Playable|null) => void;
+    playablesList: Playable[];
+    setPlayablesList: (playablesList: Playable[]) => void;
     setCurrentTime: (time: number) => void;
     isPlaying: boolean;
     isPaused: boolean;
@@ -40,6 +42,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
     const [playable, setPlayableState] = useState<Playable|null>(null);
+    const [playablesList, setPlayablesList] = useState<Playable[]>([]);
 
     // Subscription arrays and methods
     const onPlaySubscribers = useRef<Array<() => void>>([]);
@@ -118,6 +121,14 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             setIsPaused(false);
             setHasEnded(true);
             onEndedSubscribers.current.forEach((callback) => callback());
+            if (playable){
+                const index = playablesList.indexOf(playable);
+                if (index < playablesList.length - 1){
+                    setPlayable(playablesList[index + 1]);
+                }
+            } else if(playablesList.length > 0){
+                setPlayable(playablesList[0]);
+            }
         };
 
         const handleLoadedMetadata = () => {
@@ -155,6 +166,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             if (audio.src !== playable.audioUrl) {
                 audio.src = playable.audioUrl;
             }
+        } else if (playablesList.length > 0) {
+            setPlayable(playablesList[0]);
         }
         audio.play();
     };
@@ -188,6 +201,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
                 pause,
                 playable,
                 setPlayable: setPlayableState,
+                playablesList,
+                setPlayablesList,
                 setCurrentTime,
                 isPlaying,
                 isPaused,

@@ -1,6 +1,6 @@
 import { atom, selector } from "recoil";
 import { Users, Playables } from "../data/mocks";
-import { Playable, PlayableSorting, PlayingMode } from "../data/model";
+import { PlayableSorting, } from "../data/model";
 
 export const userEmailState = atom({
     key: 'CurrentUserEmail',
@@ -27,5 +27,3 @@ export const playablesState = selector({
         return await Playables.list(user.email);
     },
 });
-
-

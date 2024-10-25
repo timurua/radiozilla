@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Navbar, Nav } from 'react-bootstrap';
-import { BsBell, BsSearch, BsHouseDoor, BsCompass, BsMusicNoteList, BsSpeaker, BsMusicNote, BsPersonCircle } from 'react-icons/bs';
 import { AudioPlayer} from '../components/AudioPlayer';
 import {PlayableList} from '../components/PlayableList';
 import {PlayableSortingSelector} from '../components/PlayableSortingSelector';
 import { SmallAudioPlayer } from '../components/SmallAudioPlayer';
+import BottomNavbar from '../components/BottomNavbar';
+import TopNavbar from '../components/TopNavbar';
 
-function Player() {
+function Listen() {
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const sortingSelectorRef = useRef(null);
@@ -58,13 +58,7 @@ function Player() {
     <div className="min-vh-100">
       {/* Header */}
       <div ref={navbarRef}>
-        <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
-          <Navbar.Brand href="#">Podcasts</Navbar.Brand>
-          <div>
-            <BsBell size={20} className="mx-2 text-light" />
-            <BsSearch size={20} className="mx-2 text-light" />
-          </div>
-        </Navbar>
+        <TopNavbar />
       </div>
 
       {
@@ -83,31 +77,10 @@ function Player() {
 
       <PlayableList />
 
-      {/* Bottom Navigation */}
-      <Navbar fixed="bottom" bg="dark" variant="dark">
-        <Nav className="w-100 d-flex justify-content-around">
-          <Nav.Item>
-            <Nav.Link href="#" className="text-center text-light">
-              <BsMusicNote size={20} />
-              <div>Listen</div>
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link href="#" className="text-center text-light">
-              <BsCompass size={20} />
-              <div>Explore</div>
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link href="#" className="text-center text-light">
-              <BsPersonCircle size={20} />
-              <div>Me</div>
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
-      </Navbar>
+      <BottomNavbar />
+
     </div>
   );
 }
 
-export default Player;
+export default Listen;

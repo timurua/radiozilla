@@ -8,7 +8,8 @@ import {
 } from 'recoil';
 
 // Import your components
-import Player from './pages/Player';
+import Listen from './pages/Listen';
+import Explore from './pages/Explore';
 import Profile from './pages/Profile';
 import { AudioProvider } from './providers/AudioProvider';
 
@@ -22,8 +23,9 @@ const App: React.FC = () => {
           {/* Main Content */}
           <Container className="mt-5 bg-dark w-100">
             <Routes>
-              <Route path="/" element={<Player />} />
-              <Route path="/player" element={<Player />} />
+              <Route path="/" element={<Listen />} />
+              <Route path="/listen" element={<Listen />} />
+              <Route path="/explore" element={<Explore />} />
               <Route path="/profile" element={<Profile />} />
             </Routes>
           </Container>

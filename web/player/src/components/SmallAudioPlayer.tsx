@@ -1,7 +1,6 @@
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 
-import { Button, ButtonGroup, Container, ProgressBar } from 'react-bootstrap';
+import { Button, ButtonGroup, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useAudio } from '../providers/AudioProvider';
 

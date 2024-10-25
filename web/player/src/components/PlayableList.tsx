@@ -19,8 +19,8 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
     const buckets = new Map<string, Playable[]>([
         ["Today", []],
         ["Yesterday", []],
-        ["LastWeek", []],
-        ["LastYear", []],
+        ["Last Week", []],
+        ["Last Year", []],
     ]);
 
     playables.forEach((playable) => {
@@ -31,9 +31,9 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
         } else if (isSameDay(createdAt, yesterday)) {
             buckets.get("Yesterday")!.push(playable);
         } else if (createdAt >= startOfWeek) {
-            buckets.get("LastWeek")!.push(playable);
+            buckets.get("Last Week")!.push(playable);
         } else if (createdAt >= startOfYear) {
-            buckets.get("LastYear")!.push(playable);
+            buckets.get("Last Year")!.push(playable);
         }
     });
 

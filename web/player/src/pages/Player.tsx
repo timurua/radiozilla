@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Navbar, Nav } from 'react-bootstrap';
-import { BsBell, BsSearch, BsHouseDoor, BsCompass, BsMusicNoteList } from 'react-icons/bs';
-import { PlayablePlayer} from '../components/PlayablePlayer';
+import { BsBell, BsSearch, BsHouseDoor, BsCompass, BsMusicNoteList, BsSpeaker, BsMusicNote, BsPersonCircle } from 'react-icons/bs';
+import { AudioPlayer} from '../components/AudioPlayer';
 import {PlayableList} from '../components/PlayableList';
 import {PlayableSortingSelector} from '../components/PlayableSortingSelector';
+import { SmallAudioPlayer } from '../components/SmallAudioPlayer';
 
 function Player() {
   const [playerMinimized, setPlayerMinimized] = useState(false);
@@ -39,6 +40,20 @@ function Player() {
     };
   }, []);
 
+  const minimizedStyle: React.CSSProperties = playerMinimized
+  ? {
+    position: 'fixed',
+    top: navbarHeight,
+    width: '100%',
+    left: 0,
+    height: '50px', // Adjust the minimized height as needed
+    zIndex: 1000,
+    paddingTop: '40px',
+    paddingLeft: '10px',
+    paddingRight: '10px',
+  } : { display: 'none' };
+
+
   return (
     <div className="min-vh-100">
       {/* Header */}
@@ -52,11 +67,19 @@ function Player() {
         </Navbar>
       </div>
 
+      {
+        playerMinimized ? (
+          <div style={minimizedStyle} className='bg-dark'>
+            <SmallAudioPlayer/>
+          </div>
+        ) : null
+      }
+
       <div ref={sortingSelectorRef}>
         <PlayableSortingSelector />
       </div>
 
-      <PlayablePlayer minimized={playerMinimized} navbarHeight={navbarHeight} />
+      <AudioPlayer/>
 
       <PlayableList />
 
@@ -65,8 +88,8 @@ function Player() {
         <Nav className="w-100 d-flex justify-content-around">
           <Nav.Item>
             <Nav.Link href="#" className="text-center text-light">
-              <BsHouseDoor size={20} />
-              <div>Home</div>
+              <BsMusicNote size={20} />
+              <div>Listen</div>
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -77,8 +100,8 @@ function Player() {
           </Nav.Item>
           <Nav.Item>
             <Nav.Link href="#" className="text-center text-light">
-              <BsMusicNoteList size={20} />
-              <div>Library</div>
+              <BsPersonCircle size={20} />
+              <div>Me</div>
             </Nav.Link>
           </Nav.Item>
         </Nav>

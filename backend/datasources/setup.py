@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='radiozilla-backend-datasources',
-    version='0.1.0',
+    version='0.1.1',
     description='Python library for importing data from external datasources',
     author='Radiozilla',
     author_email='timurua@gmail.com',

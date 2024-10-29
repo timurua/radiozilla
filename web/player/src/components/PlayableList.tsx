@@ -1,3 +1,4 @@
+import React from 'react';
 import { Image, ListGroup } from "react-bootstrap";
 import { Playable, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
@@ -78,15 +79,22 @@ function isSameDay(date1: Date, date2: Date): boolean {
     );
 }
 
-export function PlayableList() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <PlayableListImpl />
-        </Suspense>
-    );
+interface PlayableListProps {
+  searchString: string|undefined;
+  // other props
 }
 
-function PlayableListImpl() {
+export const PlayableList: React.FC<PlayableListProps> = ({ searchString, ...props }) => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PlayableListImpl searchString={searchString} {...props} />
+    </Suspense>
+  );
+};
+
+export default PlayableList;
+
+function PlayableListImpl({ searchString, ...props }: PlayableListProps) {
     const playableList = useRecoilValue(playablesState);
     const playableSorting = useRecoilValue(playableSortingState);
     const {playable: currentPlayable} = useAudio();
@@ -117,13 +125,19 @@ function PlayableListImpl() {
                     <div key={name}>
                         <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
-                            {playables.map((playable) => (
+                            {playables
+                                .filter(playable => {
+                                    if (!searchString) {
+                                        return true;
+                                    }
+                                    playable.name.toLowerCase().includes(searchString.toLowerCase())
+                                })
+                                .map((playable) => (
                                 <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === playable.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playPlayable(playable)}>
-                                    <Image src={playable.imageUrl} rounded className="me-3" width={50}
-                                        height={50} />
+                                    <Image src={playable.imageUrl} rounded className="me-3" width={50} height={50} />
                                     <div>
                                         <div>{playable.name}</div>
-                                        <small>{playable.writer}</small>
+                                        <small>{playable.author}</small>
                                     </div>
                                 </ListGroup.Item>))}
 

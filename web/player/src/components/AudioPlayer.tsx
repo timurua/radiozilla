@@ -51,7 +51,7 @@ function AudioPlayerImpl() {
                 height={50} />
               <div>
                 <div>{playable.name}</div>
-                <small>{playable.writer}</small>
+                <small>{playable.author}</small>
               </div>
             </div>) : null
         }

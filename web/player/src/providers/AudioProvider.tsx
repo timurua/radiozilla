@@ -184,7 +184,12 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         if (!audio) return;
 
         audio.src = playable.audioUrl;
+        setDocumentTitle(playable);
     };
+
+    const setDocumentTitle = (playable: Playable) => {  
+        document.title = `${playable.name} - ${playable.author}`;
+    }
 
     const setCurrentTime = (time: number) => {
         const audio = audioRef.current;

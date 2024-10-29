@@ -38,7 +38,7 @@ export class Playable {
     public id: string,
     public createdAt: Date,
     public name: string,
-    public writer: string,
+    public author: string,
     public imageUrl: string,
     public audioUrl: string,
     public playbackStatus: PlaybackStatus,
@@ -66,6 +66,17 @@ export class PlayableLog {
     public durationSeconds: number,
     public action: LogAction,
   ) { }
+}
+
+export class ChannelType {
+  constructor(
+    public id: string,
+    public name: string,
+    public writer: string,
+    public imageUrl: string,
+    public url: string,
+  ) {
+  }  
 }
 
 export class Channel {

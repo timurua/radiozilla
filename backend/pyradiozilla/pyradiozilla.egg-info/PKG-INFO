@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pyradiozilla
-Version: 0.1.2
+Version: 0.1.3
 Summary: Python library for importing data from external datasources
 Home-page: https://github.com/timurua/radiozilla/backend/datasources
 Author: Radiozilla

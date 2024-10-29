@@ -1,0 +1,9 @@
+README.md
+setup.py
+datasources/__init__.py
+datasources/github.py
+pyradiozilla.egg-info/PKG-INFO
+pyradiozilla.egg-info/SOURCES.txt
+pyradiozilla.egg-info/dependency_links.txt
+pyradiozilla.egg-info/requires.txt
+pyradiozilla.egg-info/top_level.txt

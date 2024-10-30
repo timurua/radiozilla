@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyradiozilla',
-    version='0.1.3',
+    version='0.1.4',
     description='Python library for importing data from external datasources',
     author='Radiozilla',
     author_email='timurua@gmail.com',

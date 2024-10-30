@@ -64,4 +64,4 @@ class GithubDatasource:
                 for pr in pull_requests
             ]
         except Exception as e:
-            print(f"Error retrieving pull requests
+            print(f"Error retrieving pull requests): {e}")

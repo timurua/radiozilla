@@ -24,13 +24,13 @@ class GithubDatasource:
         except Exception as e:
             print(f"Failed to connect to GitHub: {e}")
 
-    def read_repositories(self):
+    def read_repositories(self) -> list[str]:
         """
         Retrieve and print all repositories accessible by the authenticated user.
         """
         if not self.client:
             print("Not connected to GitHub. Please call connect() first.")
-            return
+            return []
         
         try:
             user = self.client.get_user()
@@ -40,7 +40,7 @@ class GithubDatasource:
             print(f"Error retrieving repositories: {e}")
             return []
 
-    def read_prs(self, repo_name: str):
+    def read_prs(self, repo_name: str) -> list[dict[str, any]]:
         """
         Retrieve and print all open pull requests for a given repository.
         
@@ -48,7 +48,7 @@ class GithubDatasource:
         """
         if not self.client:
             print("Not connected to GitHub. Please call connect() first.")
-            return
+            return []
         
         try:
             repo: Repository = self.client.get_repo(repo_name)
@@ -66,3 +66,4 @@ class GithubDatasource:
             
         except Exception as e:
             print(f"Error retrieving pull requests: {e}")
+            return []

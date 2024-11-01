@@ -6,15 +6,15 @@ import React, {
     ReactNode,
     useContext,
 } from 'react';
-import { Playable } from '../data/model';
+import { Audio } from '../data/model';
 
 interface AudioContextProps {
     play: (url?: string) => void;
     pause: () => void;
-    playable: Playable|null;
-    setPlayable: (playable: Playable|null) => void;
-    playablesList: Playable[];
-    setPlayablesList: (playablesList: Playable[]) => void;
+    playable: Audio|null;
+    setPlayable: (playable: Audio|null) => void;
+    playablesList: Audio[];
+    setPlayablesList: (playablesList: Audio[]) => void;
     setCurrentTime: (time: number) => void;
     isPlaying: boolean;
     isPaused: boolean;
@@ -41,8 +41,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     const [hasEnded, setHasEnded] = useState<boolean>(false);
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
-    const [playable, setPlayableState] = useState<Playable|null>(null);
-    const [playablesList, setPlayablesList] = useState<Playable[]>([]);
+    const [playable, setPlayableState] = useState<Audio|null>(null);
+    const [playablesList, setPlayablesList] = useState<Audio[]>([]);
 
     // Subscription arrays and methods
     const onPlaySubscribers = useRef<Array<() => void>>([]);
@@ -163,8 +163,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         if (!audio) return;
 
         if (playable) {
-            if (audio.src !== playable.audioUrl) {
-                audio.src = playable.audioUrl;
+            if (audio.src !== playable.audio_url) {
+                audio.src = playable.audio_url;
             }
         } else if (playablesList.length > 0) {
             setPlayable(playablesList[0]);
@@ -179,15 +179,15 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         audio.pause();
     };
 
-    const setPlayable = (playable: Playable) => {
+    const setPlayable = (playable: Audio) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.src = playable.audioUrl;
+        audio.src = playable.audio_url;
         setDocumentTitle(playable);
     };
 
-    const setDocumentTitle = (playable: Playable) => {  
+    const setDocumentTitle = (playable: Audio) => {  
         document.title = `${playable.name} - ${playable.author}`;
     }
 

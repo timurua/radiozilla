@@ -28,24 +28,19 @@ export enum PlaybackStatus {
   Cancelled,
 }
 
-export enum SourceType {
-  Audio,
-  Text,
+export class AudioSource {
+
 }
 
-export class Playable {
+export class Audio {
   constructor(
     public id: string,
-    public createdAt: Date,
+    public created_at: Date,
     public name: string,
     public author: string,
-    public imageUrl: string,
-    public audioUrl: string,
-    public playbackStatus: PlaybackStatus,
-    public readinessStatus: RedinessStatus,
+    public image_url: string,
+    public audio_url: string,
     public topics: string[],
-    public sourceType: SourceType,
-    public topicsEmbedding: number[] = [],
   ) {
   }
 }

@@ -1,13 +1,13 @@
 import React from 'react';
 import { Image, ListGroup } from "react-bootstrap";
-import { Playable, PlayableSorting } from "../data/model";
+import { Audio, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
 import { playableSortingState, playablesState } from "../state/main";
 import { startTransition, Suspense, useEffect } from "react";
 import { useAudio } from "../providers/AudioProvider";
 
 // Static method to bucket playables by date
-function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
+function bucketByDate(playables: Audio[]): Map<string, Audio[]> {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
@@ -17,7 +17,7 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
 
     const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-    const buckets = new Map<string, Playable[]>([
+    const buckets = new Map<string, Audio[]>([
         ["Today", []],
         ["Yesterday", []],
         ["Last Week", []],
@@ -25,7 +25,7 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
     ]);
 
     playables.forEach((playable) => {
-        const createdAt = new Date(playable.createdAt);
+        const createdAt = new Date(playable.created_at);
 
         if (isSameDay(createdAt, today)) {
             buckets.get("Today")!.push(playable);
@@ -41,8 +41,8 @@ function bucketByDate(playables: Playable[]): Map<string, Playable[]> {
     return buckets;
 }
 
-function buucketByTopic(playables: Playable[]): Map<string, Playable[]> {
-    const buckets = new Map<string, Playable[]>();
+function buucketByTopic(playables: Audio[]): Map<string, Audio[]> {
+    const buckets = new Map<string, Audio[]>();
 
     playables.forEach((playable) => {
         playable.topics.forEach((topic) => {
@@ -57,8 +57,8 @@ function buucketByTopic(playables: Playable[]): Map<string, Playable[]> {
     return buckets;
 }
 
-function removeEmptyBuckets(map: Map<string, Playable[]>): Map<string, Playable[]> {
-    const filteredMap = new Map<string, Playable[]>();
+function removeEmptyBuckets(map: Map<string, Audio[]>): Map<string, Audio[]> {
+    const filteredMap = new Map<string, Audio[]>();
 
     map.forEach((value, key) => {
         if (value.length > 0) {
@@ -111,7 +111,7 @@ function PlayableListImpl({ searchString, ...props }: PlayableListProps) {
     let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
     bucketedPlayableList = removeEmptyBuckets(bucketedPlayableList);
 
-    function playPlayable(playable: Playable) {
+    function playPlayable(playable: Audio) {
         startTransition(() => {
             setPlayable(playable);
             play();
@@ -134,7 +134,7 @@ function PlayableListImpl({ searchString, ...props }: PlayableListProps) {
                                 })
                                 .map((playable) => (
                                 <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === playable.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playPlayable(playable)}>
-                                    <Image src={playable.imageUrl} rounded className="me-3" width={50} height={50} />
+                                    <Image src={playable.image_url} rounded className="me-3" width={50} height={50} />
                                     <div>
                                         <div>{playable.name}</div>
                                         <small>{playable.author}</small>

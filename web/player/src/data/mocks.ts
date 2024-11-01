@@ -1,4 +1,4 @@
-import { User, Playable, PlaybackStatus, RedinessStatus, SourceType } from "./model";
+import { User, Audio, PlaybackStatus, RedinessStatus, SourceType } from "./model";
 
 export const Users = {
     getCurrent: async () => {
@@ -20,10 +20,10 @@ function getDateWithOffset(daysOffset: number): Date {
 export const Playables = {
     list: async (userEmail: string) => {
         // Simulate an asynchronous operation (e.g., fetching from a database)
-        return new Promise<Playable[]>((resolve) => {
+        return new Promise<Audio[]>((resolve) => {
             Promise.resolve().then(() => {
                 resolve([
-                    new Playable(
+                    new Audio(
                         "1",
                         getDateWithOffset(0),
                         "Maya & Mark",
@@ -34,7 +34,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Technology"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "2",
                         getDateWithOffset(0),
                         "music - 2",
@@ -45,7 +45,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Technology"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "3",
                         getDateWithOffset(1),
                         "music - 3",
@@ -56,7 +56,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Music"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "4",
                         getDateWithOffset(1),
                         "music - 1",
@@ -67,7 +67,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Music"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "5",
                         getDateWithOffset(7),
                         "music - 1",
@@ -78,7 +78,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Technology"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "6",
                         getDateWithOffset(1),
                         "music - 1",
@@ -89,7 +89,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Music"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "7",
                         getDateWithOffset(7),
                         "music - 1",
@@ -101,7 +101,7 @@ export const Playables = {
                         ["Technology"],
                         SourceType.Audio,),
 
-                    new Playable(
+                    new Audio(
                         "8",
                         getDateWithOffset(1),
                         "music - 1",
@@ -112,7 +112,7 @@ export const Playables = {
                         RedinessStatus.Ready,
                         ["Music"],
                         SourceType.Audio,),
-                    new Playable(
+                    new Audio(
                         "9",
                         getDateWithOffset(7),
                         "music - 1",

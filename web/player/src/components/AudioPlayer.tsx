@@ -47,7 +47,7 @@ function AudioPlayerImpl() {
         {
           playable && (isPlaying || isPaused) ? (
             <div className="d-flex align-items-center text-light bg-dark">
-              <Image src={playable.imageUrl} rounded className="me-3" width={50}
+              <Image src={playable.image_url} rounded className="me-3" width={50}
                 height={50} />
               <div>
                 <div>{playable.name}</div>

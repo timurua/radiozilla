@@ -26,6 +26,6 @@ export const playablesState = selector({
     key: 'Playables',
     get: async ({ get }) => {
         const user = await get(userState);
-        return await getDocs(collection(db, 'your-collection-name'));;
+        return await getDocs(collection(db, 'audios'));;
     },
 });

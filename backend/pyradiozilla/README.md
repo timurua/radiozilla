@@ -1,7 +1,13 @@
+# Install Jupyter locally
+
+https://jupyter.org/install
+
 # Build
 
+```
 cd backend/pyradiozilla
 pip3 install .
+```
 
 # Installation 
 

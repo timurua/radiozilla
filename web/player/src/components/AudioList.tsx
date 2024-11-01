@@ -1,13 +1,13 @@
 import React from 'react';
 import { Image, ListGroup } from "react-bootstrap";
-import { Audio, PlayableSorting } from "../data/model";
+import { RZAudio, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
-import { playableSortingState, playablesState } from "../state/main";
+import { audioSortingState, rzAudiosState } from "../state/audio";
 import { startTransition, Suspense, useEffect } from "react";
 import { useAudio } from "../providers/AudioProvider";
 
 // Static method to bucket playables by date
-function bucketByDate(playables: Audio[]): Map<string, Audio[]> {
+function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
@@ -17,32 +17,32 @@ function bucketByDate(playables: Audio[]): Map<string, Audio[]> {
 
     const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-    const buckets = new Map<string, Audio[]>([
+    const buckets = new Map<string, RZAudio[]>([
         ["Today", []],
         ["Yesterday", []],
         ["Last Week", []],
         ["Last Year", []],
     ]);
 
-    playables.forEach((playable) => {
-        const createdAt = new Date(playable.created_at);
+    audios.forEach((audio) => {
+        const createdAt = new Date(audio.created_at);
 
         if (isSameDay(createdAt, today)) {
-            buckets.get("Today")!.push(playable);
+            buckets.get("Today")!.push(audio);
         } else if (isSameDay(createdAt, yesterday)) {
-            buckets.get("Yesterday")!.push(playable);
+            buckets.get("Yesterday")!.push(audio);
         } else if (createdAt >= startOfWeek) {
-            buckets.get("Last Week")!.push(playable);
+            buckets.get("Last Week")!.push(audio);
         } else if (createdAt >= startOfYear) {
-            buckets.get("Last Year")!.push(playable);
+            buckets.get("Last Year")!.push(audio);
         }
     });
 
     return buckets;
 }
 
-function buucketByTopic(playables: Audio[]): Map<string, Audio[]> {
-    const buckets = new Map<string, Audio[]>();
+function buucketByTopic(playables: RZAudio[]): Map<string, RZAudio[]> {
+    const buckets = new Map<string, RZAudio[]>();
 
     playables.forEach((playable) => {
         playable.topics.forEach((topic) => {
@@ -57,8 +57,8 @@ function buucketByTopic(playables: Audio[]): Map<string, Audio[]> {
     return buckets;
 }
 
-function removeEmptyBuckets(map: Map<string, Audio[]>): Map<string, Audio[]> {
-    const filteredMap = new Map<string, Audio[]>();
+function removeEmptyBuckets(map: Map<string, RZAudio[]>): Map<string, RZAudio[]> {
+    const filteredMap = new Map<string, RZAudio[]>();
 
     map.forEach((value, key) => {
         if (value.length > 0) {
@@ -84,36 +84,36 @@ interface PlayableListProps {
   // other props
 }
 
-export const PlayableList: React.FC<PlayableListProps> = ({ searchString, ...props }) => {
+export const AudioList: React.FC<PlayableListProps> = ({ searchString, ...props }) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <PlayableListImpl searchString={searchString} {...props} />
+      <AudioListImpl searchString={searchString} {...props} />
     </Suspense>
   );
 };
 
-export default PlayableList;
+export default AudioList;
 
-function PlayableListImpl({ searchString, ...props }: PlayableListProps) {
-    const playableList = useRecoilValue(playablesState);
-    const playableSorting = useRecoilValue(playableSortingState);
-    const {playable: currentPlayable} = useAudio();
+function AudioListImpl({ searchString }: PlayableListProps) {
+    const rzAudios = useRecoilValue(rzAudiosState);
+    const audioSorting = useRecoilValue(audioSortingState);
+    const {rzAudio: currentPlayable} = useAudio();
 
     const {
         play,
-        setPlayable,
-        setPlayablesList } = useAudio();
+        setRzAudio: setPlayable,
+        setRzAudios: setPlayablesList } = useAudio();
 
     useEffect(() => {
-        setPlayablesList(playableList);
-    }, [playableList, setPlayablesList]);
+        setPlayablesList(rzAudios);
+    }, [rzAudios, setPlayablesList]);
 
-    let bucketedPlayableList = (playableSorting === PlayableSorting.Date) ? bucketByDate(playableList) : buucketByTopic(playableList);
-    bucketedPlayableList = removeEmptyBuckets(bucketedPlayableList);
+    let bucketedAudioList = (audioSorting === PlayableSorting.Date) ? bucketByDate(rzAudios) : buucketByTopic(rzAudios);
+    bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
 
-    function playPlayable(playable: Audio) {
+    function playAudio(audio: RZAudio) {
         startTransition(() => {
-            setPlayable(playable);
+            setPlayable(audio);
             play();
         });
     }
@@ -121,23 +121,23 @@ function PlayableListImpl({ searchString, ...props }: PlayableListProps) {
     return (
         <Suspense fallback={<div>Loading...</div>}>
             {
-                Array.from(bucketedPlayableList).map(([name, playables]) => (
+                Array.from(bucketedAudioList).map(([name, audios]) => (
                     <div key={name}>
                         <h5 className="mt-4 text-light">{name}</h5>
                         <ListGroup variant="flush" key={name} className="w-100">
-                            {playables
-                                .filter(playable => {
+                            {audios
+                                .filter(rzAudio => {
                                     if (!searchString) {
                                         return true;
                                     }
-                                    playable.name.toLowerCase().includes(searchString.toLowerCase())
+                                    rzAudio.name.toLowerCase().includes(searchString.toLowerCase())
                                 })
-                                .map((playable) => (
-                                <ListGroup.Item key={playable.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === playable.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playPlayable(playable)}>
-                                    <Image src={playable.image_url} rounded className="me-3" width={50} height={50} />
+                                .map((rzAudio) => (
+                                <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
+                                    <Image src={rzAudio.image_url} rounded className="me-3" width={50} height={50} />
                                     <div>
-                                        <div>{playable.name}</div>
-                                        <small>{playable.author}</small>
+                                        <div>{rzAudio.name}</div>
+                                        <small>{rzAudio.author.name}</small>
                                     </div>
                                 </ListGroup.Item>))}
 

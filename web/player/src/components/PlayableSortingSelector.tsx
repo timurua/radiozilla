@@ -1,14 +1,14 @@
 import { Button, ButtonGroup } from "react-bootstrap";
 import { PlayableSorting } from "../data/model"
-import { playableSortingState } from "../state/main";
+import { audioSortingState } from "../state/audio";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
 
 export function PlayableSortingSelector() {
     const sortings = Object.values(PlayableSorting).filter(value => typeof value === 'string');
 
-    const playableSorting = useRecoilValue(playableSortingState);
-    const setPlayableSorting = useSetRecoilState(playableSortingState);
+    const playableSorting = useRecoilValue(audioSortingState);
+    const setPlayableSorting = useSetRecoilState(audioSortingState);
 
     function setSorting(sorting: string) {
         setPlayableSorting(PlayableSorting[sorting as keyof typeof PlayableSorting])

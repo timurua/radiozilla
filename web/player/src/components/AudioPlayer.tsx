@@ -8,7 +8,7 @@ function AudioPlayerImpl() {
   const {
     play,
     pause,
-    playable,
+    rzAudio: playable,
     isPlaying,
     isPaused,
     currentTime,
@@ -51,7 +51,7 @@ function AudioPlayerImpl() {
                 height={50} />
               <div>
                 <div>{playable.name}</div>
-                <small>{playable.author}</small>
+                <small>{playable.author.name}</small>
               </div>
             </div>) : null
         }

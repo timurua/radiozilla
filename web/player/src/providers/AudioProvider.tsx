@@ -6,15 +6,15 @@ import React, {
     ReactNode,
     useContext,
 } from 'react';
-import { Audio } from '../data/model';
+import { RZAudio } from '../data/model';
 
 interface AudioContextProps {
     play: (url?: string) => void;
     pause: () => void;
-    playable: Audio|null;
-    setPlayable: (playable: Audio|null) => void;
-    playablesList: Audio[];
-    setPlayablesList: (playablesList: Audio[]) => void;
+    rzAudio: RZAudio|null;
+    setRzAudio: (rzAudio: RZAudio|null) => void;
+    rzAudios: RZAudio[];
+    setRzAudios: (audios: RZAudio[]) => void;
     setCurrentTime: (time: number) => void;
     isPlaying: boolean;
     isPaused: boolean;
@@ -41,8 +41,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     const [hasEnded, setHasEnded] = useState<boolean>(false);
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
-    const [playable, setPlayableState] = useState<Audio|null>(null);
-    const [playablesList, setPlayablesList] = useState<Audio[]>([]);
+    const [rzAudio, setRzAudioState] = useState<RZAudio|null>(null);
+    const [rzAudioList, setRzAudioList] = useState<RZAudio[]>([]);
 
     // Subscription arrays and methods
     const onPlaySubscribers = useRef<Array<() => void>>([]);
@@ -121,13 +121,13 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             setIsPaused(false);
             setHasEnded(true);
             onEndedSubscribers.current.forEach((callback) => callback());
-            if (playable){
-                const index = playablesList.indexOf(playable);
-                if (index < playablesList.length - 1){
-                    setPlayable(playablesList[index + 1]);
+            if (rzAudio){
+                const index = rzAudioList.indexOf(rzAudio);
+                if (index < rzAudioList.length - 1){
+                    setAudio(rzAudioList[index + 1]);
                 }
-            } else if(playablesList.length > 0){
-                setPlayable(playablesList[0]);
+            } else if(rzAudioList.length > 0){
+                setAudio(rzAudioList[0]);
             }
         };
 
@@ -162,12 +162,12 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (playable) {
-            if (audio.src !== playable.audio_url) {
-                audio.src = playable.audio_url;
+        if (rzAudio) {
+            if (audio.src !== rzAudio.audio_url) {
+                audio.src = rzAudio.audio_url;
             }
-        } else if (playablesList.length > 0) {
-            setPlayable(playablesList[0]);
+        } else if (rzAudioList.length > 0) {
+            setAudio(rzAudioList[0]);
         }
         audio.play();
     };
@@ -179,16 +179,16 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         audio.pause();
     };
 
-    const setPlayable = (playable: Audio) => {
+    const setAudio = (rzAudio: RZAudio) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.src = playable.audio_url;
-        setDocumentTitle(playable);
+        audio.src = rzAudio.audio_url;
+        setDocumentTitle(rzAudio);
     };
 
-    const setDocumentTitle = (playable: Audio) => {  
-        document.title = `${playable.name} - ${playable.author}`;
+    const setDocumentTitle = (rzAudio: RZAudio) => {  
+        document.title = `${rzAudio.name} - ${rzAudio.author}`;
     }
 
     const setCurrentTime = (time: number) => {
@@ -204,10 +204,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
             value={{
                 play,
                 pause,
-                playable,
-                setPlayable: setPlayableState,
-                playablesList,
-                setPlayablesList,
+                rzAudio: rzAudio,
+                setRzAudio: setRzAudioState,
+                rzAudios: rzAudioList,
+                setRzAudios: setRzAudioList,
                 setCurrentTime,
                 isPlaying,
                 isPaused,

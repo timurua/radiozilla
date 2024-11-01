@@ -28,67 +28,58 @@ export enum PlaybackStatus {
   Cancelled,
 }
 
-export class AudioSource {
+export class RZAuthor {
+  constructor(
+    public id: string,
+    public name: string,
+    public description: string,
+    public image_url: string,
+  ) {
+  }
 
+  static fromObject(obj: any, id: string): RZAuthor {
+    return new RZAuthor(
+      id,
+      obj.name,
+      obj.description,
+      obj.image_url,
+    );
+  }  
 }
 
-export class Audio {
+export class RZAudio {
   constructor(
     public id: string,
     public created_at: Date,
     public name: string,
-    public author: string,
     public image_url: string,
     public audio_url: string,
     public topics: string[],
+    public author: RZAuthor,
   ) {
+  }
+
+  static fromObject(obj: any, id: string, created_at: Date, author: RZAuthor): RZAudio {
+    return new RZAudio(
+      id,
+      created_at,  // Convert to Date object
+      obj.name,
+      obj.image_url,
+      obj.audio_url,
+      obj.topics,
+      author,
+    );
   }
 }
 
-export enum LogAction {
-  Completed,
-  Skipped,
-  Paused,
-  Shrinked,
-  Expanded
-}
-
-export class PlayableLog {
+export class RZAudioTask {
   constructor(
     public id: string,
-    public startedAt: Date,
-    public playableId: string,
-    public durationSeconds: number,
-    public action: LogAction,
-  ) { }
-}
-
-export class ChannelType {
-  constructor(
-    public id: string,
+    public created_at: Date,
     public name: string,
-    public writer: string,
-    public imageUrl: string,
-    public url: string,
-  ) {
-  }  
-}
-
-export class Channel {
-  constructor(
-    public id: string,
-    public name: string,
-    public writer: string,
-    public imageUrl: string,
-    public url: string,
+    public description: string,
+    public image_url: string,
+    public summary_text: string,
   ) {
   }
 }
-
-export class Update {
-  constructor(
-    public id: string,
-    public playableId: string,
-  ){}
-}
-

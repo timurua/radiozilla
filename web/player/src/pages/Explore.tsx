@@ -1,12 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { AudioPlayer } from '../components/AudioPlayer';
-import { PlayableList } from '../components/PlayableList';
-import { PlayableSortingSelector } from '../components/PlayableSortingSelector';
-import { SmallAudioPlayer } from '../components/SmallAudioPlayer';
-import BottomNavbar from '../components/BottomNavbar';
-import TopNavbar from '../components/TopNavbar';
-import { Row, Col, InputGroup, FormControl, Button } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Button, Col, FormControl, InputGroup, Row } from 'react-bootstrap';
 import { FaSearch, FaTimes } from 'react-icons/fa';
+import BottomNavbar from '../components/BottomNavbar';
+import { AudioList } from '../components/AudioList';
+import TopNavbar from '../components/TopNavbar';
 
 function Listen() {
 
@@ -53,7 +50,7 @@ function Listen() {
                 </Col>
             </Row>
 
-            <PlayableList searchString={searchValue} />
+            <AudioList searchString={searchValue} />
 
             <BottomNavbar />
 

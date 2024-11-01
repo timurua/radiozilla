@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { AudioPlayer} from '../components/AudioPlayer';
-import {PlayableList} from '../components/PlayableList';
+import {AudioList} from '../components/AudioList';
 import {PlayableSortingSelector} from '../components/PlayableSortingSelector';
 import { SmallAudioPlayer } from '../components/SmallAudioPlayer';
 import BottomNavbar from '../components/BottomNavbar';
@@ -9,8 +9,8 @@ import TopNavbar from '../components/TopNavbar';
 function Listen() {
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
-  const sortingSelectorRef = useRef(null);
-  const navbarRef = useRef(null);
+  const sortingSelectorRef = useRef<HTMLDivElement>(null);
+  const navbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (navbarRef.current) {
@@ -75,7 +75,7 @@ function Listen() {
 
       <AudioPlayer/>
 
-      <PlayableList />
+      <AudioList searchString={undefined}/>
 
       <BottomNavbar />
 

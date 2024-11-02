@@ -163,8 +163,8 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         if (!audio) return;
 
         if (rzAudio) {
-            if (audio.src !== rzAudio.audio_url) {
-                audio.src = rzAudio.audio_url;
+            if (audio.src !== rzAudio.audioUrl) {
+                audio.src = rzAudio.audioUrl;
             }
         } else if (rzAudioList.length > 0) {
             setAudio(rzAudioList[0]);
@@ -183,7 +183,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.src = rzAudio.audio_url;
+        audio.src = rzAudio.audioUrl;
         setDocumentTitle(rzAudio);
     };
 

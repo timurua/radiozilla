@@ -39,15 +39,15 @@ const getAuthor = async (reference: string): Promise<RZAuthor> => {
 
 export const rzAudiosState = selector({
     key: 'RzAudios',
-    get: async ({ get }) => {
+    get: async ({}) => {
         const querySnapshot = await getDocs(collection(db, 'audios'));
 
         const audios: RZAudio[] = await Promise.all(querySnapshot.docs.map(async (doc) => {
             const data = doc.data();
-            const created_at = data.created_at.toDate();
-            const authorId = data.author_id;
+            const createdAt = data.createdAt.toDate();
+            const authorId = data.author;
             const author = await getAuthor(authorId);            
-            return RZAudio.fromObject(data, doc.id, created_at, author);
+            return RZAudio.fromObject(data, doc.id, createdAt, author);
         }));
         log.info(`Fetched ${audios.length} audios`);
         return audios;

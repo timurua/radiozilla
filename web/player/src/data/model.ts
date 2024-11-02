@@ -33,7 +33,7 @@ export class RZAuthor {
     public id: string,
     public name: string,
     public description: string,
-    public image_url: string,
+    public imageUrl: string,
   ) {
   }
 
@@ -42,7 +42,29 @@ export class RZAuthor {
       id,
       obj.name,
       obj.description,
-      obj.image_url,
+      obj.imageUrl,
+    );
+  }  
+}
+
+
+export class RZSummarization {
+  constructor(
+    public id: string,
+    public length: string, // Options: "short", "medium", "long"
+    public tone: string, // Options: "formal", "informal", "neutral"
+    public focus: string, // Options: list of areas of focus (e.g., "key points", "data", "examples")
+    public detaileLevel: string, // Options: "low", "medium", "high"
+  ) {
+  }
+
+  static fromObject(obj: any, id: string): RZSummarization {
+    return new RZSummarization(
+      id,
+      obj.length,
+      obj.tone,
+      obj.focus,      
+      obj.detaileLevel,
     );
   }  
 }
@@ -50,22 +72,22 @@ export class RZAuthor {
 export class RZAudio {
   constructor(
     public id: string,
-    public created_at: Date,
+    public createdAt: Date,
     public name: string,
-    public image_url: string,
-    public audio_url: string,
+    public imageUrl: string,
+    public audioUrl: string,
     public topics: string[],
     public author: RZAuthor,
   ) {
   }
 
-  static fromObject(obj: any, id: string, created_at: Date, author: RZAuthor): RZAudio {
+  static fromObject(obj: any, id: string, createdAt: Date, author: RZAuthor): RZAudio {
     return new RZAudio(
       id,
-      created_at,  // Convert to Date object
+      createdAt,  // Convert to Date object
       obj.name,
-      obj.image_url,
-      obj.audio_url,
+      obj.imageUrl,
+      obj.audioUrl,
       obj.topics,
       author,
     );
@@ -78,8 +100,8 @@ export class RZAudioTask {
     public created_at: Date,
     public name: string,
     public description: string,
-    public image_url: string,
-    public summary_text: string,
+    public imageUrl: string,
+    public sourceText: string,
   ) {
   }
 }

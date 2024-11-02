@@ -25,7 +25,7 @@ function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
     ]);
 
     audios.forEach((audio) => {
-        const createdAt = new Date(audio.created_at);
+        const createdAt = new Date(audio.createdAt);
 
         if (isSameDay(createdAt, today)) {
             buckets.get("Today")!.push(audio);
@@ -134,7 +134,7 @@ function AudioListImpl({ searchString }: PlayableListProps) {
                                 })
                                 .map((rzAudio) => (
                                 <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
-                                    <Image src={rzAudio.image_url} rounded className="me-3" width={50} height={50} />
+                                    <Image src={rzAudio.imageUrl} rounded className="me-3" width={50} height={50} />
                                     <div>
                                         <div>{rzAudio.name}</div>
                                         <small>{rzAudio.author.name}</small>

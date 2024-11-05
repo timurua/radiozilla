@@ -2,16 +2,17 @@ import requests
 import json
 
 class OllamaClient:
-    def __init__(self, host="localhost", port=11434):
+    def __init__(self, model: str, host="localhost", port=11434):
         self.base_url = f"http://{host}:{port}/api"
         self.headers = {
             "Content-Type": "application/json"
         }
+        self.model = model
 
-    def generate(self, model, prompt):
+    def generate(self, prompt):
         url = f"{self.base_url}/generate"
         data = {
-            "model": model,
+            "model": self.model,
             "prompt": prompt
         }
 

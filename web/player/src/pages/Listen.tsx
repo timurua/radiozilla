@@ -68,13 +68,15 @@ function Listen() {
 
       {
         playerMinimized ? (
-          <div style={minimizedStyle} className='bg-dark'>
+          <div style={minimizedStyle} className='bg-dark slide-in'>
             <SmallAudioPlayer/>
           </div>
         ) : null
       }
 
-      <AudioList searchString={undefined}/>
+      <div className='bottom_margin_bottom_navbar'>
+        <AudioList searchString={undefined}/>
+      </div>
 
       <BottomNavbar />
 

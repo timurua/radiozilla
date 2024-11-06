@@ -1,7 +1,6 @@
 import React from 'react';
 //import 'bootswatch/dist/darkly/bootstrap.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container } from 'react-bootstrap';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import {
   RecoilRoot,
@@ -21,14 +20,14 @@ const App: React.FC = () => {
         <div>
 
           {/* Main Content */}
-          <Container className="mt-5 bg-dark w-100">
+          <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container">
             <Routes>
               <Route path="/" element={<Listen />} />
               <Route path="/listen" element={<Listen />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/profile" element={<Profile />} />
             </Routes>
-          </Container>
+          </div>
         </div>
         </AudioProvider>
       </BrowserRouter>

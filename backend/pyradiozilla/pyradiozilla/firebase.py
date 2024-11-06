@@ -99,12 +99,12 @@ class RzChannel:
         self.save(firebase)                
             
 class RzAudio:
-    def __init__(self, id: str, author_id: str, channel_id: str, title: str, description: str, audio: Blob, image: Blob, topics: list[str] = []) -> None:
+    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio: Blob, image: Blob, topics: list[str] = []) -> None:
         self.id = id
         self.created_at = firestore.SERVER_TIMESTAMP
         self.author_id = author_id
         self.channel_id = channel_id
-        self.title = title
+        self.name = name
         self.description = description
         self.audio = audio
         self.image = image
@@ -114,8 +114,8 @@ class RzAudio:
         firebase._db.collection('audios').document(self.id).set({
             'createdAt': self.created_at,
             'author':  f"/authors/{self.author_id}",
-            'channel_id': f"/channels/{self.channel_id}",
-            'title': self.title,
+            'channel': f"/channels/{self.channel_id}",
+            'name': self.name,
             'description': self.description,
             'audioUrl': self.audio.url,
             'imageUrl': self.image.url,

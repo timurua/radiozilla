@@ -23,6 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignore .pyc files and __pycache__ directories
-*.pyc
-__pycache__/

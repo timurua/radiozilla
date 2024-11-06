@@ -1,6 +1,5 @@
 from typing import Optional
 from google.cloud import firestore
-from pyradiozilla import audio
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import storage
@@ -16,9 +15,18 @@ def generate_url_safe_uuid() -> str:
     return url_safe_id
 
 def generate_url_safe_id(input_string:str)->str:
-    hash_object = hashlib.sha256(input_string.encode())
-    base64_encoded = base64.urlsafe_b64encode(hash_object.digest()).decode('utf-8')
+    sha256_hash = hashlib.sha256(input_string.encode())
+    base64_encoded = base64.urlsafe_b64encode(sha256_hash.digest()).decode('utf-8')
     return base64_encoded[:16]
+
+def generate_url_safe_hash(file_path)->str:
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    base64_encoded = base64.urlsafe_b64encode(sha256_hash.digest()).decode('utf-8')
+    return base64_encoded[:16]
+    
 
 class Firebase:
     def __init__(self) -> None:
@@ -32,7 +40,7 @@ class Firebase:
     def upload_file(self, remote_directory: str, remote_file_name: str, local_file_path: str):
         mime_type, _ = mimetypes.guess_type(local_file_path)
         content_type = mime_type if mime_type else 'application/octet-stream'
-        blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}{Path(remote_file_name).suffix}")
+        blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}{Path(local_file_path).suffix}")
         blob.upload_from_filename(local_file_path, content_type=content_type)
         blob.make_public()
         return blob.public_url

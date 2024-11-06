@@ -2,7 +2,6 @@ import threading
 import nltk
 import numpy as np
 from pyradiozilla import storage
-from pyradiozilla import audio
 import soundfile
 import ffmpeg
 
@@ -12,6 +11,12 @@ from bark.generation import (
 )
 from bark.api import semantic_to_waveform
 from bark import generate_audio, SAMPLE_RATE
+
+class Audio:
+    def __init__(self, wav_file_path: str, ogg_file_path: str, sample_rate: int) -> None:
+        self.wav_file_path = wav_file_path
+        self.ogg_file_path = ogg_file_path
+        self.sample_rate = sample_rate
 
 class NLTKTokenizer:
     _initialized = False
@@ -63,7 +68,7 @@ class BarkTTS:
                 
 
     @classmethod
-    def generate(cls, text: str, directory: storage.Directory) -> audio.Audio:
+    def generate(cls, text: str, directory: storage.Directory) -> Audio:
         SPEAKER = "v2/en_speaker_6"
         silence = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
         sentences = NLTKTokenizer.tokenize(text)
@@ -82,7 +87,7 @@ class BarkTTS:
         txt_file_path = f"{path}.txt"
         storage.File(txt_file_path).write_json({"text": text, "sentences": sentences})
         
-        return audio.Audio(wav_file_path, ogg_file_path, SAMPLE_RATE)
+        return Audio(wav_file_path, ogg_file_path, SAMPLE_RATE)
         
         
 

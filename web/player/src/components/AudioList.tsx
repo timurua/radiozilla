@@ -137,7 +137,7 @@ function AudioListImpl({ searchString }: PlayableListProps) {
                                     <Image src={rzAudio.imageUrl} rounded className="me-3" width={50} height={50} />
                                     <div>
                                         <div>{rzAudio.name}</div>
-                                        <small>{rzAudio.author.name}</small>
+                                        <small>{rzAudio.channel.name}</small>
                                     </div>
                                 </ListGroup.Item>))}
 

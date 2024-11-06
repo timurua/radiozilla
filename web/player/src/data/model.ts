@@ -28,6 +28,27 @@ export enum PlaybackStatus {
   Cancelled,
 }
 
+export class RZChannel {
+  constructor(
+    public id: string,
+    public name: string,
+    public description: string,
+    public imageUrl: string,
+  ) {
+  }
+
+  static fromObject(obj: any, id: string): RZAuthor {
+    return new RZChannel(
+      id,
+      obj.name,
+      obj.description,
+      obj.imageUrl,
+    );
+  }  
+}
+
+
+
 export class RZAuthor {
   constructor(
     public id: string,
@@ -46,7 +67,6 @@ export class RZAuthor {
     );
   }  
 }
-
 
 export class RZSummarization {
   constructor(
@@ -78,10 +98,11 @@ export class RZAudio {
     public audioUrl: string,
     public topics: string[],
     public author: RZAuthor,
+    public channel: RZChannel,
   ) {
   }
 
-  static fromObject(obj: any, id: string, createdAt: Date, author: RZAuthor): RZAudio {
+  static fromObject(obj: any, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object
@@ -90,6 +111,7 @@ export class RZAudio {
       obj.audioUrl,
       obj.topics,
       author,
+      channel,
     );
   }
 }

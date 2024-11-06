@@ -9,7 +9,7 @@ import TopNavbar from '../components/TopNavbar';
 function Listen() {
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
-  const sortingSelectorRef = useRef<HTMLDivElement>(null);
+  const playerWithSortingRef = useRef<HTMLDivElement>(null);
   const navbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,9 +18,9 @@ function Listen() {
     }
 
     const handleScroll = () => {
-      if (sortingSelectorRef.current && navbarRef.current) {
+      if (playerWithSortingRef.current && navbarRef.current) {
         const navbarHeight = navbarRef.current.getBoundingClientRect().height;
-        const sortingSelectorRect = sortingSelectorRef.current.getBoundingClientRect();
+        const sortingSelectorRect = playerWithSortingRef.current.getBoundingClientRect();
 
         if (sortingSelectorRect.bottom <= (navbarHeight)) {
           // PlayableSortingSelector has scrolled out of view
@@ -61,6 +61,11 @@ function Listen() {
         <TopNavbar />
       </div>
 
+      <div ref={playerWithSortingRef}>
+        <PlayableSortingSelector />
+        <AudioPlayer/>
+      </div>
+
       {
         playerMinimized ? (
           <div style={minimizedStyle} className='bg-dark'>
@@ -68,12 +73,6 @@ function Listen() {
           </div>
         ) : null
       }
-
-      <div ref={sortingSelectorRef}>
-        <PlayableSortingSelector />
-      </div>
-
-      <AudioPlayer/>
 
       <AudioList searchString={undefined}/>
 

@@ -30,9 +30,9 @@ const storageUtils = {
 
       const downloadUrl = await getDownloadURL(ref(storage, url));
       console.log(`originalUrl: ${url}, downloadUrl': ${downloadUrl} `);
-      return downloadUrl;
+      return Promise.resolve(downloadUrl);
     }
-    return url;
+    return Promise.resolve(url);
   },
 };
 

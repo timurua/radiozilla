@@ -37,14 +37,14 @@ export class RZChannel {
   ) {
   }
 
-  static fromObject(obj: any, id: string): RZAuthor {
+  static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZAuthor {
     return new RZChannel(
       id,
       obj.name,
       obj.description,
       obj.imageUrl,
     );
-  }  
+  }
 }
 
 
@@ -58,14 +58,14 @@ export class RZAuthor {
   ) {
   }
 
-  static fromObject(obj: any, id: string): RZAuthor {
+  static fromObject(obj: {name: string, description: string, imageUrl: string}, id: string): RZAuthor {
     return new RZAuthor(
       id,
       obj.name,
       obj.description,
       obj.imageUrl,
     );
-  }  
+  }
 }
 
 export class RZSummarization {
@@ -78,15 +78,15 @@ export class RZSummarization {
   ) {
   }
 
-  static fromObject(obj: any, id: string): RZSummarization {
+  static fromObject(obj: { length: string, tone: string, focus: string, detaileLevel: string}, id: string): RZSummarization {
     return new RZSummarization(
       id,
       obj.length,
       obj.tone,
-      obj.focus,      
+      obj.focus,
       obj.detaileLevel,
     );
-  }  
+  }
 }
 
 export class RZAudio {
@@ -102,7 +102,7 @@ export class RZAudio {
   ) {
   }
 
-  static fromObject(obj: any, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
+  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[] }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object

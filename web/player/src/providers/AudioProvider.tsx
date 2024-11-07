@@ -158,7 +158,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
             audio.removeEventListener('timeupdate', handleTimeUpdate);
         };
-    }, [rzAudio, rzAudioList]);
+    }, [rzAudio, rzAudioList, play]);
 
     const play = async (newRzAudio?: RZAudio) => {
 
@@ -230,7 +230,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     );
 };
 
-export default AudioContext;
+export default AudioContext; 
 
 
 export const useAudio = () => {

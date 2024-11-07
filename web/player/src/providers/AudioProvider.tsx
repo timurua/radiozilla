@@ -15,8 +15,8 @@ import { storageUtils } from '../firebase';
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
     pause: () => void;
-    rzAudio: RZAudio|null;
-    setRzAudio: (rzAudio: RZAudio|null) => void;
+    rzAudio: RZAudio | null;
+    setRzAudio: (rzAudio: RZAudio | null) => void;
     rzAudios: RZAudio[];
     setRzAudios: (audios: RZAudio[]) => void;
     setCurrentTime: (time: number) => void;
@@ -38,13 +38,35 @@ interface AudioProviderProps {
     children: ReactNode;
 }
 
+// Error message mapping type
+type ErrorMessageMap = {
+    [key in 'MEDIA_ERR_ABORTED' |
+    'MEDIA_ERR_NETWORK' |
+    'MEDIA_ERR_DECODE' |
+    'MEDIA_ERR_SRC_NOT_SUPPORTED' |
+    'PLAYBACK_ERROR' |
+    'PERMISSION_ERROR' |
+    'UNKNOWN_ERROR']: string;
+};
+
+// Error message mapping
+const errorMessages: ErrorMessageMap = {
+    MEDIA_ERR_ABORTED: 'Playback was aborted by the user',
+    MEDIA_ERR_NETWORK: 'A network error occurred while loading the audio',
+    MEDIA_ERR_DECODE: 'The audio file is corrupted or unsupported',
+    MEDIA_ERR_SRC_NOT_SUPPORTED: 'The audio format is not supported by your browser',
+    PLAYBACK_ERROR: 'Failed to play the audio',
+    PERMISSION_ERROR: 'Browser denied audio playback. Please check your permissions',
+    UNKNOWN_ERROR: 'An unknown error occurred'
+};
+
 export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [hasEnded, setHasEnded] = useState<boolean>(false);
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
-    const [rzAudio, setRzAudioState] = useState<RZAudio|null>(null);
+    const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [rzAudioList, setRzAudioList] = useState<RZAudio[]>([]);
 
     // Subscription arrays and methods
@@ -66,7 +88,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.load(); // Reset the audio element
         };
     }, [audioElement]);
-    
+
     // Subscription methods (same as before)
     // Subscription methods
     const subscribeToPlay = useCallback((callback: () => void) => {
@@ -114,7 +136,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         };
     }, [onTimeUpdateSubscribers]);
 
-    const setDocumentTitle = useCallback((rzAudio: RZAudio) => {  
+    const setDocumentTitle = useCallback((rzAudio: RZAudio) => {
         document.title = `${rzAudio.name} - ${rzAudio.author.name}`;
     }, []);
 
@@ -126,7 +148,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     }, [audioElement, setRzAudioState, setDocumentTitle]);
 
     const play = useCallback(async (newRzAudio?: RZAudio) => {
-         if (newRzAudio) {
+        if (newRzAudio) {
             await setAudio(newRzAudio);
         } else if (!rzAudio && rzAudioList.length > 0) {
             await setAudio(rzAudioList[0]);
@@ -143,7 +165,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.currentTime = time;
             setCurrentTimeState(time);
         }
-    },[audioElement, setCurrentTimeState]);
+    }, [audioElement, setCurrentTimeState]);
 
     useEffect(() => {
         const handlePlay = () => {
@@ -159,17 +181,17 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             onPauseSubscribers.current.forEach((callback) => callback());
         };
 
-        const handleEnded = async() => {
+        const handleEnded = async () => {
             setIsPlaying(false);
             setIsPaused(false);
             setHasEnded(true);
             onEndedSubscribers.current.forEach((callback) => callback());
-            if (rzAudio){
+            if (rzAudio) {
                 const index = rzAudioList.indexOf(rzAudio);
-                if (index < rzAudioList.length - 1){
+                if (index < rzAudioList.length - 1) {
                     await play(rzAudioList[index + 1]);
                 }
-            } else if(rzAudioList.length > 0){
+            } else if (rzAudioList.length > 0) {
                 await play(rzAudioList[0]);
             }
         };
@@ -186,11 +208,55 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             );
         };
 
+        const handleError = (error: Event | Error | unknown) => {
+            let errorMessage: string;
+
+            // Handle error event from audio element
+            if (error instanceof Event && error.type === 'error' && audioElement?.error) {
+                const mediaError = audioElement.error;
+
+                switch (mediaError.code) {
+                    case MediaError.MEDIA_ERR_ABORTED:
+                        errorMessage = `${errorMessages.MEDIA_ERR_ABORTED} (Code: ${mediaError.code}). Message: ${mediaError.message}`;
+                        break;
+                    case MediaError.MEDIA_ERR_NETWORK:
+                        errorMessage = `${errorMessages.MEDIA_ERR_NETWORK} (Code: ${mediaError.code}). Message: ${mediaError.message}`;
+                        break;
+                    case MediaError.MEDIA_ERR_DECODE:
+                        errorMessage = `${errorMessages.MEDIA_ERR_DECODE} (Code: ${mediaError.code}). Message: ${mediaError.message}`;
+                        break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                        errorMessage = `${errorMessages.MEDIA_ERR_SRC_NOT_SUPPORTED} (Code: ${mediaError.code}). Message: ${mediaError.message}`;
+                        break;
+                    default:
+                        errorMessage = `${errorMessages.UNKNOWN_ERROR} (Code: ${mediaError.code}). Message: ${mediaError.message}`;
+                }
+            }
+            // Handle DOMException errors
+            else if (error instanceof DOMException) {
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = `${errorMessages.PERMISSION_ERROR}. Details: ${error.message}`;
+                } else {
+                    errorMessage = `${errorMessages.PLAYBACK_ERROR}. Details: ${error.message}`;
+                }
+            }
+            // Handle other Error types
+            else if (error instanceof Error) {
+                errorMessage = `${errorMessages.UNKNOWN_ERROR}. Details: ${error.message}`;
+            }
+            // Handle unknown error types
+            else {
+                errorMessage = errorMessages.UNKNOWN_ERROR;
+            }
+            console.error(`Error loading audio: ${errorMessage}`);
+        };
+
         audioElement.addEventListener('play', handlePlay);
         audioElement.addEventListener('pause', handlePause);
         audioElement.addEventListener('ended', handleEnded);
         audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
         audioElement.addEventListener('timeupdate', handleTimeUpdate);
+        audioElement.addEventListener('error', handleError);
 
         return () => {
             audioElement.removeEventListener('play', handlePlay);
@@ -198,6 +264,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.removeEventListener('ended', handleEnded);
             audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
             audioElement.removeEventListener('timeupdate', handleTimeUpdate);
+            audioElement.removeEventListener('error', handleError);
         };
     }, [rzAudio, rzAudioList, play, audioElement, setCurrentTimeState, onPlaySubscribers, onPauseSubscribers, onEndedSubscribers, onLoadedMetadataSubscribers, onTimeUpdateSubscribers]);
 
@@ -228,7 +295,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     );
 };
 
-export default AudioContext; 
+export default AudioContext;
 
 
 export const useAudio = () => {

@@ -125,8 +125,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
                 <div>{rzAudio.name}</div>
                 <small>{rzAudio.channel.name}</small>
             </div>
-        </ListGroup.Item>)
-
+        </ListGroup.Item>);
 }
 
 function AudioListImpl({ searchString }: PlayableListProps) {

@@ -28,7 +28,12 @@ const getAuthor = async (reference: string): Promise<RZAuthor> => {
 
     if (docSnap.exists()) {
         const data = docSnap.data();
-        return RZAuthor.fromObject(data, docSnap.id);
+        const authorData = {
+            name: data.name,
+            description: data.description,
+            imageUrl: data.imageUrl,
+        };
+        return RZAuthor.fromObject(authorData, docSnap.id);
     } else {
         console.log(`No document found with ID: ${reference}`);
         throw new Error(`No document found with ID: ${reference}`);
@@ -41,7 +46,12 @@ const getChannel = async (reference: string): Promise<RZChannel> => {
 
     if (docSnap.exists()) {
         const data = docSnap.data();
-        return RZChannel.fromObject(data, docSnap.id);
+        const channelData = {
+            name: data.name,
+            description: data.description,
+            imageUrl: data.imageUrl,
+        };
+        return RZChannel.fromObject(channelData, docSnap.id);
     } else {
         console.log(`No document found with ID: ${reference}`);
         throw new Error(`No document found with ID: ${reference}`);
@@ -59,8 +69,14 @@ export const rzAudiosState = selector({
             const authorId = data.author;
             const channelId = data.channel;
             const author = await getAuthor(authorId);            
-            const channel = await getChannel(channelId);            
-            return RZAudio.fromObject(data, doc.id, createdAt, author, channel);
+            const channel = await getChannel(channelId);
+            const audioData = {
+                name: data.name,
+                audioUrl: data.audioUrl,
+                imageUrl: data.imageUrl,
+                topics: data.topics,
+            };
+            return RZAudio.fromObject(audioData, doc.id, createdAt, author, channel);
         }));
         log.info(`Fetched ${audios.length} audios`);
         return audios;

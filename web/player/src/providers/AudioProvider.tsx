@@ -1,11 +1,13 @@
 import {
     createContext,
-    useRef,
-    useState,
-    useEffect,
-    ReactNode,
-    useContext,
     FC,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
 } from 'react';
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
@@ -37,7 +39,6 @@ interface AudioProviderProps {
 }
 
 export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
-    const audioRef = useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [hasEnded, setHasEnded] = useState<boolean>(false);
@@ -53,58 +54,98 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const onLoadedMetadataSubscribers = useRef<Array<() => void>>([]);
     const onTimeUpdateSubscribers = useRef<Array<(currentTime: number) => void>>([]);
 
+    const audioElement = useMemo(() => {
+        return document.createElement('audio');
+    }, []);
+
+    useEffect(() => {
+        // Cleanup function to remove the audio element on unmount
+        return () => {
+            audioElement.pause();
+            audioElement.removeAttribute('src'); // Clear the src to stop loading
+            audioElement.load(); // Reset the audio element
+        };
+    }, [audioElement]);
+    
     // Subscription methods (same as before)
     // Subscription methods
-    const subscribeToPlay = (callback: () => void) => {
+    const subscribeToPlay = useCallback((callback: () => void) => {
         onPlaySubscribers.current.push(callback);
         return () => {
             onPlaySubscribers.current = onPlaySubscribers.current.filter(
                 (cb) => cb !== callback
             );
         };
-    };
+    }, [onPlaySubscribers]);
 
-    const subscribeToPause = (callback: () => void) => {
+    const subscribeToPause = useCallback((callback: () => void) => {
         onPauseSubscribers.current.push(callback);
         return () => {
             onPauseSubscribers.current = onPauseSubscribers.current.filter(
                 (cb) => cb !== callback
             );
         };
-    };
+    }, [onPauseSubscribers]);
 
-    const subscribeToEnded = (callback: () => void) => {
+    const subscribeToEnded = useCallback((callback: () => void) => {
         onEndedSubscribers.current.push(callback);
         return () => {
             onEndedSubscribers.current = onEndedSubscribers.current.filter(
                 (cb) => cb !== callback
             );
         };
-    };
+    }, [onEndedSubscribers]);
 
-    const subscribeToLoadedMetadata = (callback: () => void) => {
+    const subscribeToLoadedMetadata = useCallback((callback: () => void) => {
         onLoadedMetadataSubscribers.current.push(callback);
         return () => {
             onLoadedMetadataSubscribers.current = onLoadedMetadataSubscribers.current.filter(
                 (cb) => cb !== callback
             );
         };
-    };
+    }, [onLoadedMetadataSubscribers]);
 
-    const subscribeToTimeUpdate = (callback: (currentTime: number) => void) => {
+    const subscribeToTimeUpdate = useCallback((callback: (currentTime: number) => void) => {
         onTimeUpdateSubscribers.current.push(callback);
         return () => {
             onTimeUpdateSubscribers.current = onTimeUpdateSubscribers.current.filter(
                 (cb) => cb !== callback
             );
         };
-    };
+    }, [onTimeUpdateSubscribers]);
 
+    const setDocumentTitle = useCallback((rzAudio: RZAudio) => {  
+        document.title = `${rzAudio.name} - ${rzAudio.author.name}`;
+    }, []);
+
+    const setAudio = useCallback(async (rzAudio: RZAudio) => {
+        const url = await storageUtils.toDownloadURL(rzAudio.audioUrl);
+        audioElement.src = url;
+        setRzAudioState(rzAudio);
+        setDocumentTitle(rzAudio);
+    }, [audioElement, setRzAudioState, setDocumentTitle]);
+
+    const play = useCallback(async (newRzAudio?: RZAudio) => {
+         if (newRzAudio) {
+            await setAudio(newRzAudio);
+        } else if (!rzAudio && rzAudioList.length > 0) {
+            await setAudio(rzAudioList[0]);
+        }
+        audioElement.play();
+    }, [rzAudio, rzAudioList, setAudio, audioElement]);
+
+    const pause = useCallback(() => {
+        audioElement.pause();
+    }, [audioElement]);
+
+    const setCurrentTime = useCallback((time: number) => {
+        if (!isNaN(audioElement.duration)) {
+            audioElement.currentTime = time;
+            setCurrentTimeState(time);
+        }
+    },[audioElement, setCurrentTimeState]);
 
     useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
         const handlePlay = () => {
             setIsPlaying(true);
             setIsPaused(false);
@@ -134,73 +175,31 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         };
 
         const handleLoadedMetadata = () => {
-            setDuration(audio.duration);
+            setDuration(audioElement.duration);
             onLoadedMetadataSubscribers.current.forEach((callback) => callback());
         };
 
         const handleTimeUpdate = () => {
-            setCurrentTimeState(audio.currentTime);
+            setCurrentTimeState(audioElement.currentTime);
             onTimeUpdateSubscribers.current.forEach((callback) =>
-                callback(audio.currentTime)
+                callback(audioElement.currentTime)
             );
         };
 
-        audio.addEventListener('play', handlePlay);
-        audio.addEventListener('pause', handlePause);
-        audio.addEventListener('ended', handleEnded);
-        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-        audio.addEventListener('timeupdate', handleTimeUpdate);
+        audioElement.addEventListener('play', handlePlay);
+        audioElement.addEventListener('pause', handlePause);
+        audioElement.addEventListener('ended', handleEnded);
+        audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audioElement.addEventListener('timeupdate', handleTimeUpdate);
 
         return () => {
-            audio.removeEventListener('play', handlePlay);
-            audio.removeEventListener('pause', handlePause);
-            audio.removeEventListener('ended', handleEnded);
-            audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            audio.removeEventListener('timeupdate', handleTimeUpdate);
+            audioElement.removeEventListener('play', handlePlay);
+            audioElement.removeEventListener('pause', handlePause);
+            audioElement.removeEventListener('ended', handleEnded);
+            audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            audioElement.removeEventListener('timeupdate', handleTimeUpdate);
         };
-    }, [rzAudio, rzAudioList, play]);
-
-    const play = async (newRzAudio?: RZAudio) => {
-
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        if (newRzAudio) {
-            await setAudio(newRzAudio);
-        } else if (!rzAudio && rzAudioList.length > 0) {
-            await setAudio(rzAudioList[0]);
-        }
-        audio.play();
-    };
-
-    const pause = () => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        audio.pause();
-    };
-
-    const setAudio = async (rzAudio: RZAudio) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const url = await storageUtils.getDownloadURL(rzAudio.audioUrl);
-        audio.src = url;
-        setRzAudioState(rzAudio);
-        setDocumentTitle(rzAudio);
-    };
-
-    const setDocumentTitle = (rzAudio: RZAudio) => {  
-        document.title = `${rzAudio.name} - ${rzAudio.author.name}`;
-    }
-
-    const setCurrentTime = (time: number) => {
-        const audio = audioRef.current;
-        if (audio && !isNaN(audio.duration)) {
-            audio.currentTime = time;
-            setCurrentTimeState(time);
-        }
-    };
+    }, [rzAudio, rzAudioList, play, audioElement, setCurrentTimeState, onPlaySubscribers, onPauseSubscribers, onEndedSubscribers, onLoadedMetadataSubscribers, onTimeUpdateSubscribers]);
 
     return (
         <AudioContext.Provider
@@ -225,7 +224,6 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             }}
         >
             {children}
-            <audio ref={audioRef} style={{ display: 'none' }} />
         </AudioContext.Provider>
     );
 };

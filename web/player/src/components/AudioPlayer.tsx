@@ -48,7 +48,7 @@ function AudioPlayerImpl() {
     const fetchImage = async () => {
       try {
         if (playable) {
-          const url = await storageUtils.getDownloadURL(playable.imageUrl);
+          const url = await storageUtils.toDownloadURL(playable.imageUrl);
           setImageUrl(url);
         } else {
           setImageUrl(undefined);

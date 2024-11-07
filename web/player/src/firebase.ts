@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref } from 'firebase/storage';
+import { LRUCache } from 'lru-cache'
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -24,12 +25,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+const urlCache = new LRUCache<string, string>({
+  max: 10000, // Maximum number of items in cache
+  ttl: 60*1000, // Expiration time in milliseconds
+});
+
 const storageUtils = {
-  getDownloadURL: async (url: string): Promise<string> => {
+  toDownloadURL: async (url: string): Promise<string> => {
     if (url.startsWith('gs://')) {
 
+      const cachedUrl = urlCache.get(url);
+      if(cachedUrl){
+        console.log(`Retrieved from cache originalUrl: ${url}, downloadUrl': ${cachedUrl} `);
+        return Promise.resolve(cachedUrl);
+      }
       const downloadUrl = await getDownloadURL(ref(storage, url));
-      console.log(`originalUrl: ${url}, downloadUrl': ${downloadUrl} `);
+      urlCache.set(url, downloadUrl);
+      console.log(`Retrieved from Firebase originalUrl: ${url}, downloadUrl': ${downloadUrl} `);
       return Promise.resolve(downloadUrl);
     }
     return Promise.resolve(url);

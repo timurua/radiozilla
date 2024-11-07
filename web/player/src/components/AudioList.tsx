@@ -108,7 +108,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     useEffect(() => {
         const fetchImage = async () => {
             try {
-                const url = await storageUtils.getDownloadURL(rzAudio.imageUrl);
+                const url = await storageUtils.toDownloadURL(rzAudio.imageUrl);
                 setImageUrl(url);
             } catch (error) {
                 console.error('Error fetching image URL from Firebase Storage:', error);

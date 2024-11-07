@@ -43,7 +43,8 @@ class Firebase:
         blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}{Path(local_file_path).suffix}")
         blob.upload_from_filename(local_file_path, content_type=content_type)
         blob.make_public()
-        return blob.public_url
+        gs_url = f'gs://{self._bucket.name}/{blob.name}'
+        return gs_url
     
     def file_blob(self, file_path: str):
         return Blob(self, file_path=file_path)

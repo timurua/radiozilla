@@ -1,6 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore } from 'firebase/firestore';
+import { Firestore, getFirestore } from 'firebase/firestore';
+import { FirebaseStorage, getStorage } from 'firebase/storage';
+import { createContext, ReactNode, useContext, FC } from "react";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -20,4 +22,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
 const db = getFirestore(app);
-export { db };
+const storage = getStorage(app);
+
+interface FirebaseContextProps {
+  db: Firestore;
+  storage: FirebaseStorage;
+};
+
+// Create Context
+const FirebaseContext = createContext<FirebaseContextProps | undefined>(undefined);
+
+interface FirebaseProviderProps {
+  children: ReactNode;
+};
+
+export const FirebaseProvider: FC<FirebaseProviderProps> = ({ children }) => (
+  <FirebaseContext.Provider value={{ db, storage }}>
+    {children}
+  </FirebaseContext.Provider>
+);
+
+// Custom Hook for accessing Firebase
+export const useFirebase = () => useContext(FirebaseContext);

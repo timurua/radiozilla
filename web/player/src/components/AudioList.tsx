@@ -80,24 +80,50 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 interface PlayableListProps {
-  searchString: string|undefined;
-  // other props
+    searchString: string | undefined;
+    // other props
 }
 
 export const AudioList: React.FC<PlayableListProps> = ({ searchString, ...props }) => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <AudioListImpl searchString={searchString} {...props} />
-    </Suspense>
-  );
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <AudioListImpl searchString={searchString} {...props} />
+        </Suspense>
+    );
 };
 
 export default AudioList;
 
+function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
+    const { rzAudio: currentPlayable } = useAudio();
+
+    const fetchImage = async () => {
+        try {
+          const storage = getStorage();
+          const imageRef = ref(storage, 'images/my-image.jpg'); // Replace with your image path
+          const url = await getDownloadURL(imageRef);
+          setImageSrc(url);
+        } catch (error) {
+          console.error('Error fetching image URL from Firebase Storage:', error);
+        }
+      };
+
+      fetchImage();
+      
+    return (
+        <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
+            <Image src={rzAudio.imageUrl} rounded className="me-3" width={50} height={50} />
+            <div>
+                <div>{rzAudio.name}</div>
+                <small>{rzAudio.channel.name}</small>
+            </div>
+        </ListGroup.Item>)
+
+}
+
 function AudioListImpl({ searchString }: PlayableListProps) {
     const rzAudios = useRecoilValue(rzAudiosState);
     const audioSorting = useRecoilValue(audioSortingState);
-    const {rzAudio: currentPlayable} = useAudio();
 
     const {
         play,
@@ -133,13 +159,9 @@ function AudioListImpl({ searchString }: PlayableListProps) {
                                     rzAudio.name.toLowerCase().includes(searchString.toLowerCase())
                                 })
                                 .map((rzAudio) => (
-                                <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
-                                    <Image src={rzAudio.imageUrl} rounded className="me-3" width={50} height={50} />
-                                    <div>
-                                        <div>{rzAudio.name}</div>
-                                        <small>{rzAudio.channel.name}</small>
-                                    </div>
-                                </ListGroup.Item>))}
+                                    <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
+                                ))
+                            }
 
                         </ListGroup>
                     </div>

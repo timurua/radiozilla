@@ -1,10 +1,11 @@
-import React, {
+import {
     createContext,
     useRef,
     useState,
     useEffect,
     ReactNode,
     useContext,
+    FC,
 } from 'react';
 import { RZAudio } from '../data/model';
 
@@ -34,7 +35,7 @@ interface AudioProviderProps {
     children: ReactNode;
 }
 
-export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
+export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const audioRef = useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -164,7 +165,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
         if (rzAudio) {
             if (audio.src !== rzAudio.audioUrl) {
-                audio.src = rzAudio.audioUrl;
+                audio.src = rzAudio.audioUrl; 
             }
         } else if (rzAudioList.length > 0) {
             setAudio(rzAudioList[0]);

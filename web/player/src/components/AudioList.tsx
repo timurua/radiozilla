@@ -3,7 +3,7 @@ import { Image, ListGroup } from "react-bootstrap";
 import { RZAudio, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
 import { audioSortingState, rzAudiosState } from "../state/audio";
-import { startTransition, Suspense, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useAudio } from "../providers/AudioProvider";
 import { storageUtils } from '../firebase';
 
@@ -99,15 +99,10 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     const { rzAudio: currentPlayable } = useAudio();
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
-    const {
-        play,
-        setRzAudio: setPlayable } = useAudio();
+    const { play } = useAudio();
 
     function playAudio(audio: RZAudio) {
-        startTransition(() => {
-            setPlayable(audio);
-            play();
-        });
+        play(audio);
     }
 
     useEffect(() => {
@@ -121,11 +116,11 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         };
 
         fetchImage();
-    });
+    }, [rzAudio?.imageUrl, setImageUrl]);
 
     return (
-        <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
-            <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
+        <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
+            <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
             <div>
                 <div>{rzAudio.name}</div>
                 <small>{rzAudio.channel.name}</small>

@@ -11,7 +11,7 @@ import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 
 interface AudioContextProps {
-    play: (url?: string) => void;
+    play: (audio?: RZAudio) => Promise<void>;
     pause: () => void;
     rzAudio: RZAudio|null;
     setRzAudio: (rzAudio: RZAudio|null) => void;
@@ -118,7 +118,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             onPauseSubscribers.current.forEach((callback) => callback());
         };
 
-        const handleEnded = () => {
+        const handleEnded = async() => {
             setIsPlaying(false);
             setIsPaused(false);
             setHasEnded(true);
@@ -126,10 +126,10 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             if (rzAudio){
                 const index = rzAudioList.indexOf(rzAudio);
                 if (index < rzAudioList.length - 1){
-                    setAudio(rzAudioList[index + 1]);
+                    await play(rzAudioList[index + 1]);
                 }
             } else if(rzAudioList.length > 0){
-                setAudio(rzAudioList[0]);
+                await play(rzAudioList[0]);
             }
         };
 
@@ -158,19 +158,17 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
             audio.removeEventListener('timeupdate', handleTimeUpdate);
         };
-    }, []);
+    }, [rzAudio, rzAudioList]);
 
-    const play = async () => {
+    const play = async (newRzAudio?: RZAudio) => {
+
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (rzAudio) {
-            const audioUrl = await storageUtils.getDownloadURL(rzAudio.audioUrl);
-            if (audio.src !== audioUrl) {
-                audio.src = audioUrl; 
-            }
-        } else if (rzAudioList.length > 0) {
-            setAudio(rzAudioList[0]);
+        if (newRzAudio) {
+            await setAudio(newRzAudio);
+        } else if (!rzAudio && rzAudioList.length > 0) {
+            await setAudio(rzAudioList[0]);
         }
         audio.play();
     };
@@ -182,16 +180,18 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         audio.pause();
     };
 
-    const setAudio = (rzAudio: RZAudio) => {
+    const setAudio = async (rzAudio: RZAudio) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.src = rzAudio.audioUrl;
+        const url = await storageUtils.getDownloadURL(rzAudio.audioUrl);
+        audio.src = url;
+        setRzAudioState(rzAudio);
         setDocumentTitle(rzAudio);
     };
 
     const setDocumentTitle = (rzAudio: RZAudio) => {  
-        document.title = `${rzAudio.name} - ${rzAudio.author}`;
+        document.title = `${rzAudio.name} - ${rzAudio.author.name}`;
     }
 
     const setCurrentTime = (time: number) => {

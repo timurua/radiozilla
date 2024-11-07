@@ -27,7 +27,10 @@ const storage = getStorage(app);
 const storageUtils = {
   getDownloadURL: async (url: string): Promise<string> => {
     if (url.startsWith('gs://')) {
-      return await getDownloadURL(ref(storage, url));
+
+      const downloadUrl = await getDownloadURL(ref(storage, url));
+      console.log(`originalUrl: ${url}, downloadUrl': ${downloadUrl} `);
+      return downloadUrl;
     }
     return url;
   },

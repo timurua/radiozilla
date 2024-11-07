@@ -59,7 +59,7 @@ function AudioPlayerImpl() {
     };
 
     fetchImage();
-  }, [playable]);
+  }, [playable, playable?.imageUrl, setImageUrl]);
 
   return (
     <div className='bg-dark'>

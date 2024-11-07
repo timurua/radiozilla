@@ -97,3 +97,10 @@ $navbar-height: 100px;
 .slide-in {
   animation: slideInFromTop 0.5s ease-in-out; /* Adjust duration as needed */
 }
+
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

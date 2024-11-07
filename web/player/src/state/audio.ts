@@ -12,7 +12,7 @@ export const userEmailState = atom({
 
 export const userState = selector({
     key: 'CurrentUser',
-    get: async ({ }) => {
+    get: async () => {
         return await Users.getCurrent();
     },
 });
@@ -50,7 +50,7 @@ const getChannel = async (reference: string): Promise<RZChannel> => {
 
 export const rzAudiosState = selector({
     key: 'RzAudios',
-    get: async ({}) => {
+    get: async () => {
         const querySnapshot = await getDocs(collection(db, 'audios'));
 
         const audios: RZAudio[] = await Promise.all(querySnapshot.docs.map(async (doc) => {

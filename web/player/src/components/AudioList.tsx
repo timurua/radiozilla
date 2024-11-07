@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, ListGroup } from "react-bootstrap";
 import { RZAudio, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
 import { audioSortingState, rzAudiosState } from "../state/audio";
 import { startTransition, Suspense, useEffect } from "react";
 import { useAudio } from "../providers/AudioProvider";
+import { storageUtils } from '../firebase';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -96,23 +97,33 @@ export default AudioList;
 
 function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     const { rzAudio: currentPlayable } = useAudio();
+    const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+
+    const {
+        play,
+        setRzAudio: setPlayable } = useAudio();
+
+    function playAudio(audio: RZAudio) {
+        startTransition(() => {
+            setPlayable(audio);
+            play();
+        });
+    }
 
     const fetchImage = async () => {
         try {
-          const storage = getStorage();
-          const imageRef = ref(storage, 'images/my-image.jpg'); // Replace with your image path
-          const url = await getDownloadURL(imageRef);
-          setImageSrc(url);
+            const url = await storageUtils.getDownloadURL(rzAudio.imageUrl);
+            setImageUrl(url);
         } catch (error) {
-          console.error('Error fetching image URL from Firebase Storage:', error);
+            console.error('Error fetching image URL from Firebase Storage:', error);
         }
-      };
+    };
 
-      fetchImage();
-      
+    fetchImage();
+
     return (
         <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
-            <Image src={rzAudio.imageUrl} rounded className="me-3" width={50} height={50} />
+            <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
                 <div>{rzAudio.name}</div>
                 <small>{rzAudio.channel.name}</small>
@@ -126,8 +137,6 @@ function AudioListImpl({ searchString }: PlayableListProps) {
     const audioSorting = useRecoilValue(audioSortingState);
 
     const {
-        play,
-        setRzAudio: setPlayable,
         setRzAudios: setPlayablesList } = useAudio();
 
     useEffect(() => {
@@ -136,13 +145,6 @@ function AudioListImpl({ searchString }: PlayableListProps) {
 
     let bucketedAudioList = (audioSorting === PlayableSorting.Date) ? bucketByDate(rzAudios) : buucketByTopic(rzAudios);
     bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
-
-    function playAudio(audio: RZAudio) {
-        startTransition(() => {
-            setPlayable(audio);
-            play();
-        });
-    }
 
     return (
         <Suspense fallback={<div>Loading...</div>}>

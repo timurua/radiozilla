@@ -8,6 +8,7 @@ import {
     FC,
 } from 'react';
 import { RZAudio } from '../data/model';
+import { storageUtils } from '../firebase';
 
 interface AudioContextProps {
     play: (url?: string) => void;
@@ -159,13 +160,14 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         };
     }, []);
 
-    const play = () => {
+    const play = async () => {
         const audio = audioRef.current;
         if (!audio) return;
 
         if (rzAudio) {
-            if (audio.src !== rzAudio.audioUrl) {
-                audio.src = rzAudio.audioUrl; 
+            const audioUrl = await storageUtils.getDownloadURL(rzAudio.audioUrl);
+            if (audio.src !== audioUrl) {
+                audio.src = audioUrl; 
             }
         } else if (rzAudioList.length > 0) {
             setAudio(rzAudioList[0]);

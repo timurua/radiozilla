@@ -1,8 +1,9 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useAudio } from '../providers/AudioProvider';
+import { storageUtils } from '../firebase';
 
 function AudioPlayerImpl() {
   const {
@@ -14,6 +15,8 @@ function AudioPlayerImpl() {
     currentTime,
     duration,
     setCurrentTime } = useAudio();
+
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
   const togglePlayPause = () => {
     if (isPlaying) {
@@ -41,13 +44,30 @@ function AudioPlayerImpl() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        if (playable) {
+          const url = await storageUtils.getDownloadURL(playable.imageUrl);
+          setImageUrl(url);
+        } else {
+          setImageUrl(undefined);
+        }
+      } catch (error) {
+        console.error('Error fetching image URL from Firebase Storage:', error);
+      }
+    };
+
+    fetchImage();
+  }, [playable]);
+
   return (
     <div className='bg-dark'>
       <Container className="audio-player bg-dark">
         {
           playable && (isPlaying || isPaused) ? (
             <div className="d-flex align-items-center text-light bg-dark">
-              <Image src={playable.imageUrl} rounded className="me-3" width={50}
+              <Image src={imageUrl} rounded className="me-3" width={50}
                 height={50} />
               <div>
                 <div>{playable.name}</div>
@@ -82,7 +102,7 @@ function AudioPlayerImpl() {
 export function AudioPlayer() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <AudioPlayerImpl/>
+      <AudioPlayerImpl />
     </Suspense>
   )
 }

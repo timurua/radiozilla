@@ -110,16 +110,18 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         });
     }
 
-    const fetchImage = async () => {
-        try {
-            const url = await storageUtils.getDownloadURL(rzAudio.imageUrl);
-            setImageUrl(url);
-        } catch (error) {
-            console.error('Error fetching image URL from Firebase Storage:', error);
-        }
-    };
+    useEffect(() => {
+        const fetchImage = async () => {
+            try {
+                const url = await storageUtils.getDownloadURL(rzAudio.imageUrl);
+                setImageUrl(url);
+            } catch (error) {
+                console.error('Error fetching image URL from Firebase Storage:', error);
+            }
+        };
 
-    fetchImage();
+        fetchImage();
+    });
 
     return (
         <ListGroup.Item key={rzAudio.id} className={"d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>

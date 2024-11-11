@@ -1,31 +1,7 @@
 
-export class User {
-  constructor(
-    public email: string,
-    public name: string,
-    public preferences: string[] = [],
-    public preferencesEmbedding: number[] = []
-  ) { }
-
-}
-
 export enum PlayableSorting {
   Date = "Date",
   Topic = "Topic",
-}
-
-export enum RedinessStatus {
-  Shrinking,
-  Expanding,
-  Refreshing,
-  Ready,
-}
-
-export enum PlaybackStatus {
-  Idle,
-  Playing,
-  Completed,
-  Cancelled,
 }
 
 export class RZChannel {
@@ -37,7 +13,7 @@ export class RZChannel {
   ) {
   }
 
-  static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZAuthor {
+  static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZChannel {
     return new RZChannel(
       id,
       obj.name,
@@ -48,6 +24,31 @@ export class RZChannel {
 }
 
 
+export class RZUser {
+  constructor(
+    public id: string,
+    public name: string,
+    public imageUrl: string,
+    public email: string,
+    public channels: RZChannel[],
+    public likedAudioIds: string[],
+    public listenedAudioIds: string[],
+  ) {
+  }
+
+  static fromObject(obj: { name: string; description: string; imageUrl: string, channels: RZChannel[], likedAudioIds: string[], listenedAudioIds: string[]}, id: string): RZUser {
+    return new RZUser(
+      id,
+      obj.name,
+      obj.description,
+      obj.imageUrl,
+      obj.channels,
+      obj.likedAudioIds,
+      obj.listenedAudioIds,  
+    );
+  }
+
+}
 
 export class RZAuthor {
   constructor(

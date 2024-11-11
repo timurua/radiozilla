@@ -11,28 +11,33 @@ import Listen from './pages/Listen';
 import Explore from './pages/Explore';
 import Profile from './pages/Profile';
 import { AudioProvider } from './providers/AudioProvider';
+import { AuthProvider } from './providers/AuthProvider';
+import { NotificationProvider } from './providers/NotificationProvider';
 
 const App: React.FC = () => {
   return (
     <RecoilRoot>
-      <BrowserRouter>
-        <AudioProvider>
-        <div>
-
-          {/* Main Content */}
-          <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container">
-            <Routes>
-              <Route path="/" element={<Listen />} />
-              <Route path="/listen" element={<Listen />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-          </div>
-        </div>
-        </AudioProvider>
-      </BrowserRouter>
+      <NotificationProvider>
+        <AuthProvider>
+          <AudioProvider>
+            <BrowserRouter>
+              <div>
+                {/* Main Content */}
+                <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container">
+                  <Routes>
+                    <Route path="/" element={<Listen />} />
+                    <Route path="/listen" element={<Listen />} />
+                    <Route path="/explore" element={<Explore />} />
+                    <Route path="/profile" element={<Profile isAuthenticated={false} />} />
+                  </Routes>
+                </div>
+              </div>
+            </BrowserRouter>
+          </AudioProvider>
+        </AuthProvider>
+      </NotificationProvider>
     </RecoilRoot>
-    
+
   );
 };
 

@@ -1,14 +1,14 @@
 import { atom, useSetRecoilState } from 'recoil';
-import { User } from 'firebase/auth';
 import LocalStorage from '../utils/LocalStorage';
+import { RZUser } from '../data/model';
 
-export const firebaseUserState = atom<User | null>({
-  key: 'firebaseUserState',
+export const userState = atom<RZUser | null>({
+  key: 'userState',
   default: null,
 });
 
-export const firebaseUserLoadingState = atom<boolean>({
-  key: 'firebaseUserLoadingState',
+export const userLoadingState = atom<boolean>({
+  key: 'userLoadingState',
   default: true,
 });
 

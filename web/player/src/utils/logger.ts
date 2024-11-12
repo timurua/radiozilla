@@ -1,9 +1,5 @@
-import loglevel, { Logger, LogLevelDesc, LogLevelNames, LogLevelNumbers } from 'loglevel';
+import loglevel, { LoggingMethod, LogLevelDesc, LogLevelNames, LogLevelNumbers } from 'loglevel';
 
-// Define custom logger interface if you want to extend the base logger
-interface CustomLogger extends Logger {
-  // Add any custom methods here if needed
-}
 
 // Define environment configuration interface
 interface LoggerConfig {
@@ -20,7 +16,7 @@ const LOG_LEVEL_CONFIG: LoggerConfig = {
 };
 
 // Initialize as early as possible, before any other code runs
-const logger: CustomLogger = loglevel.getLogger('app') as CustomLogger;
+const logger = loglevel.getLogger('app');
 
 // Get current environment, with type safety
 const currentEnv = (process.env.NODE_ENV || 'development') as keyof LoggerConfig;
@@ -34,10 +30,11 @@ logger.methodFactory = function (
   methodName: LogLevelNames, 
   logLevel: LogLevelNumbers, 
   loggerName: string| symbol
-): (...args: any[]) => void {
+): LoggingMethod {
   const rawMethod = originalFactory(methodName, logLevel, loggerName);
-  return function (message: string, ...args: any[]): void {
-    rawMethod(`[${new Date().toISOString()}] ${message}`, ...args);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (...message: any[]): void => {
+      rawMethod(`[${new Date().toISOString()}]`, ...message);
   };
 };
 

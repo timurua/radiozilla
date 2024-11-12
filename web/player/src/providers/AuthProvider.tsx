@@ -146,29 +146,19 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
     isAuthenticated: !!firebaseUser,
   };
 
-  if (!cookieConsent) {
-    return (
-      <AuthContext.Provider value={value}>
+  return (
+    <AuthContext.Provider value={value}>
+      {!cookieConsent ? (
         <NoFunctionalityScreen>
           <CookieConsent />
         </NoFunctionalityScreen>
-      </AuthContext.Provider>
-    );
-  }
-
-  if (firebaseUserLoading) {
-    return (
-      <AuthContext.Provider value={value}>
+      ) : firebaseUserLoading ? (
         <NoFunctionalityScreen>
-          <Spinner text="Loading User"/>
+          <Spinner text="Loading User" />
         </NoFunctionalityScreen>
-      </AuthContext.Provider>
-    );
-  }
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

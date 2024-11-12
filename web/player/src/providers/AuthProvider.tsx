@@ -49,6 +49,11 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
       logger.debug('Auth state changed', user);
+      setUserLoading(false);
+      if(user === null) {
+        setUser(null);
+        return;
+      }
       setUser(new RZUser(
         user?.uid ?? '',
         user?.email ?? '',
@@ -59,7 +64,6 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
         [],
         [],
       ));
-      setUserLoading(false);
     });
 
     return () => unsubscribe();

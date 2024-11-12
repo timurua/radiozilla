@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
+import logger from '../utils/logger';
 
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
@@ -261,7 +262,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             else {
                 errorMessage = errorMessages.UNKNOWN_ERROR;
             }
-            console.error(`Error loading audio: ${errorMessage}`);
+            logger.error(`Error loading audio: ${errorMessage}`);
         };
 
         audioElement.addEventListener('play', handlePlay);

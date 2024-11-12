@@ -3,6 +3,7 @@ import log from 'loglevel';
 import { atom, selector } from "recoil";
 import { PlayableSorting, RZAudio, RZAuthor, RZChannel, } from "../data/model";
 import { db } from '../firebase';
+import logger from '../utils/logger';
 
 export const audioSortingState = atom({
     key: 'CurrentAudioSorting',
@@ -22,7 +23,7 @@ const getAuthor = async (reference: string): Promise<RZAuthor> => {
         };
         return RZAuthor.fromObject(authorData, docSnap.id);
     } else {
-        console.log(`No document found with ID: ${reference}`);
+        logger.log(`No document found with ID: ${reference}`);
         throw new Error(`No document found with ID: ${reference}`);
     }
 }
@@ -40,7 +41,7 @@ const getChannel = async (reference: string): Promise<RZChannel> => {
         };
         return RZChannel.fromObject(channelData, docSnap.id);
     } else {
-        console.log(`No document found with ID: ${reference}`);
+        logger.log(`No document found with ID: ${reference}`);
         throw new Error(`No document found with ID: ${reference}`);
     }
 }

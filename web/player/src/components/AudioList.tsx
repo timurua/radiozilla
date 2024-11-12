@@ -7,6 +7,7 @@ import { Suspense, useEffect } from "react";
 import { useAudio } from "../providers/AudioProvider";
 import { storageUtils } from '../firebase';
 import { useNotification } from '../providers/NotificationProvider';
+import logger from '../utils/logger';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -114,7 +115,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
                 const url = await storageUtils.toDownloadURL(rzAudio.imageUrl);
                 setImageUrl(url);
             } catch (error) {
-                console.error('Error fetching image URL from Firebase Storage:', error);
+                logger.error('Error fetching image URL from Firebase Storage:', error);
             }
         };
 

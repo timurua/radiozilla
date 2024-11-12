@@ -19,39 +19,85 @@ import * as logger from "firebase-functions/logger";
 // });
 
 import * as admin from "firebase-admin";
-import { AuthBlockingEvent } from "firebase-functions/identity";
-import * as functions from "firebase-functions/v2";
+import * as functions from "firebase-functions/v1";
 
 admin.initializeApp();
 
-export const createUserInFirestore = functions.identity.beforeUserCreated(async (event: AuthBlockingEvent) => {
-  // Get user UID
-  const user = event.data;
-  const uid = user?.uid;
-  if (!uid) {
-    logger.error("No UID found for user.");
-    return
-  }
-  
-  // Set up a Firestore reference
-  const firestore = admin.firestore();
+// Triggers when a new anonymous user is created
+export const onCreate = functions.auth.user().onCreate(
+    async (user: admin.auth.UserRecord): Promise<void | null> => {
+        // Set up a Firestore reference
+        const firestore = admin.firestore();
 
-  // Define user data to store in Firestore
-  const userData = {
-    name: user?.displayName || null,
-    email: user?.email || null,
-    imageURL: user?.photoURL || null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    subscribedChannelIds: [],
-    likedAudioIds: [],
-    listenedAudioIds: [],
-  };
+        // Define user data to store in Firestore
+        const userData = {
+            name: user?.displayName || null,
+            email: user?.email || null,
+            imageURL: user?.photoURL || null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            subscribedChannelIds: [],
+            likedAudioIds: [],
+            listenedAudioIds: [],
+        };
 
-  // Create a document in the "users" collection with the UID
-  try {
-        await firestore.collection("users").doc(uid).set(userData);
-        logger.info("User document created successfully.");
-    } catch (error) {
-        logger.error("Error creating user document:", error);
+        // Create a document in the "users" collection with the UID
+        try {
+            await firestore.collection("users").doc(user.uid).set(userData);
+            logger.info("User document created successfully.");
+        } catch (error) {
+            logger.error("Error creating user document:", error);
+        }
     }
-});
+);
+
+// Triggers when an anonymous user is deleted
+export const onAnonymousUserDeleted = functions.auth.user().onDelete(
+    async (user: admin.auth.UserRecord): Promise<void | null> => {
+
+        const uid: string = user.uid;
+
+        // Example: Clean up user data
+        await admin.firestore()
+            .collection('users')
+            .doc(uid)
+            .delete();
+
+    }
+
+);
+
+// Triggers when an anonymous user is converted to a permanent account
+// export const onAnonymousUpgrade = functions.auth.user().beforeCreate(
+//     async (user: AuthUserRecord, context: AuthEventContext): Promise<void> => {
+//         // Check if this is a conversion from anonymous
+//         if (user.providerData && user.providerData.length > 0) {
+//             const anonymousUid: string = user.metadata.creationTime;
+
+//             try {
+//                 const docSnapshot = await admin.firestore()
+//                     .collection('users')
+//                     .doc(anonymousUid)
+//                     .get();
+
+//                 if (docSnapshot.exists) {
+//                     const existingData = docSnapshot.data() as UserDocument;
+
+//                     const updatedData: UserDocument = {
+//                         ...existingData,
+//                         isAnonymous: false,
+//                         convertedAt: admin.firestore.Timestamp.now(),
+//                     };
+
+//                     await admin.firestore()
+//                         .collection('users')
+//                         .doc(user.uid)
+//                         .set(updatedData);
+//                 }
+//             } catch (error) {
+//                 console.error('Error during anonymous user upgrade:', error);
+//                 return Promise.reject(error);
+//             }
+//         }
+//         return Promise.resolve();
+//     }
+// );

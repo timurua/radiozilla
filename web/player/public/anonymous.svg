@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+  <!-- Original person -->
+  <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1z"/>
+  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+  <!-- Pirate cap -->
+  <path d="M5 5c1-3 5-3 6 0L8 2 5 5z" fill="#000"/>
+</svg>

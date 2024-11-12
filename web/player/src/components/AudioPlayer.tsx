@@ -4,6 +4,7 @@ import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootst
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useAudio } from '../providers/AudioProvider';
 import { storageUtils } from '../firebase';
+import logger from '../utils/logger';
 
 function AudioPlayerImpl() {
   const {
@@ -54,7 +55,7 @@ function AudioPlayerImpl() {
           setImageUrl(undefined);
         }
       } catch (error) {
-        console.error('Error fetching image URL from Firebase Storage:', error);
+        logger.error('Error fetching image URL from Firebase Storage:', error);
       }
     };
 

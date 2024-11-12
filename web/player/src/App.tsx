@@ -17,10 +17,10 @@ import { NotificationProvider } from './providers/NotificationProvider';
 const App: React.FC = () => {
   return (
     <RecoilRoot>
-      <NotificationProvider>
-        <AuthProvider>
-          <AudioProvider>
-            <BrowserRouter>
+      <BrowserRouter>
+        <NotificationProvider>
+          <AuthProvider>
+            <AudioProvider>
               <div>
                 {/* Main Content */}
                 <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container">
@@ -28,14 +28,14 @@ const App: React.FC = () => {
                     <Route path="/" element={<Listen />} />
                     <Route path="/listen" element={<Listen />} />
                     <Route path="/explore" element={<Explore />} />
-                    <Route path="/profile" element={<Profile/>} />
+                    <Route path="/profile" element={<Profile />} />
                   </Routes>
                 </div>
               </div>
-            </BrowserRouter>
-          </AudioProvider>
-        </AuthProvider>
-      </NotificationProvider>
+            </AudioProvider>
+          </AuthProvider>
+        </NotificationProvider>
+      </BrowserRouter>
     </RecoilRoot>
 
   );

@@ -28,7 +28,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<Listen />} />
                     <Route path="/listen" element={<Listen />} />
                     <Route path="/explore" element={<Explore />} />
-                    <Route path="/profile" element={<Profile isAuthenticated={false} />} />
+                    <Route path="/profile" element={<Profile/>} />
                   </Routes>
                 </div>
               </div>

@@ -154,6 +154,19 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             await setAudio(rzAudioList[0]);
         }
         audioElement.play();
+        if ('mediaSession' in navigator && rzAudio) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+            title: rzAudio.name,
+            artist: rzAudio.author.name,
+            album: rzAudio.channel.name,
+            artwork: [
+                {
+                src: rzAudio.imageUrl || rzAudio.channel.imageUrl || rzAudio.author.imageUrl,
+                sizes: '512x512',
+                }
+            ]
+            });
+        }
     }, [rzAudio, rzAudioList, setAudio, audioElement]);
 
     const pause = useCallback(() => {

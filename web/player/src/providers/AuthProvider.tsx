@@ -11,7 +11,7 @@ import {
   User
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { userState, authLoadingState, cookieConsentState } from '../state/auth';
+import { firebaseUserState, firebaseUserLoadingState, cookieConsentState, isOnlineState } from '../state/auth';
 import { CookieConsent } from '../components/CookieConsent';
 import logger from '../utils/logger';
 import NoFunctionalityScreen from '../components/NoFunctionalityScreen';
@@ -38,23 +38,25 @@ interface AppProviderProps {
 
 export function AuthProvider({ children }: AppProviderProps): JSX.Element {
   const [error, setError] = useState<string | null>(null);
-  const setUser = useSetRecoilState(userState);
-  const setLoading = useSetRecoilState(authLoadingState);
-  const user = useRecoilValue(userState);
-  const loading = useRecoilValue(authLoadingState);
+  const setFirebaseUser = useSetRecoilState(firebaseUserState);
+  const setFirebaseUserLoading = useSetRecoilState(firebaseUserLoadingState);
+  const firebaseUser = useRecoilValue(firebaseUserState);
+  const firebaseUserLoading = useRecoilValue(firebaseUserLoadingState);
   const cookieConsent = useRecoilValue(cookieConsentState);
+  const isOnline = useRecoilValue(isOnlineState);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
       logger.debug('Auth state changed', user);
-      setUser(user);
-      setLoading(false);
+      setFirebaseUser(user);
+      setFirebaseUserLoading(false);
     });
 
     return () => unsubscribe();
-  }, [setUser, setLoading]);
+  }, [setFirebaseUser, setFirebaseUserLoading]);
 
   const checkCookieConsent = (): void => {
+    logger.debug(`Checking cookie consent, value: ${cookieConsent}`); 
     if (!cookieConsent) {
       throw new Error('Please accept necessary cookies to continue');
     }
@@ -112,17 +114,36 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
     }
   };
 
+  useEffect(() => {
+    if (!cookieConsent) {
+      return;
+    }
+    if (firebaseUserLoading) {
+      return;
+    }
+    if(!isOnline) {
+      return;
+    }
+    if (firebaseUser === null) {
+      logger.debug('No user found, signing in anonymously');
+      signInAnon();      
+      return;
+    }
+    
+  }, [firebaseUserLoading, firebaseUser, cookieConsent, isOnline]);
+
+
   const value: AuthContextType = {
-    user,
+    user: firebaseUser,
     error,
-    loading,
+    loading: firebaseUserLoading,
     signInAnon,
     signUpWithEmail,
     signInWithEmail,
     convertAnonToEmail,
     logout,
-    isAnonymous: user?.isAnonymous ?? false,
-    isAuthenticated: !!user,
+    isAnonymous: firebaseUser?.isAnonymous ?? false,
+    isAuthenticated: !!firebaseUser,
   };
 
   if (!cookieConsent) {
@@ -135,7 +156,7 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
     );
   }
 
-  if (loading) {
+  if (firebaseUserLoading) {
     return (
       <AuthContext.Provider value={value}>
         <NoFunctionalityScreen>

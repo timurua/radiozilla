@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Image, Badge, ListGroup, Alert } from 'react-bootstrap';
+import NoFunctionalityScreen from '../components/NoFunctionalityScreen';
 
 // Define interfaces for our data structures
 interface Channel {
@@ -27,7 +28,7 @@ const defaultChannels: Channel[] = [
   { id: 3, name: 'Sports', picture: '/api/placeholder/50/50' }
 ];
 
-const UserProfile: React.FC<UserProfileProps> = ({ isAuthenticated, userData = null }) => {
+const UserProfileContent: React.FC<UserProfileProps> = ({ isAuthenticated, userData = null }) => {
   // Default anonymous user data
   const anonymousUser: UserData = {
     name: 'Guest User',
@@ -101,5 +102,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ isAuthenticated, userData = n
     </Card>
   );
 };
+
+function UserProfile() {
+
+  return (
+
+    <NoFunctionalityScreen>
+      <UserProfileContent isAuthenticated={false} />
+    </NoFunctionalityScreen>
+    
+  );
+}
+
+
 
 export default UserProfile;

@@ -1,7 +1,7 @@
 import { Nav, Navbar } from "react-bootstrap";
 import { BsCompass, BsMusicNote, BsPerson, BsPersonCircle } from 'react-icons/bs';
 import { useAuth } from "../providers/AuthProvider";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function BottomNavbar() {
     const { user } = useAuth();

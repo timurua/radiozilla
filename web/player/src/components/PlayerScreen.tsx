@@ -1,7 +1,7 @@
-import React, { forwardRef, RefObject, useRef } from 'react';
+import React, { useRef } from 'react';
 import BottomNavbar from './BottomNavbar';
-import TopNavbar from './TopNavbar';
 import { SmallAudioPlayer } from './SmallAudioPlayer';
+import TopNavbar from './TopNavbar';
 
 export enum PlayerPosition {
     TOP = 'top',

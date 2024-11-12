@@ -1,28 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { AudioPlayer} from '../components/AudioPlayer';
-import {AudioList} from '../components/AudioList';
-import {PlayableSortingSelector} from '../components/PlayableSortingSelector';
-import { SmallAudioPlayer } from '../components/SmallAudioPlayer';
-import BottomNavbar from '../components/BottomNavbar';
-import TopNavbar from '../components/TopNavbar';
+import { useEffect, useRef, useState } from 'react';
+import { AudioList } from '../components/AudioList';
+import { AudioPlayer } from '../components/AudioPlayer';
+import { PlayableSortingSelector } from '../components/PlayableSortingSelector';
+import PlayerScreen, { PlayerPosition } from '../components/PlayerScreen';
 
 function Listen() {
   const [playerMinimized, setPlayerMinimized] = useState(false);
-  const [navbarHeight, setNavbarHeight] = useState(0);
   const playerWithSortingRef = useRef<HTMLDivElement>(null);
-  const navbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (navbarRef.current) {
-      setNavbarHeight(navbarRef.current.getBoundingClientRect().height);
-    }
-
     const handleScroll = () => {
-      if (playerWithSortingRef.current && navbarRef.current) {
-        const navbarHeight = navbarRef.current.getBoundingClientRect().height;
+      if (playerWithSortingRef.current) {
         const sortingSelectorRect = playerWithSortingRef.current.getBoundingClientRect();
 
-        if (sortingSelectorRect.bottom <= (navbarHeight)) {
+        if (sortingSelectorRect.bottom <= 50) {
           // PlayableSortingSelector has scrolled out of view
           setPlayerMinimized(true);
         } else {
@@ -40,47 +31,15 @@ function Listen() {
     };
   }, []);
 
-  const minimizedStyle: React.CSSProperties = playerMinimized
-  ? {
-    position: 'fixed',
-    top: navbarHeight,
-    width: '100%',
-    left: 0,
-    height: '50px', // Adjust the minimized height as needed
-    zIndex: 1000,
-    paddingTop: '40px',
-    paddingLeft: '10px',
-    paddingRight: '10px',
-  } : { display: 'none' };
-
-
   return (
-    <div className="min-vh-100">
-      {/* Header */}
-      <div ref={navbarRef}>
-        <TopNavbar />
-      </div>
+    <PlayerScreen playerPosition={playerMinimized ? PlayerPosition.TOP : undefined} >
 
       <div ref={playerWithSortingRef}>
         <PlayableSortingSelector />
-        <AudioPlayer/>
+        <AudioPlayer />
       </div>
-
-      {
-        playerMinimized ? (
-          <div style={minimizedStyle} className='bg-dark slide-in'>
-            <SmallAudioPlayer/>
-          </div>
-        ) : null
-      }
-
-      <div className='bottom_margin_bottom_navbar'>
-        <AudioList searchString={undefined}/>
-      </div>
-
-      <BottomNavbar />
-
-    </div>
+      <AudioList searchString={undefined} />
+    </PlayerScreen>
   );
 }
 

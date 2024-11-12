@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Image, ListGroup } from "react-bootstrap";
-import { RZAudio, PlayableSorting } from "../data/model";
 import { useRecoilValue } from "recoil";
-import { audioSortingState, rzAudiosState } from "../state/audio";
-import { Suspense, useEffect } from "react";
-import { useAudio } from "../providers/AudioProvider";
+import { PlayableSorting, RZAudio } from "../data/model";
 import { storageUtils } from '../firebase';
-import { useNotification } from '../providers/NotificationProvider';
+import { useAudio } from "../providers/AudioProvider";
+import { audioSortingState, rzAudiosState } from "../state/audio";
 import logger from '../utils/logger';
 
 // Static method to bucket playables by date
@@ -102,11 +100,9 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
     const { play } = useAudio();
-    const { showSuccess } = useNotification();
-
+    
     function playAudio(audio: RZAudio) {
         play(audio);
-        showSuccess(`Now playing: ${audio.name}`);
     }
 
     useEffect(() => {

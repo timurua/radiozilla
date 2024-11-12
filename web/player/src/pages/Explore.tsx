@@ -1,31 +1,25 @@
 import React, { useState } from 'react';
 import { Button, Col, FormControl, InputGroup, Row } from 'react-bootstrap';
 import { FaSearch, FaTimes } from 'react-icons/fa';
-import BottomNavbar from '../components/BottomNavbar';
 import { AudioList } from '../components/AudioList';
-import TopNavbar from '../components/TopNavbar';
+import PlayerScreen from '../components/PlayerScreen';
 
 function Listen() {
 
     const [searchValue, setSearchValue] = useState('');
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchValue(event.target.value);
+        setSearchValue(event.target.value);
     };
-  
+
     const handleButtonClick = () => {
-      if (searchValue) {
-        setSearchValue('');
-      }
+        if (searchValue) {
+            setSearchValue('');
+        }
     };
 
     return (
-        <div className="min-vh-100">
-            {/* Header */}
-            <div>
-                <TopNavbar />
-            </div>
-
+        <PlayerScreen>
             <Row>
                 <Col md={5} className="mx-auto">
                     <div className="small fw-light">search input with icon</div>
@@ -49,12 +43,8 @@ function Listen() {
                     </InputGroup>
                 </Col>
             </Row>
-
             <AudioList searchString={searchValue} />
-
-            <BottomNavbar />
-
-        </div>
+        </PlayerScreen>
     );
 }
 

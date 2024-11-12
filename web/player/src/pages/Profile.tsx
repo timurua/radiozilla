@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Image, Badge, ListGroup, Alert } from 'react-bootstrap';
-import NoFunctionalityScreen from '../components/NoFunctionalityScreen';
+import PlayerScreen from '../components/PlayerScreen';
 
 // Define interfaces for our data structures
 interface Channel {
@@ -107,9 +107,9 @@ function UserProfile() {
 
   return (
 
-    <NoFunctionalityScreen>
+    <PlayerScreen>
       <UserProfileContent isAuthenticated={false} />
-    </NoFunctionalityScreen>
+    </PlayerScreen>
     
   );
 }

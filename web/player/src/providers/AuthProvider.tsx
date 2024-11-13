@@ -144,7 +144,7 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
       return;
     }
     
-  }, [userLoading, user, cookieConsent, isOnline]);
+  }, [userLoading, user, cookieConsent, isOnline, signInAnon]);
 
 
   const value: AuthContextType = {

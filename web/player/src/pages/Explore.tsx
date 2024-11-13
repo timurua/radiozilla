@@ -22,7 +22,6 @@ function Listen() {
         <PlayerScreen>
             <Row>
                 <Col md={5} className="mx-auto">
-                    <div className="small fw-light">search input with icon</div>
                     <InputGroup>
                         <FormControl
                             type="search"

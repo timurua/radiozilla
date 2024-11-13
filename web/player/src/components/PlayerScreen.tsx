@@ -29,7 +29,8 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, playerPosition, p
         } : { display: 'none' };
 
     return (
-        <div className="min-vh-100">
+        <div className="min-vh-100 w-100 bg-dark text-white">
+
             <div ref={topNavbarRef}>
                 <TopNavbar />
             </div>
@@ -42,7 +43,9 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, playerPosition, p
                 ) : null
             }
 
+            <div style={{ paddingTop: '50px', paddingBottom: '100px' }}>
                 {children}
+            </div>
             <BottomNavbar />
         </div>
     );

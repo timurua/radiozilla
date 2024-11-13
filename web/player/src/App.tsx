@@ -1,5 +1,4 @@
 import React from 'react';
-//import 'bootswatch/dist/darkly/bootstrap.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import {
@@ -23,7 +22,7 @@ const App: React.FC = () => {
             <AudioProvider>
               <div>
                 {/* Main Content */}
-                <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container">
+                <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                   <Routes>
                     <Route path="/" element={<Listen />} />
                     <Route path="/listen" element={<Listen />} />

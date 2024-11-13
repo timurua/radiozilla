@@ -9,6 +9,13 @@ class File:
     def __init__(self, path: str)-> None:
         self.file = path    
         
+    def write_text(self, text: str)-> None:
+        try:
+            with open(self.file, 'w', encoding='utf-8') as file:
+                file.write(text)            
+        except IOError as e:
+            print(f"Error writing to file: {e}")
+        
     def write_json(self, obj: any)-> any:
         def default_serializer(o):
             if isinstance(o, (datetime,)):
@@ -52,14 +59,20 @@ class Directory:
     def get_file(self, name: str)-> 'File':
         return File(f"{self.path}/{name}")
     
-    def get_timed_path(self, name: str)-> str:
+    def get_file_timed_path(self, name: str)-> str:
         return f"{self.path}/{datetime.now().isoformat()}_{name}".replace(":", ".")
     
+    def get_file_path(self, name: str)-> str:
+        return f"{self.path}/{name}"    
+    
+    def get_path(self)-> str:
+        return self.path     
+    
     def get_timed_file(self, name: str)-> 'File':
-        return File(self.get_timed_path(name))
+        return File(self.get_file_timed_path(name))
     
     def get_timed_directory(self, name: str)-> 'Directory':
-        path = self.get_timed_path(name)
+        path = self.get_file_timed_path(name)
         os.makedirs(path, exist_ok=True)
         return Directory(path)    
     

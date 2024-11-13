@@ -1,6 +1,7 @@
 from enum import Enum
 from datetime import datetime, timedelta
 from pyradiozilla.rss import RssEntry
+from typing import NamedTuple
 
 class SummaryLength(Enum):
     short="short"
@@ -38,6 +39,12 @@ class SummaryPropmpt:
                 f"{self.text}")
         return prompt
     
+
+class RssPrompt(NamedTuple):
+    start_date: datetime
+    prompt: str    
+    
+    
 class RssWeeklySummaryPropmpt:
     def __init__(self, entries: list[RssEntry], config: SummaryConfig) -> None:
         self.entries = entries 
@@ -49,7 +56,7 @@ class RssWeeklySummaryPropmpt:
         monday_midnight = monday.replace(hour=0, minute=0, second=0, microsecond=0)
         return monday_midnight
 
-    def get_prompts(self)-> dict[datetime, str]:
+    def get_prompts(self)-> list[RssPrompt]:
         weekly_data = {}
         for entry in self.entries:    
             week_start_date = self.get_week_start(entry.published_date)
@@ -57,12 +64,18 @@ class RssWeeklySummaryPropmpt:
                 weekly_data[week_start_date] = []
             weekly_data[week_start_date].append(entry)
             
-        result = {}
+        result = []
         for week_start_date, entries in weekly_data.items():
             week_end_date = week_start_date + timedelta(days=6)
-            week_summary = "\n".join([f"{entry.title}: {entry.description}" for entry in entries])
+            week_summary = " \n".join([f"{entry.title}: {entry.description}" for entry in entries])
             prompt = f"News from {week_start_date.strftime('%Y-%m-%d')} to {week_end_date.strftime('%Y-%m-%d')}:\n\n{week_summary}"
-            result[week_start_date] = SummaryPropmpt(prompt, self.config).get_prompt()
+            
+            result.append(
+                RssPrompt(
+                    start_date=week_start_date,
+                    prompt=SummaryPropmpt(prompt, self.config).get_prompt()
+                )
+            )              
             
         return result
             

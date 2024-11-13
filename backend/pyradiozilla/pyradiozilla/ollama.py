@@ -13,7 +13,8 @@ class OllamaClient:
         url = f"{self.base_url}/generate"
         data = {
             "model": self.model,
-            "prompt": prompt
+            "prompt": prompt,
+            "keep_alive": 0
         }
 
         try:
@@ -33,3 +34,26 @@ class OllamaClient:
                     continue
 
         return output.strip()
+    
+    def unload_all_models(self):
+        # Step 1: Retrieve the list of loaded models
+        try:
+            response = requests.get(f"{self.base_url}/ps")
+            response.raise_for_status()
+            loaded_models = response.json()
+        except requests.RequestException as e:
+            print("Error retrieving model list:", e)
+            return
+        
+        # Step 2: Check and unload each model if loaded
+        for model in loaded_models.get("models", []):
+            model_name = model.get("name")
+            if model_name:
+                try:
+                    # Unload each model by setting `keep_alive` to 0
+                    unload_payload = {"model": model_name, "keep_alive": 0}
+                    unload_response = requests.post(f"{self.base_url}/generate", json=unload_payload)
+                    unload_response.raise_for_status()
+                    print(f"Unloaded model: {model_name}")
+                except requests.RequestException as e:
+                    print(f"Error unloading model {model_name}:", e)

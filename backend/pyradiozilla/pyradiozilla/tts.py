@@ -13,9 +13,9 @@ from bark.api import semantic_to_waveform
 from bark import generate_audio, SAMPLE_RATE
 
 class Audio:
-    def __init__(self, wav_file_path: str, ogg_file_path: str, sample_rate: int) -> None:
+    def __init__(self, wav_file_path: str, m4a_file_path: str, sample_rate: int) -> None:
         self.wav_file_path = wav_file_path
-        self.ogg_file_path = ogg_file_path
+        self.m4a_file_path = m4a_file_path
         self.sample_rate = sample_rate
 
 class NLTKTokenizer:
@@ -34,6 +34,7 @@ class NLTKTokenizer:
 
     @classmethod
     def tokenize(cls, text: str) -> list[str]:
+        cls.initialize()
         sentences = nltk.sent_tokenize(text)
         return sentences
 
@@ -51,16 +52,16 @@ class BarkTTS:
                 cls._initialized = True
     
     @classmethod            
-    def __convert_wav_to_ogg_opus(cls, input_wav_path, output_ogg_path):
+    def __convert_wav_to_m4a(cls, input_wav_path, output_m4a_path):
         try:
             (
                 ffmpeg
                 .input(input_wav_path)
-                .output(output_ogg_path, **{'c:a': 'libopus'})
+                .output(output_m4a_path, codec='aac', audio_bitrate='128k')
                 .overwrite_output()
                 .run()
             )
-            print(f"Conversion successful: {output_ogg_path}")
+            print(f"Conversion successful: {output_m4a_path}")
         except ffmpeg.Error as e:
             print(f"An error occurred during conversion: {e.stderr.decode()}")
         except FileNotFoundError:
@@ -69,6 +70,7 @@ class BarkTTS:
 
     @classmethod
     def generate(cls, text: str, directory: storage.Directory) -> Audio:
+        cls.initialize()
         SPEAKER = "v2/en_speaker_6"
         silence = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
         sentences = NLTKTokenizer.tokenize(text)
@@ -79,15 +81,14 @@ class BarkTTS:
             pieces += [audio_array, silence.copy()]
         
         audio_data = np.concatenate(pieces)        
-        path = directory.get_timed_path("audio")
+        path = directory.get_file_path("audio")
         wav_file_path = f"{path}.wav"
         soundfile.write(wav_file_path, audio_data, SAMPLE_RATE)
-        ogg_file_path = f"{path}.ogg"
-        cls.__convert_wav_to_ogg_opus(wav_file_path, ogg_file_path)
-        txt_file_path = f"{path}.txt"
-        storage.File(txt_file_path).write_json({"text": text, "sentences": sentences})
+        m4a_file_path = f"{path}.m4a"
+        cls.__convert_wav_to_m4a(wav_file_path, m4a_file_path)
+        directory.get_file("sentences.txt").write_text("\n".join(sentences))
         
-        return Audio(wav_file_path, ogg_file_path, SAMPLE_RATE)
+        return Audio(wav_file_path, m4a_file_path, SAMPLE_RATE)
         
         
 

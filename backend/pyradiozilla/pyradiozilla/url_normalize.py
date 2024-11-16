@@ -1,7 +1,9 @@
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 import re
+from typing import List, Tuple
+from re import Match
 
-def normalize_preserving_semantics(url):
+def normalize_preserving_semantics(url: str) -> str:
     """
     Apply normalizations that preserve semantics:
     - Convert percent-encoded triplets to uppercase.
@@ -13,8 +15,8 @@ def normalize_preserving_semantics(url):
     """
     # Parse the URL into components
     parsed_url = urlparse(url)
-    scheme = parsed_url.scheme.lower()
-    netloc = parsed_url.netloc.lower()
+    scheme: str = parsed_url.scheme.lower()
+    netloc: str = parsed_url.netloc.lower()
 
     # Remove default port (port 80 for http, 443 for https)
     hostname, sep, port = netloc.partition(':')
@@ -22,19 +24,20 @@ def normalize_preserving_semantics(url):
         netloc = hostname
 
     # Unreserved characters as per RFC 3986
-    unreserved_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
+    unreserved_chars: str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
 
     # Process the path
-    path = parsed_url.path
+    path: str = parsed_url.path
 
     # Convert percent-encoded triplets to uppercase
     path = re.sub(r'%[0-9a-fA-F]{2}', lambda m: m.group(0).upper(), path)
 
     # Decode percent-encoded triplets of unreserved characters
-    def decode_unreserved(match):
-        pct_encoded = match.group(0)
-        char = chr(int(pct_encoded[1:], 16))
+    def decode_unreserved(match: Match) -> str:
+        pct_encoded: str = match.group(0)
+        char: str = chr(int(pct_encoded[1:], 16))
         return char if char in unreserved_chars else pct_encoded
+
     path = re.sub(r'%[0-9A-F]{2}', decode_unreserved, path)
 
     # Remove dot-segments
@@ -45,7 +48,7 @@ def normalize_preserving_semantics(url):
         path = '/'
 
     # Reconstruct the URL
-    normalized_url = urlunparse((
+    normalized_url: str = urlunparse((
         scheme,
         netloc,
         path,
@@ -55,10 +58,10 @@ def normalize_preserving_semantics(url):
     ))
     return normalized_url
 
-def remove_dot_segments(path):
+def remove_dot_segments(path: str) -> str:
     """Remove dot-segments from path as per RFC 3986 Section 5.2.4"""
     segments = path.split('/')
-    output = []
+    output: list[str] = []
     for segment in segments:
         if segment == '..':
             if output:
@@ -67,7 +70,7 @@ def remove_dot_segments(path):
             output.append(segment)
     return '/' + '/'.join(output)
 
-def normalize_usually_preserving_semantics(url):
+def normalize_usually_preserving_semantics(url: str) -> str:
     """
     Apply normalizations that usually preserve semantics:
     - Add a trailing "/" to a non-empty path if not present.
@@ -92,7 +95,7 @@ def normalize_usually_preserving_semantics(url):
     ))
     return normalized_url
 
-def normalize_changing_semantics(url):
+def normalize_changing_semantics(url: str) -> str:
     """
     Apply normalizations that change semantics:
     - Remove directory index.
@@ -108,7 +111,7 @@ def normalize_changing_semantics(url):
     scheme, netloc, path, params, query, fragment = parsed_url
 
     # Remove directory index
-    directory_indexes = ['index.html', 'index.htm', 'default.asp']
+    directory_indexes: List[str] = ['index.html', 'index.htm', 'default.asp']
     for index in directory_indexes:
         if path.endswith(index):
             path = path[:-(len(index))]
@@ -128,7 +131,7 @@ def normalize_changing_semantics(url):
 
     # Sort the query parameters
     if query:
-        query_params = parse_qsl(query, keep_blank_values=True)
+        query_params: List[Tuple[str, str]] = parse_qsl(query, keep_blank_values=True)
         query_params.sort()
         query = urlencode(query_params, doseq=True)
 
@@ -137,7 +140,7 @@ def normalize_changing_semantics(url):
         query = ''
 
     # Reconstruct the URL
-    normalized_url = urlunparse((
+    normalized_url: str = urlunparse((
         scheme,
         netloc,
         path,

@@ -4,11 +4,13 @@
         "-s",
         "./backend",
         "-p",
-        "*test*.py"
+        "test_*.py"
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
-    "python.testing.pytestArgs": [
-        "backend"
-    ]
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit"
+        }
+    }
 }

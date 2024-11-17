@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from typing import Optional, Dict, Any, List, Set
 from scrape_html_processor import HtmlContent, HtmlScraperProcessor
+import logging
 
+logger = logging.getLogger("scrape_html_http")
 
 class HttpHtmlScraper:
     def __init__(self, client_session: aiohttp.ClientSession, timeout_seconds: int = 30):
@@ -18,7 +20,12 @@ class HttpHtmlScraper:
                 response.raise_for_status()  # Ensure we notice bad responses
                 html_content = await response.text()
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            print(f"Error fetching {url}: {e}")
+            logger.error(f"Error fetching {url}: {e}")
+            return None
+        except (aiohttp.ClientResponseError, aiohttp.ClientPayloadError) as e:
+            logger.error(f"Error receiving response for {url}: {e}")
+        except (UnicodeDecodeError) as e:            
+            logger.error(f"Error decoding text for {url}: {e}")
             return None
 
         return HtmlScraperProcessor(url, html_content).extract()
@@ -41,6 +48,15 @@ class HttpHtmlScraperFactory:
             })
         self.timeout_seconds = timeout_seconds
 
+    async def __aenter__(self) -> 'HttpHtmlScraperFactory':
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.client_session.close()
+
+    async def close(self) -> None:
+        await self.client_session.close()
+
     def newScraper(self) -> HttpHtmlScraper:
         return HttpHtmlScraper(self.client_session, self.timeout_seconds)
 
@@ -60,7 +76,7 @@ if __name__ == "__main__":
             }
         ) as session:
             scraper_factory = HttpHtmlScraperFactory()
-            with(scraper_factory.newScraper()) as scraper:
+            with (scraper_factory.newScraper()) as scraper:
                 result = await scraper.scrape("http://cnn.com/")
                 if result:
                     print("Canonical URL:", result.canonical_url)

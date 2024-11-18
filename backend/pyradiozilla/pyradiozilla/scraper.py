@@ -7,6 +7,7 @@ import scrape_html_http
 import scrape_html_browser
 import aiohttp
 import sys
+import scrape_store
 
 logger = logging.getLogger("scraper")
 
@@ -52,7 +53,8 @@ class ScraperConfig:
                  max_parallel_requests: int = 16, allowed_domains: set[str] = set(),
                  page_cache: Optional[ScraperPageCache] = None, max_queue_size: int = 1024*1024,
                  use_headless_browser: bool = False,
-                 timeout_seconds: int = 30, max_initiated_urls: int = 64 * 1024):
+                 timeout_seconds: int = 30, max_initiated_urls: int = 64 * 1024,
+                 http_html_scraper_factory: scrape_html_http.HttpHtmlScraperFactory, browser_html_scraper_factory : scrape_html_browser.BrowserHtmlScraperFactory|None = None):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.allowed_domains = allowed_domains
@@ -63,9 +65,8 @@ class ScraperConfig:
         self.use_headless_browser = use_headless_browser
         self.timeout_seconds = timeout_seconds
         self.max_initiated_urls = max_initiated_urls
-        self.browser_html_scraper_factory = scrape_html_browser.BrowserHtmlScraperFactory()
-        self.http_html_scraper_factory = scrape_html_http.HttpHtmlScraperFactory(
-            timeout_seconds=timeout_seconds)
+        self.browser_html_scraper_factory = browser_html_scraper_factory
+        self.http_html_scraper_factory = http_html_scraper_factory
 
 
 class ScraperLoopResult:
@@ -74,7 +75,7 @@ class ScraperLoopResult:
 
 
 class Scraper:
-    def __init__(self, config: ScraperConfig, http_html_scraper: scrape_html_http.HttpHtmlScraperFactory, browser_html_scraper : scrape_html_browser.BrowserHtmlScraperFactory|None = None):
+    def __init__(self, config: ScraperConfig):
         self.config = config
         self.initiated_urls: dict[str, ScraperUrl] = {}
         self.initiated_urls_count = 0
@@ -82,15 +83,12 @@ class Scraper:
         self.url_queue: asyncio.Queue[ScraperUrl] = asyncio.Queue(
             maxsize=config.max_queue_size)
         self.pages: dict[str, Optional[ScraperPage]] = {}
-        self.http_html_scraper = http_html_scraper
-        self.browser_html_scraper = browser_html_scraper
 
     def __enter__(self):
         return self
     
     async def __exit__(self, exc_type, exc_value, traceback):
-        await self.http_html_scraper.close()
-        await self.browser_html_scraper.close()
+        pass
 
     async def scrape(self):
         for scraper_url in self.config.scraper_urls:
@@ -155,15 +153,15 @@ class Scraper:
         return False
 
     async def terminate_all_loops_if_needed(self):
-        if self.completed_urls_count >= self.initiated_urls_count:
+        if self.completed_urls_count < self.initiated_urls_count:
             return
         logger.info(f"terminating all loops - i:c={self.initiated_urls_count}:{self.completed_urls_count}")
         for i in range(self.config.max_parallel_requests):
             await self.url_queue.put(ScraperUrl.create_terminal())
 
     async def scrape_url(self, url: ScraperUrl) -> Optional[ScraperPage]:
-        if self.config.use_headless_browser:
-            async with self.config.browser_html_scraper_factory.newScraper() as scraper_page_browser:
+        if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
+            with await self.config.browser_html_scraper_factory.newScraper() as scraper_page_browser:
                 page = await scraper_page_browser.scrape(url.normalized_url)
         else:
             with self.config.http_html_scraper_factory.newScraper() as scraper_page_http:
@@ -181,8 +179,9 @@ async def main():
             logging.StreamHandler(sys.stdout),  # Log to standard output
         ]
     )
-    async with scrape_html_http.HttpHtmlScraperFactory() as http_html_scraper_factory:
-        async with scrape_html_browser.BrowserHtmlScraperFactory() as browser_html_scraper_factory:
+    store = scrape_store.ScraperStore()
+    async with scrape_html_http.HttpHtmlScraperFactory(scraper_store=store) as http_html_scraper_factory:
+        async with scrape_html_browser.BrowserHtmlScraperFactory(scraper_store=store) as browser_html_scraper_factory:
             scraper = Scraper(
                 ScraperConfig(
                     scraper_urls=[
@@ -193,10 +192,10 @@ async def main():
                     allowed_domains=["anthropic.com"],
                     page_cache=ScraperPageCache(),
                     max_queue_size=1024*1024,
-                    timeout_seconds=30
+                    timeout_seconds=30, 
+                    http_html_scraper_factory=http_html_scraper_factory,
+                    browser_html_scraper_factory=browser_html_scraper_factory
                 ),
-                http_html_scraper_factory,
-                browser_html_scraper_factory
             )
             await scraper.scrape()
 

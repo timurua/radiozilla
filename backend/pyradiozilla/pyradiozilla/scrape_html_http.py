@@ -1,20 +1,25 @@
 import asyncio
 import aiohttp
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-from typing import Optional, Dict, Any, List, Set
+from typing import Optional
 from scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import logging
+import scrape_store
+import scrape_model
 
 logger = logging.getLogger("scrape_html_http")
 
 class HttpHtmlScraper:
-    def __init__(self, client_session: aiohttp.ClientSession, timeout_seconds: int = 30):
+    def __init__(self, client_session: aiohttp.ClientSession, scraper_store: scrape_store.ScraperStore | None = None, timeout_seconds: int = 30):
         self.client_session = client_session
         self.timeout_seconds = timeout_seconds
+        self.scraper_store = scraper_store
 
     async def scrape(self, url: str) -> Optional[HtmlContent]:
-        """Asynchronously download a URL's content, extract canonical URL, outgoing links, and text content."""
+        if self.scraper_store:
+            response = await self.scraper_store.load_url_response(url)
+            if response:
+                return HtmlScraperProcessor(url, response.content.decode("utf-8")).extract()
+    
         try:
             async with self.client_session.get(url) as response:
                 response.raise_for_status()  # Ensure we notice bad responses
@@ -27,6 +32,16 @@ class HttpHtmlScraper:
         except (UnicodeDecodeError) as e:            
             logger.error(f"Error decoding text for {url}: {e}")
             return None
+        
+        if self.scraper_store:
+            response = scrape_model.HttpResponse(
+                status_code=200,
+                headers=None,
+                content=html_content.encode("utf-8") if html_content is not None else None,
+                url=url,
+                normalized_url=url
+            )
+            await self.scraper_store.store_url_response(response)
 
         return HtmlScraperProcessor(url, html_content).extract()
 
@@ -38,7 +53,7 @@ class HttpHtmlScraper:
 
 
 class HttpHtmlScraperFactory:
-    def __init__(self, timeout_seconds: int = 30):
+    def __init__(self, *, timeout_seconds: int = 30, scraper_store: scrape_store.ScraperStore | None = None):
         self.client_session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False),
             headers={
@@ -47,12 +62,14 @@ class HttpHtmlScraperFactory:
                 'Chrome/115.0.0.0 Safari/537.36'
             })
         self.timeout_seconds = timeout_seconds
+        self.scraper_store = scraper_store
 
     async def __aenter__(self) -> 'HttpHtmlScraperFactory':
         return self
     
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.client_session.close()
+        logger.info("Closing client session")
+        await self.close()
 
     async def close(self) -> None:
         await self.client_session.close()

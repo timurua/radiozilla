@@ -6,7 +6,11 @@ import concurrent.futures
 import concurrent
 import scrape_store
 import scrape_model
-from typing import Callable
+from typing import Callable, Awaitable, Tuple
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+import functools
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
 
@@ -28,8 +32,8 @@ class BrowserHtmlScraperFactory:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
-    async def newScraper(self) -> 'BrowserHtmlScraper':
-        return BrowserHtmlScraper(await self._getDriver(), self._returnDriver, self.scraper_store)
+    def newScraper(self) -> 'BrowserHtmlScraper':
+        return BrowserHtmlScraper(self._getDriver, self._returnDriver, self.scraper_store)
 
     async def _getDriver(self) -> webdriver.Chrome:
         if len(self.drivers) == 0:
@@ -71,17 +75,10 @@ class BrowserHtmlScraperFactory:
 
 
 class BrowserHtmlScraper:
-    def __init__(self, driver: webdriver.Chrome, driver_callback: Callable[[webdriver.Chrome], None], scraper_store: scrape_store.ScraperStore | None = None):
-        self.driver = driver
-        self.driver_callback = driver_callback
+    def __init__(self, driver_get: Callable[[], Awaitable[webdriver.Chrome]], driver_return: Callable[[webdriver.Chrome], None], scraper_store: scrape_store.ScraperStore | None = None):
+        self.driver_get = driver_get
+        self.driver_return = driver_return
         self.scraper_store = scraper_store
-
-    def __enter__(self) -> 'BrowserHtmlScraper':
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.driver_callback(self.driver) 
-        return
 
     async def scrape(self, url: str) -> HtmlContent:
         if self.scraper_store:
@@ -89,14 +86,34 @@ class BrowserHtmlScraper:
             if response:
                 return HtmlScraperProcessor(url, response.content.decode("utf-8")).extract()
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(executor, self.driver.get, url)
-        html = await loop.run_in_executor(executor, lambda: self.driver.page_source)
+        try:
+            driver = await self.driver_get()
+            await loop.run_in_executor(executor, driver.get, url)
+            html = await loop.run_in_executor(executor, lambda: driver.page_source)
+
+            def get_driver_data()-> Tuple[str, str, str]:
+                elements = driver.find_elements(By.XPATH, "//*")
+                visible_text = " ".join([element.text for element in elements if element.is_displayed()])
+                html = driver.page_source
+                title = driver.title
+                return html, visible_text, title
+            
+            data = await loop.run_in_executor(executor, get_driver_data)
+            html = data[0]
+            visible_text = data[1]
+            title = data[2]
+            
+        finally:
+            if driver:
+                self.driver_return(driver)
+        
         
         if self.scraper_store:
             response = scrape_model.HttpResponse(
                 status_code=200,
                 headers={},
                 content=html.encode("utf-8"),
+                visible_text=visible_text,
                 url=url,
                 normalized_url=url,
                 normalized_url_hash=None,
@@ -104,20 +121,19 @@ class BrowserHtmlScraper:
             )
             await self.scraper_store.store_url_response(response)
     
-        return HtmlScraperProcessor(url, html).extract()
-
-
+        return HtmlScraperProcessor(url, html, visible_text).extract()
+    
 # Example usage:
 if __name__ == "__main__":
     async def main() -> None:
         scraper_factory = BrowserHtmlScraperFactory()
         async with scraper_factory as scraper_factory:
-            with await scraper_factory.newScraper() as scraper:
-                result = await scraper.scrape("http://cnn.com/")
-                if result:
-                    print("Canonical URL:", result.canonical_url)
-                    print("Outgoing URLs:", result.outgoing_urls)
-                    print("Text Content:", result.text_content)
-                    print("Sitemap URL:", result.sitemap_url)
-                    print("Robots Content:", result.robots_content)
+            scraper = scraper_factory.newScraper()
+            result = await scraper.scrape("http://cnn.com/")
+            if result:
+                print("Canonical URL:", result.canonical_url)
+                print("Outgoing URLs:", result.outgoing_urls)
+                print("Text Content:", result.visible_text)
+                print("Sitemap URL:", result.sitemap_url)
+                print("Robots Content:", result.robots_content)
     asyncio.run(main())

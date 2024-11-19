@@ -98,7 +98,7 @@ if __name__ == "__main__":
                 if result:
                     print("Canonical URL:", result.canonical_url)
                     print("Outgoing URLs:", result.outgoing_urls)
-                    print("Text Content:", result.text_content)
+                    print("Text Content:", result.visible_text)
                     print("Sitemap URL:", result.sitemap_url)
                     print("Robots Content:", result.robots_content)
 

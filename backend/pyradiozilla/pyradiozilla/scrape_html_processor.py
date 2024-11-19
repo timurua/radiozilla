@@ -12,17 +12,18 @@ EXCLUDED_EXTENSIONS = (
 )
 
 class HtmlContent:
-    def __init__(self, canonical_url: str, outgoing_urls: list[str], text_content: str, sitemap_url: str, robots_content: list[str]):
+    def __init__(self, canonical_url: str, outgoing_urls: list[str], visible_text: str, sitemap_url: str | None, robots_content: list[str]):
         self.canonical_url = canonical_url
         self.outgoing_urls = outgoing_urls
-        self.text_content = text_content
+        self.visible_text = visible_text
         self.sitemap_url = sitemap_url
         self.robots_content = robots_content
 
 class HtmlScraperProcessor:
-    def __init__(self, url: str, html: str, ):
+    def __init__(self, url: str, html: str, visible_text: str | None = None):
         self.url = url
         self.html = html
+        self.visible_text = visible_text
 
     @staticmethod
     def is_excluded_url(href: str) -> bool:
@@ -44,7 +45,7 @@ class HtmlScraperProcessor:
         return False
 
     def extract(self) -> Optional[HtmlContent]:
-        soup = BeautifulSoup(self.html, 'html.parser')
+        soup = BeautifulSoup(self.html, 'lxml')
 
         # Determine the canonical URL
         canonical_link = soup.find('link', rel='canonical')

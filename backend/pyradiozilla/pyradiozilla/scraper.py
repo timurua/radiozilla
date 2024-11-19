@@ -161,8 +161,7 @@ class Scraper:
 
     async def scrape_url(self, url: ScraperUrl) -> Optional[ScraperPage]:
         if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
-            with await self.config.browser_html_scraper_factory.newScraper() as scraper_page_browser:
-                page = await scraper_page_browser.scrape(url.normalized_url)
+            page = await self.config.browser_html_scraper_factory.newScraper().scrape(url.normalized_url)
         else:
             with self.config.http_html_scraper_factory.newScraper() as scraper_page_http:
                 page = await scraper_page_http.scrape(url.normalized_url)

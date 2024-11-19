@@ -36,16 +36,24 @@ class ScraperStore:
                     status_code,
                     headers,
                     content,
-                    updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                    updated_at,
+                    content_type,
+                    title,
+                    content_date,
+                    visible_text
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10)
                 ON CONFLICT (normalized_url_hash) DO UPDATE
                 SET normalized_url = $2,
                     url = $3,
                     status_code = $4,
                     headers = $5,
                     content = $6,
-                    updated_at = NOW()
-            ''', normalized_url_hash, response.normalized_url, response.url, response.status_code, json.dumps(response.headers), response.content)
+                    updated_at = NOW(),
+                    content_type = $7,
+                    title = $8,
+                    content_date = $9,
+                    visible_text = $10
+            ''', normalized_url_hash, response.normalized_url, response.url, response.status_code, json.dumps(response.headers), response.content, response.content_type, response.title, response.content_date, response.visible_text)
 
     async def load_url_response(
         self,
@@ -57,7 +65,7 @@ class ScraperStore:
         pool = await self._get_pool()
         async with pool.acquire() as conn:
             row = await conn.fetchrow('''
-                SELECT normalized_url_hash, normalized_url, url, status_code, headers, content, updated_at
+                SELECT normalized_url_hash, normalized_url, url, status_code, headers, content, updated_at, content_type, title, content_date, visible_text
                 FROM http_responses
                 WHERE normalized_url_hash = $1
             ''', normalized_url_hash)
@@ -74,7 +82,11 @@ class ScraperStore:
             status_code=row['status_code'],
             headers=json.loads(row['headers']) if headers is not None else None,
             content=row['content'],
-            updated_at=row['updated_at']
+            updated_at=row['updated_at'],
+            visible_text=row["visible_text"],
+            title=row["title"],
+            content_type=row["content_type"],
+            content_date=row["content_date"]
         )
 
     async def close(self) -> None:
@@ -94,7 +106,11 @@ class ScraperStore:
                                 url TEXT NOT NULL,
                                 status_code INTEGER NOT NULL,
                                 headers JSONB,
+                                content_type TEXT,
                                 content BYTEA,
+                                title TEXT,
+                                visible_text TEXT,
+                                content_date TIMESTAMP,
                                 updated_at TIMESTAMP NOT NULL
                             )
                         ''')

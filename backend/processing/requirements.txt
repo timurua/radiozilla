@@ -1,0 +1,4 @@
+Flask
+debugpy
+Werkzeug
+python-dotenv

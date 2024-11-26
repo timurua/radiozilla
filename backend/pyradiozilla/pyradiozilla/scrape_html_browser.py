@@ -93,7 +93,14 @@ class BrowserHtmlScraper:
 
             def get_driver_data()-> Tuple[str, str, str]:
                 elements = driver.find_elements(By.XPATH, "//*")
-                visible_text = " ".join([element.text for element in elements if element.is_displayed()])
+                def is_displayed(element):
+                    try:
+                        return element.is_displayed()
+                    except:
+                        return False
+                    
+                elements[:] = filter(lambda element: is_displayed(element), elements)
+                visible_text = " ".join([element.text for element in elements])
                 html = driver.page_source
                 title = driver.title
                 return html, visible_text, title

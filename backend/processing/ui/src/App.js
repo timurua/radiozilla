@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 function App() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch data from the Flask API
-        fetch("/api/data")
+        // Fetch data from the Flask API using axios
+        axios.get("/api/data")
             .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                return response.json();
-            })
-            .then((data) => {
-                setData(data);
+                setData(response.data);
                 setLoading(false);
             })
             .catch((error) => {

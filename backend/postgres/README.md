@@ -22,3 +22,10 @@ sudo microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1
 sudo microk8s kubectl describe secret -n kube-system microk8s-dashboard-token
 ```
 
+Connecting to Postgres
+```
+# password postgrespassword
+
+psql -h localhost -p 30432 -U postgres -W
+```
+

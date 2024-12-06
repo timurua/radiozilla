@@ -2,10 +2,23 @@
 Kubernetes scripts
 
 ```
-kubectl apply -f persistence-volume.yaml
-kubectl apply -f persistence-volume-claim.yaml
-kubectl apply -f secret.yaml
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
-kubectl apply -f backup-cronjob.yaml
+sudo microk8s kubectl apply -f persistence-volume.yaml
+sudo microk8s kubectl apply -f persistence-volume-claim.yaml
+sudo microk8s kubectl apply -f secret.yaml
+sudo microk8s kubectl apply -f deployment.yaml
+sudo microk8s kubectl apply -f service.yaml
+sudo microk8s kubectl apply -f backup-cronjob.yaml
 ```
+
+Kubernetes dashboard
+```
+# create dashboard
+sudo microk8s enable dashboard
+
+# token
+sudo microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 10443:443
+
+# dashboad
+sudo microk8s kubectl describe secret -n kube-system microk8s-dashboard-token
+```
+

@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: pyapi
+Version: 0.1
+Requires-Dist: flask>=3.0.0
+Requires-Dist: flask-sqlalchemy>=3.1.1
+Requires-Dist: dependency-injector>=4.41.0
+Requires-Dist: python-dotenv>=1.0.0

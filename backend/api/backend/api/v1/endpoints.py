@@ -1,15 +1,27 @@
 from fastapi import APIRouter, Depends
-from ..deps import get_base_service
-from ...services.base import BaseService
-from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from ...database import get_db
+from ...services.health import HealthService
 
 router = APIRouter()
 
-class HealthResponse(BaseModel):
-    status: str
+async def get_health_service(db: AsyncSession = Depends(get_db)) -> HealthService:
+    return HealthService(db)
 
 @router.get("/health")
 async def health_check(
-    service: BaseService = Depends(get_base_service)
-) -> HealthResponse:
-    return HealthResponse(status=service.status)
+    health_service: HealthService = Depends(get_health_service)
+):
+    """
+    Basic health check endpoint
+    """
+    return await health_service.get_basic_health()
+
+@router.get("/health/detailed")
+async def detailed_health_check(
+    health_service: HealthService = Depends(get_health_service)
+):
+    """
+    Detailed health check endpoint
+    """
+    return await health_service.get_detailed_health()

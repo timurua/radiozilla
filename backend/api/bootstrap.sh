@@ -20,7 +20,7 @@ npm run build
 cd ..
 
 # Run database migrations (assuming you're using alembic)
-alembic upgrade head
+# alembic upgrade head
 
 # Start the application
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000

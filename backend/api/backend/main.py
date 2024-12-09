@@ -5,12 +5,18 @@ from backend.config import settings
 from .api.v1 import endpoints
 from .database import init_db
 from contextlib import asynccontextmanager
+import logging
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     yield
     
+# Configure the logger
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 app = FastAPI(title=settings.PROJECT_NAME , lifespan=lifespan)
 

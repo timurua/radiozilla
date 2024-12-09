@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import { fetchEmbedding, fetchSimilar, storeEmbedding } from '../services/api';
+import { fetchEmbedding, fetchSimilar } from '../services/api';
+import JsonViewer from '../components/JsonViewer';
 
 const Similarity: React.FC = () => {
     const [text, setText] = useState('');
@@ -8,7 +9,7 @@ const Similarity: React.FC = () => {
 
     const handleSearchSimilar = async () => {
         try {
-            const response = await fetchEmbedding(text);    
+            const response = await fetchSimilar(text);  
             setResponse(response);
         } catch (error) {
             console.error('Error searching similar:', error);
@@ -17,7 +18,7 @@ const Similarity: React.FC = () => {
 
     const handleFetchEmbedding = async () => {
         try {
-            const response = await fetchSimilar(text);    
+            const response = await fetchEmbedding(text);
             setResponse(response);
         } catch (error) {
             console.error('Error calculating embedding:', error);
@@ -54,7 +55,7 @@ const Similarity: React.FC = () => {
             <Row className="my-4">
                 <Col>
                     <h5>Response:</h5>
-                    <pre>{response}</pre>
+                    <pre><JsonViewer data={response}/></pre>
                 </Col>
             </Row>
         </Container>

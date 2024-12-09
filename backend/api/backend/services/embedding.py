@@ -10,17 +10,20 @@ class EmbeddingService:
         self._start_time = time.time()
         self._version = "1.0.0"
 
-    async def create_embeddings(self, texts: str):        
+    async def fetch_embedding(self, texts: str):        
         """Basic health check"""
         lines = [line.strip() for line in texts.split('\n') if line.strip()]
         model = SentenceTransformer('all-MiniLM-L6-v2')
         embeddings = model.encode(lines)
 
+        result = []
         for text, embedding in zip(lines, embeddings):
-            await self.session.execute(
-                sql_text("INSERT INTO embeddings (text, embedding) VALUES (:text, :embedding)"),
-                {"text": text, "embedding": embedding}
-            )
+            result.append({
+            "text": text,
+            "embedding": embedding.tolist()
+            })
+        
+        return {"embeddings": result}
 
         
         

@@ -35,8 +35,25 @@ class EmbeddingRequest(BaseModel):
 async def get_embedding_service(db: AsyncSession = Depends(get_db)) -> EmbeddingService:
     return EmbeddingService(db)
 
+@router.get("/embeddings")
+async def fetch_embedding(
+    text: str,
+    embedding_service: EmbeddingService = Depends(get_embedding_service)
+):
+    """
+    Fetch embeddings for the given text from query parameters
+    """
+    try:
+        embedding = await embedding_service.create_embedding(text)
+        return {"embedding": embedding}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
 @router.post("/embeddings")
-async def create_embedding(
+async def store_embedding(
     request: EmbeddingRequest,
     embedding_service: EmbeddingService = Depends(get_embedding_service)
 ):

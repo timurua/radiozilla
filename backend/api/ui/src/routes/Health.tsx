@@ -21,7 +21,7 @@ const App: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">PyAPI Frontend</h1>
+      <h1 className="text-2xl font-bold mb-4">API Health</h1>
       {error ? (
         <div className="p-4 bg-red-100 text-red-700 rounded-lg">
           Error: {error}

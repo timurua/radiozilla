@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import axios from 'axios';
+import { fetchEmbedding, fetchSimilar, storeEmbedding } from '../services/api';
 
 const Similarity: React.FC = () => {
     const [text, setText] = useState('');
@@ -8,17 +8,17 @@ const Similarity: React.FC = () => {
 
     const handleSearchSimilar = async () => {
         try {
-            const res = await axios.post('/api/search-similar', { text });
-            setResponse(res.data);
+            const response = await fetchEmbedding(text);    
+            setResponse(response);
         } catch (error) {
             console.error('Error searching similar:', error);
         }
     };
 
-    const handleCalculateEmbedding = async () => {
+    const handleFetchEmbedding = async () => {
         try {
-            const res = await axios.post('/api/calculate-embedding', { text });
-            setResponse(res.data);
+            const response = await fetchSimilar(text);    
+            setResponse(response);
         } catch (error) {
             console.error('Error calculating embedding:', error);
         }
@@ -46,7 +46,7 @@ const Similarity: React.FC = () => {
                     </Button>
                 </Col>
                 <Col>
-                    <Button variant="secondary" onClick={handleCalculateEmbedding}>
+                    <Button variant="secondary" onClick={handleFetchEmbedding}>
                         Calculate Embedding
                     </Button>
                 </Col>

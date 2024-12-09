@@ -17,7 +17,7 @@ app = FastAPI(title=settings.PROJECT_NAME , lifespan=lifespan)
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5174"],
+    allow_origin_regex="http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +29,3 @@ app.include_router(endpoints.router, prefix=settings.API_V1_STR)
 # Mount React static files
 app.mount("/", StaticFiles(directory="ui/dist", html=True), name="static")
  
-@app.on_event("startup")
-async def startup_event():
-    await init_db()

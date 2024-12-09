@@ -1,7 +1,10 @@
+# psql -h localhost -p 5432 -U user -d db
+
 version: '3.8'
+
 services:
   db:
-    image: postgres:14
+    image: pgvector/pgvector:0.8.0-pg17
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password

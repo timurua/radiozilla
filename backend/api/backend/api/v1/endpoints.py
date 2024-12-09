@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel
 from ...services.embedding import EmbeddingService
 import logging
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -36,36 +37,48 @@ class EmbeddingRequest(BaseModel):
 async def get_embedding_service(db: AsyncSession = Depends(get_db)) -> EmbeddingService:
     return EmbeddingService(db)
 
-@router.get("/embedding")
-async def fetch_embedding(
+class FAEmbedding(BaseModel):
+    content_hash: str
+    content: str
+    embedding: list[float]
+
+@router.get("/similar-embeddings")
+async def fetch_embeddings(
     text: str,
     embedding_service: EmbeddingService = Depends(get_embedding_service)
 ):
-    """
-    Fetch embeddings for the given text from query parameters
-    """
     try:
-        embedding = await embedding_service.fetch_embedding(text)
-        return {"embedding": embedding}
+        logging.info(f"Finding similar embeddings for text: {text}")
+        embeddings = await embedding_service.find_similar_embeddings(text)
+        logging.info(f"Found {len(embeddings)} similar embeddings")
+        return [FAEmbedding(
+            content_hash=embedding.content_hash,
+            content=embedding.content,
+            embedding=embedding.embedding
+        ) for embedding in embeddings]  
     except Exception as e:
-        logging.error(f"Error fetching embedding: {str(e)}")
+        logging.error(f"Error similar-embeddings: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
 
-@router.post("/embedding")
-async def store_embedding(
+@router.post("/embeddings")
+async def upsert_embeddings(
     request: EmbeddingRequest,
     embedding_service: EmbeddingService = Depends(get_embedding_service)
 ):
-    """
-    Create embeddings for the given text
-    """
     try:
-        embedding = await embedding_service.create_embedding(request.text)
-        return {"embedding": embedding}
+        logging.info(f"Upserting embeddings for text: {request.text}")
+        embeddings = await embedding_service.upsert_embeddings(request.text)
+        logging.info(f"Upserted embeddings: {embeddings}")
+        return [FAEmbedding(
+            content_hash=embedding.content_hash,
+            content=embedding.content,
+            embedding=embedding.embedding
+        ) for embedding in embeddings]  
     except Exception as e:
+        logging.error(f"Error embeddings: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

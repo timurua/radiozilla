@@ -24,28 +24,18 @@ export const fetchHealth = async (): Promise<HealthResponse> => {
     return await fetchURL('/api/v1/health');
 };
 
-export const fetchSimilar = async (text: string): Promise<string> => {
-    const response = await axios.post(createURL('/api/v1/similar'), { text }, {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-    return response.data;
-}
-
-export const fetchEmbedding = async (text: string): Promise<string> => {
-    const response = await axios.get(createURL(`/api/v1/embedding`), {
+export const findSimilarEmbeddings = async (text: string): Promise<string> => {
+    const response = await axios.get(createURL(`/api/v1/similar-embeddings`), {
         params: { text }
     });
     return response.data;
 }
 
-export const storeEmbedding = async (text: string): Promise<string> => {
-    const response = await axios.post(createURL('/api/v1/embedding'), { text }, {
+export const upsertEmbeddings = async (text: string): Promise<any> => {
+    const response = await axios.post(createURL('/api/v1/embeddings'), { text }, {
         headers: {
             'Content-Type': 'application/json',
         },
     });
     return response.data;
 }
-

@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Create virtual environment and install dependencies
-if [ ! -d "venv" ]; then
+if [ ! -d ".venv" ]; then
     echo "Creating virtual environment..."
-    python -m venv venv
+    python -m venv .venv
 else
     echo "Virtual environment already exists"
 fi
-source venv/bin/activate
+source .venv/bin/activate
 pip install -e .
 
 # Start PostgreSQL using Docker

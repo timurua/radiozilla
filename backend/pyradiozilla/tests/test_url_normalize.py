@@ -3,7 +3,7 @@ import sys
 import os
 
 # Add the directory containing pyradiozilla to the system path
-from pyradiozilla import url_normalize
+from backend.pywebscaper.pywebscraper import url_normalize
 
 class TestUrlNormalize(unittest.TestCase):
 

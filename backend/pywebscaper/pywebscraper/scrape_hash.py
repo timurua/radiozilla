@@ -4,6 +4,7 @@ import uuid
 import hashlib
 from pathlib import Path
 import mimetypes
+from url_normalize import url_normalize 
 
 
 def generate_url_safe_uuid() -> str:
@@ -23,3 +24,7 @@ def generate_url_safe_hash_for_file(file_path)->str:
             sha256_hash.update(byte_block)
     base64_encoded = base64.urlsafe_b64encode(sha256_hash.digest()).decode('utf-8')
     return base64_encoded[:32]
+
+def generate_normalized_url_hash(url:str)->str:
+    normalized_url = url_normalize(url)
+    return generate_url_safe_id(normalized_url)

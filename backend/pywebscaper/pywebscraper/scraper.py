@@ -1,13 +1,13 @@
 import asyncio
 from typing import Optional
 import logging
-import url_normalize
 from urllib.parse import urlparse
 import scrape_html_http
 import scrape_html_browser
 import aiohttp
 import sys
 import scrape_store
+import url_normalize
 
 logger = logging.getLogger("scraper")
 
@@ -54,7 +54,9 @@ class ScraperConfig:
                  page_cache: Optional[ScraperPageCache] = None, max_queue_size: int = 1024*1024,
                  use_headless_browser: bool = False,
                  timeout_seconds: int = 30, max_initiated_urls: int = 64 * 1024,
-                 http_html_scraper_factory: scrape_html_http.HttpHtmlScraperFactory, browser_html_scraper_factory : scrape_html_browser.BrowserHtmlScraperFactory|None = None):
+                 http_html_scraper_factory: scrape_html_http.HttpHtmlScraperFactory, 
+                 browser_html_scraper_factory : scrape_html_browser.BrowserHtmlScraperFactory|None = None,
+                 scraper_store: scrape_store.ScraperStore|None = None):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.allowed_domains = allowed_domains
@@ -67,6 +69,7 @@ class ScraperConfig:
         self.max_initiated_urls = max_initiated_urls
         self.browser_html_scraper_factory = browser_html_scraper_factory
         self.http_html_scraper_factory = http_html_scraper_factory
+        self.scraper_store = scraper_store  
 
 
 class ScraperLoopResult:

@@ -6,7 +6,7 @@ from .api.v1 import endpoints
 from .database import init_db
 from contextlib import asynccontextmanager
 import logging
-from scheduler import ScraperScheduler
+from .scheduler import ScraperScheduler
 
 schedule = ScraperScheduler()
 
@@ -14,7 +14,7 @@ schedule = ScraperScheduler()
 async def lifespan(app: FastAPI):
     await init_db()
     schedule.start()
-    yield
+    yield 
     schedule.stop()
     
 # Configure the logger
@@ -38,5 +38,5 @@ app.add_middleware(
 app.include_router(endpoints.router, prefix=settings.API_V1_STR)
 
 # Mount React static files
-app.mount("/", StaticFiles(directory="ui/dist", html=True), name="static")
+app.mount("/", StaticFiles(directory="ui/build", html=True), name="static")
  

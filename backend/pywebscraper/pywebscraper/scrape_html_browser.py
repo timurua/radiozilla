@@ -1,22 +1,20 @@
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from scrape_html_processor import HtmlContent, HtmlScraperProcessor
+from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import concurrent.futures
 import concurrent
-import scrape_store
-import scrape_model
+from .scrape_store import ScraperStore
+from .scrape_model import HttpResponse
 from typing import Callable, Awaitable, Tuple
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-import functools
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
 
 
 class BrowserHtmlScraperFactory:
-    def __init__(self, *, scraper_store: scrape_store.ScraperStore | None = None):
+    def __init__(self, *, scraper_store: ScraperStore | None = None):
         self.scraper_store = scraper_store
         self.drivers: list[webdriver.Chrome] = []
 
@@ -75,7 +73,7 @@ class BrowserHtmlScraperFactory:
 
 
 class BrowserHtmlScraper:
-    def __init__(self, driver_get: Callable[[], Awaitable[webdriver.Chrome]], driver_return: Callable[[webdriver.Chrome], None], scraper_store: scrape_store.ScraperStore | None = None):
+    def __init__(self, driver_get: Callable[[], Awaitable[webdriver.Chrome]], driver_return: Callable[[webdriver.Chrome], None], scraper_store: ScraperStore | None = None):
         self.driver_get = driver_get
         self.driver_return = driver_return
         self.scraper_store = scraper_store
@@ -116,7 +114,7 @@ class BrowserHtmlScraper:
         
         
         if self.scraper_store:
-            response = scrape_model.HttpResponse(
+            response = HttpResponse(
                 status_code=200,
                 headers={},
                 content=html.encode("utf-8"),

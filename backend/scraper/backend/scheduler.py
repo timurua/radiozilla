@@ -2,7 +2,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
 import asyncio
-from services.scraper import ScraperService
+from .services.scraper import ScraperService
 
 class ScraperScheduler:
     def __init__(self):

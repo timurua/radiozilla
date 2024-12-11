@@ -2,6 +2,7 @@ from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 import re
 from typing import List, Tuple
 from re import Match
+from .scrape_hash import generate_url_safe_id
 
 def normalize_preserving_semantics(url: str) -> str:
     """
@@ -149,3 +150,7 @@ def normalize_changing_semantics(url: str) -> str:
         fragment
     ))
     return normalized_url
+
+def normalized_url_hash(url:str)->str:
+    normalized_url = normalize_changing_semantics(url)
+    return generate_url_safe_id(normalized_url)

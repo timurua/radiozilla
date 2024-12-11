@@ -1,15 +1,15 @@
 import asyncio
 import aiohttp
 from typing import Optional
-from scrape_html_processor import HtmlContent, HtmlScraperProcessor
+from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import logging
-import scrape_store
-import scrape_model
+from .scrape_store import ScraperStore
+from .scrape_model import HttpResponse
 
 logger = logging.getLogger("scrape_html_http")
 
 class HttpHtmlScraper:
-    def __init__(self, client_session: aiohttp.ClientSession, scraper_store: scrape_store.ScraperStore | None = None, timeout_seconds: int = 30):
+    def __init__(self, client_session: aiohttp.ClientSession, scraper_store: ScraperStore | None = None, timeout_seconds: int = 30):
         self.client_session = client_session
         self.timeout_seconds = timeout_seconds
         self.scraper_store = scraper_store
@@ -34,7 +34,7 @@ class HttpHtmlScraper:
             return None
         
         if self.scraper_store:
-            response = scrape_model.HttpResponse(
+            response = HttpResponse(
                 status_code=200,
                 headers=None,
                 content=html_content.encode("utf-8") if html_content is not None else None,
@@ -53,7 +53,7 @@ class HttpHtmlScraper:
 
 
 class HttpHtmlScraperFactory:
-    def __init__(self, *, timeout_seconds: int = 30, scraper_store: scrape_store.ScraperStore | None = None):
+    def __init__(self, *, timeout_seconds: int = 30, scraper_store: ScraperStore | None = None):
         self.client_session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False),
             headers={

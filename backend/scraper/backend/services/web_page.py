@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select
 from sentence_transformers import SentenceTransformer
 from ..models.web_page import WebPage
-from ....pywebscaper.pywebscraper.scrape_store import ScraperStore
-from ....pywebscaper.pywebscraper.scrape_model import HttpResponse
+from pywebscraper.scrape_store import ScraperStore
+from pywebscraper.scrape_model import HttpResponse
 import logging
 from typing import Optional
-from ....pywebscaper.pywebscraper.scrape_hash import generate_normalized_url_hash
+from pywebscraper.url_normalize import normalized_url_hash
 
 class WebPageService:
     _model = None
@@ -63,7 +63,7 @@ class WebPageService:
             await self.session.merge(web_page)
 
     async def find_web_page_by_url(self, normalized_url: str) -> WebPage:
-        normalized_url_hash = generate_normalized_url_hash(normalized_url)
+        normalized_url_hash = normalized_url_hash(normalized_url)
         stmt = select(WebPage).where(WebPage.normalized_url_hash == normalized_url_hash)
         result = await self.session.execute(stmt)
         return result.scalar_one()

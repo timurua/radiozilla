@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from typing import List, Dict
 from datetime import datetime
 from .base import Base
-from ....pywebscaper.pywebscraper.scrape_hash import generate_normalized_url_hash
+from pywebscraper.url_normalize import normalized_url_hash
 
 class WebPageSeed(Base):
     __tablename__ = "web_page_seeds"
@@ -21,14 +21,14 @@ class WebPageSeed(Base):
 # Automatically set hash when content is modified
 @event.listens_for(WebPageSeed.normalized_url, 'set')
 def set_content_hash(target, value, oldvalue, initiator):
-    target.normalized_url_hash = generate_normalized_url_hash(value)
+    target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(WebPageSeed, 'before_insert')
 @event.listens_for(WebPageSeed, 'before_update')
 def ensure_hash(mapper, connection, target):
     if target.normalized_url and not target.normalized_url_hash:
-        target.normalized_url_hash = generate_normalized_url_hash(target.normalized_url)
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 
 
 class WebPage(Base):
@@ -49,11 +49,11 @@ class WebPage(Base):
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.normalized_url, 'set')
 def set_content_hash(target, value, oldvalue, initiator):
-    target.normalized_url_hash = generate_normalized_url_hash(value)
+    target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(WebPage, 'before_insert')
 @event.listens_for(WebPage, 'before_update')
 def ensure_hash(mapper, connection, target):
     if target.normalized_url and not target.normalized_url_hash:
-        target.normalized_url_hash = generate_normalized_url_hash(target.normalized_url)
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)

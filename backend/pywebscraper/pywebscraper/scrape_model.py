@@ -1,7 +1,7 @@
 from typing import Dict
 from dataclasses import dataclass
 from datetime import datetime
-import scrape_hash
+from .scrape_hash import generate_url_safe_id
 
 @dataclass
 class HttpResponse:
@@ -34,7 +34,7 @@ class HttpResponse:
         self.status_code = status_code
         self.url = url
         self.normalized_url = normalized_url
-        self.normalized_url_hash = normalized_url_hash if normalized_url_hash is not None else scrape_hash.generate_url_safe_id(normalized_url)
+        self.normalized_url_hash = normalized_url_hash if normalized_url_hash is not None else generate_url_safe_id(normalized_url)
         self.headers = headers
         self.content = content 
         self.visible_text = visible_text

@@ -2,12 +2,13 @@ import asyncio
 from typing import Optional
 import logging
 from urllib.parse import urlparse
-import scrape_html_http
-import scrape_html_browser
+from .scrape_html_http import HttpHtmlScraperFactory
+from .scrape_html_browser import BrowserHtmlScraperFactory
+from .scrape_model import HttpResponse
 import aiohttp
 import sys
-import scrape_store
-import url_normalize
+from .scrape_store import ScraperStore
+from .url_normalize import normalize_changing_semantics
 
 logger = logging.getLogger("scraper")
 
@@ -15,7 +16,7 @@ class ScraperUrl:
     def __init__(self, url: str, no_cache: bool = False, max_depth: int = 16):
         self.url = url
         if url:
-            self.normalized_url = url_normalize.normalize_changing_semantics(
+            self.normalized_url = normalize_changing_semantics(
                 url)
         else:
             self.normalized_url = ""
@@ -54,9 +55,9 @@ class ScraperConfig:
                  page_cache: Optional[ScraperPageCache] = None, max_queue_size: int = 1024*1024,
                  use_headless_browser: bool = False,
                  timeout_seconds: int = 30, max_initiated_urls: int = 64 * 1024,
-                 http_html_scraper_factory: scrape_html_http.HttpHtmlScraperFactory, 
-                 browser_html_scraper_factory : scrape_html_browser.BrowserHtmlScraperFactory|None = None,
-                 scraper_store: scrape_store.ScraperStore|None = None):
+                 http_html_scraper_factory: HttpHtmlScraperFactory, 
+                 browser_html_scraper_factory : BrowserHtmlScraperFactory|None = None,
+                 scraper_store: ScraperStore|None = None):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.allowed_domains = allowed_domains
@@ -181,9 +182,17 @@ async def main():
             logging.StreamHandler(sys.stdout),  # Log to standard output
         ]
     )
-    store = scrape_store.ScraperStore()
-    async with scrape_html_http.HttpHtmlScraperFactory(scraper_store=store) as http_html_scraper_factory:
-        async with scrape_html_browser.BrowserHtmlScraperFactory(scraper_store=store) as browser_html_scraper_factory:
+    class InMemoryScraperStore(ScraperStore):
+        def __init__(self):
+            self.responses = {}
+        async def store_url_response(self, response: HttpResponse) -> None:
+            self.responses[response.normalized_url] = response
+        async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
+            return self.responses.get(normalized_url)
+        
+    store = ScraperStore()
+    async with HttpHtmlScraperFactory(scraper_store=store) as http_html_scraper_factory:
+        async with BrowserHtmlScraperFactory(scraper_store=store) as browser_html_scraper_factory:
             scraper = Scraper(
                 ScraperConfig(
                     scraper_urls=[

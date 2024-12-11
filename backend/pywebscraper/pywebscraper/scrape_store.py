@@ -1,9 +1,5 @@
-import json
-from typing import Optional, Dict, Any
-import scrape_hash
-from scrape_model import HttpResponse
-import asyncio
-from datetime import datetime
+from typing import Optional
+from .scrape_model import HttpResponse
 from abc import ABC, abstractmethod
 
 class ScraperStore(ABC):

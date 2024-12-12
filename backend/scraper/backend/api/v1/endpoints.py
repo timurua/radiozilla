@@ -97,6 +97,7 @@ class ScraperStartRequest(BaseModel):
 async def scraper_start(
     request: ScraperStartRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
+    web_page_service: WebPageService  = Depends(get_web_page_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ):
     class Callback(ScraperCallback):
@@ -106,7 +107,7 @@ async def scraper_start(
     try:
         logging.info(f"Starting scraper for url: {request.url}")
         urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
-        await scraper_service.start(urls, request.max_depth, Callback())
+        await scraper_service.start(urls, web_page_service.get_scraper_store(), Callback())
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error scraper-start: {str(e)}", exc_info=True)

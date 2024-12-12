@@ -24,16 +24,10 @@ class BrowserHtmlScraperFactory:
             loop.run_in_executor(executor, driver.quit)
         self.drivers = []
 
-    async def __aenter__(self) -> 'BrowserHtmlScraperFactory':
-        return self
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.close()
-
     def newScraper(self) -> 'BrowserHtmlScraper':
         return BrowserHtmlScraper(self._getDriver, self._returnDriver, self.scraper_store)
 
-    async def _getDriver(self) -> webdriver.Chrome:
+    def _getDriver(self) -> webdriver.Chrome:
         if len(self.drivers) == 0:
             chrome_options = Options()
 
@@ -73,7 +67,7 @@ class BrowserHtmlScraperFactory:
 
 
 class BrowserHtmlScraper:
-    def __init__(self, driver_get: Callable[[], Awaitable[webdriver.Chrome]], driver_return: Callable[[webdriver.Chrome], None], scraper_store: ScraperStore | None = None):
+    def __init__(self, driver_get: Callable[[], webdriver.Chrome], driver_return: Callable[[webdriver.Chrome], None], scraper_store: ScraperStore | None = None):
         self.driver_get = driver_get
         self.driver_return = driver_return
         self.scraper_store = scraper_store
@@ -85,10 +79,7 @@ class BrowserHtmlScraper:
                 return HtmlScraperProcessor(url, response.content.decode("utf-8")).extract()
         loop = asyncio.get_event_loop()
         try:
-            driver = await self.driver_get()
-            await loop.run_in_executor(executor, driver.get, url)
-            html = await loop.run_in_executor(executor, lambda: driver.page_source)
-
+            driver = self.driver_get()
             def get_driver_data()-> Tuple[str, str, str]:
                 elements = driver.find_elements(By.XPATH, "//*")
                 def is_displayed(element):
@@ -118,6 +109,7 @@ class BrowserHtmlScraper:
                 status_code=200,
                 headers={},
                 content=html.encode("utf-8"),
+                title=title,
                 visible_text=visible_text,
                 url=url,
                 normalized_url=url,

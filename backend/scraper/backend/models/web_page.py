@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, DateTime, event
+from sqlalchemy import Integer, DateTime, event,LargeBinary
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
@@ -16,7 +16,7 @@ class WebPageSeed(Base):
     normalized_url: Mapped[str] = mapped_column(String)
     url: Mapped[str] = mapped_column(String)
     max_depth: Mapped[int] = mapped_column(Integer)
-    url_patterns: Mapped[List[str]] = mapped_column(JSONB)
+    url_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
         
 # Automatically set hash when content is modified
 @event.listens_for(WebPageSeed.normalized_url, 'set')
@@ -38,13 +38,13 @@ class WebPage(Base):
     normalized_url: Mapped[str] = mapped_column(String)
     url: Mapped[str] = mapped_column(String)
     status_code: Mapped[int] = mapped_column(Integer)
-    headers: Mapped[Dict[str, str]] = mapped_column(JSONB)
-    content: Mapped[bytes] = mapped_column(JSONB)
-    content_type: Mapped[str] = mapped_column(String)
-    title: Mapped[str] = mapped_column(String)
-    visible_text: Mapped[str] = mapped_column(String)
-    content_date: Mapped[datetime] = mapped_column(DateTime)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    headers: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=True, default=None)
+    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=True, default=None)
+    content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    title: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    content_date: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=True, default=None)
     
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.normalized_url, 'set')

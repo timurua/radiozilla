@@ -61,9 +61,9 @@ class WebPageService:
             logging.info(f"Inserting web page for url: {web_page.url}")
             await self.session.merge(web_page)
 
-    async def find_web_page_by_url(self, normalized_url: str) -> WebPage:
-        normalized_url_hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPage).where(WebPage.normalized_url_hash == normalized_url_hash)
+    async def find_web_page_by_url(self, normalized_url: str) -> WebPage|None:
+        hash = normalized_url_hash(normalized_url)
+        stmt = select(WebPage).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
-        return result.scalar_one()
+        return result.scalar_one_or_none()
     

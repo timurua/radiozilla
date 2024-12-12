@@ -2,7 +2,7 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select
 from pywebscraper.scrape_store import ScraperStore
-from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperPageCache, ScraperCallback
+from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperCallback
 from pywebscraper.scrape_html_browser import BrowserHtmlScraperFactory
 from pywebscraper.scrape_html_http import HttpHtmlScraperFactory
 
@@ -33,7 +33,6 @@ class ScraperService:
                 max_parallel_requests=16,
                 use_headless_browser=True,
                 allowed_domains=["anthropic.com"],
-                page_cache=ScraperPageCache(),
                 max_queue_size=1024*1024,
                 timeout_seconds=30, 
                 http_html_scraper_factory=ScraperService._http_html_scraper_factory,

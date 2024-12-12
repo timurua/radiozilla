@@ -105,11 +105,11 @@ async def scraper_start(
     
     try:
         logging.info(f"Starting scraper for url: {request.url}")
-        urls = list(ScraperUrl(url=request.url, max_depth=0))
+        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
         await scraper_service.start(urls, request.max_depth, Callback())
         return {"status": "success"}
     except Exception as e:
-        logging.error(f"Error scraper-start: {str(e)}")
+        logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -124,7 +124,7 @@ async def scraper_stop(
         await scraper_service.stop()
         return {"status": "success"}
     except Exception as e:
-        logging.error(f"Error scraper-start: {str(e)}")
+        logging.error(f"Error scraper-stop: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

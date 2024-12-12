@@ -18,14 +18,28 @@ class HttpHtmlScraper:
 
     async def scrape(self, url: str) -> Optional[HtmlContent]:
         if self.scraper_store:
-            response = await self.scraper_store.load_url_response(url)
-            if response:
-                return HtmlScraperProcessor(url, response.content.decode("utf-8")).extract()
+            cached_response = await self.scraper_store.load_url_response(url)
+            if cached_response and cached_response.content:
+                return HtmlScraperProcessor(url, cached_response.content.decode("utf-8")).extract()
     
         try:
-            async with self.client_session.get(url) as response:
-                response.raise_for_status()  # Ensure we notice bad responses
-                html_content = await response.text()
+            async with self.client_session.get(url) as http_response:
+                if not http_response.status == 200:
+                    logger.error(f"Error fetching {url}: {http_response.status}")
+                    return None
+                html_content = await http_response.text()
+                if self.scraper_store:
+                    cached_response=HttpResponse(
+                    status_code=http_response.status,
+                    headers={str(k): str(v) for k, v in dict(http_response.headers).items()},
+                    content=html_content.encode("utf-8") if html_content is not None else None,
+                    url=url,
+                    normalized_url=normalize_url(url),
+                    normalized_url_hash=normalized_url_hash(url),
+                )
+                    await self.scraper_store.store_url_response(cached_response)
+                
+                
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             logger.error(f"Error fetching {url}: {e}")
             return None
@@ -34,17 +48,6 @@ class HttpHtmlScraper:
         except (UnicodeDecodeError) as e:            
             logger.error(f"Error decoding text for {url}: {e}")
             return None
-        
-        if self.scraper_store:
-            response = HttpResponse(
-                status_code=200,
-                headers=None,
-                content=html_content.encode("utf-8") if html_content is not None else None,
-                url=url,
-                normalized_url=normalize_url(url),
-                normalized_url_hash=normalized_url_hash(url),
-            )
-            await self.scraper_store.store_url_response(response)
 
         return HtmlScraperProcessor(url, html_content).extract()
 

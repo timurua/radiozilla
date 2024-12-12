@@ -78,10 +78,10 @@ class BrowserHtmlScraper:
         self.driver_return = driver_return
         self.scraper_store = scraper_store
 
-    async def scrape(self, url: str) -> HtmlContent:
+    async def scrape(self, url: str) -> HtmlContent|None:
         if self.scraper_store:
             response = await self.scraper_store.load_url_response(url)
-            if response:
+            if response and response.content:
                 return HtmlScraperProcessor(url, response.content.decode("utf-8")).extract()
         loop = asyncio.get_event_loop()
         try:

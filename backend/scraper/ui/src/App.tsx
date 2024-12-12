@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Health from './routes/Health';
 import Root from './components/Root';
-import Similarity from './routes/Similarity';
+import Scraper from './routes/Scraper';
 
 const App: React.FC = () => {
   return (
@@ -13,7 +13,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Health />} />
           <Route path="/health" element={<Health />} />
-          <Route path="/similarity" element={<Similarity />} />
+          <Route path="/scraper" element={<Scraper />} />
         </Routes>
       </Root>
       </BrowserRouter>

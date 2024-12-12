@@ -24,18 +24,28 @@ export const fetchHealth = async (): Promise<HealthResponse> => {
     return await fetchURL('/api/v1/health');
 };
 
-export const findSimilarEmbeddings = async (text: string): Promise<string> => {
-    const response = await axios.get(createURL(`/api/v1/similar-embeddings`), {
-        params: { text }
-    });
-    return response.data;
+export const getScraperSocketPath = (): string => {
+    // const url = new URL(createURL('/api/v1/scraper-ws'))
+    // url.protocol = url.protocol.replace('http', 'ws');
+    // return url.toString();
+    return createURL('/api/v1/scraper-ws');
 }
 
-export const upsertEmbeddings = async (text: string): Promise<any> => {
-    const response = await axios.post(createURL('/api/v1/embeddings'), { text }, {
+export const startScraper = async (url: string, maxdepth: number): Promise<any> => {
+    const response = await axios.post(createURL('/api/v1/scraper-start'), { url, "max_depth": maxdepth }, {
         headers: {
             'Content-Type': 'application/json',
         },
     });
     return response.data;
 }
+
+export const stopScraper = async (): Promise<any> => {
+    const response = await axios.post(createURL('/api/v1/scraper-stop'), { reason: "Manual Stop" }, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data;
+}
+

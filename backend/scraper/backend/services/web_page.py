@@ -20,8 +20,7 @@ class WebPageService:
 
     def get_scraper_store(self) -> ScraperStore:
         service = self
-        class InMemoryScraperStore(ScraperStore):
-            
+        class ServiceScraperStore(ScraperStore):            
             async def store_url_response(self, response: HttpResponse) -> None:
                 await service.upsert_web_page(WebPage(
                     status_code = response.status_code,
@@ -54,7 +53,7 @@ class WebPageService:
                         content_date = web_page.content_date
                     )
                 return None
-                
+        return ServiceScraperStore()
 
 
     async def upsert_web_page(self, web_page: WebPage) -> None:

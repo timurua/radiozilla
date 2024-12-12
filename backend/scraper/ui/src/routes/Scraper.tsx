@@ -1,17 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import { upsertEmbeddings, findSimilarEmbeddings } from '../services/api';
+import { startScraper, stopScraper, getScraperSocketPath } from '../services/api';
 import JsonViewer from '../components/JsonViewer';
 
-const Similarity: React.FC = () => {
-    const [text, setText] = useState('');
-    const [response, setResponse] = useState('');
+const Scraper: React.FC = () => {
+    const [url, setUrl] = useState('https://www.anthropic.com/');
+    const [maxDepth, setMaxDepth] = useState(5);
     const [loading, setLoading] = useState(false);
+
+    const [_, setSocket] = useState<WebSocket|null>(null);
+    const [response, setResponse] = useState<any>(null);
+    const [messages, setMessages] = useState<string[]>([]);
+
+    useEffect(() => {
+        // Create WebSocket connection
+        const ws = new WebSocket(getScraperSocketPath());
+
+        ws.onopen = () => {
+            console.log('Connected to WebSocket');
+        };
+
+        ws.onmessage = (event) => {
+            console.log(`Receved event on WebSocket ${JSON.stringify(event.data)}`);
+            setMessages(prev => [...prev, event.data]);
+        };
+
+        ws.onclose = () => {
+            console.log('Disconnected from WebSocket');
+        };
+
+        setSocket(ws);
+
+        // Cleanup on component unmount
+        return () => {
+            ws.close();
+        };
+    }, []);
 
     const handleStartScraping = async () => {
         try {
             setLoading(true);
-            const response = await findSimilarEmbeddings(text);
+            const response = await startScraper(
+                url,
+                maxDepth
+            );
             setResponse(response);
         } catch (error) {
             console.error('Error searching similar:', error);
@@ -22,8 +54,7 @@ const Similarity: React.FC = () => {
 
     const handleStopScraping = async () => {
         try {
-            setLoading(true);
-            const response = await upsertEmbeddings(text);
+            const response = await stopScraper();
             setResponse(response);
         } catch (error) {
             console.error('Error calculating embedding:', error);
@@ -53,14 +84,14 @@ const Similarity: React.FC = () => {
                         <Form.Control
                             as="textarea"
                             rows={1}
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
                         />
                         <Form.Label>Max Depth</Form.Label>
                         <Form.Control
                             type="number"
-                            value={5}
-                            onChange={(e) => console.log('Max Depth:', e.target.value)}
+                            value={maxDepth}
+                            onChange={(e) => setMaxDepth(parseInt(e.target.value))}
                         />
                     </Form.Group>
                 </Col>
@@ -83,8 +114,15 @@ const Similarity: React.FC = () => {
                     <pre><JsonViewer data={response} /></pre>
                 </Col>
             </Row>
+            <div className="border rounded-lg p-4 h-64 overflow-y-auto">
+                {messages.map((msg, index) => (
+                <div key={index} className="mb-2 p-2 bg-gray-100 rounded">
+                    <pre><JsonViewer data={msg} /></pre>
+                </div>
+                ))}
+            </div>
         </Container>
     );
 };
 
-export default Similarity;
+export default Scraper;

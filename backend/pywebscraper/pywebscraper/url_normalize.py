@@ -151,6 +151,9 @@ def normalize_changing_semantics(url: str) -> str:
     ))
     return normalized_url
 
+def normalize_url(url:str)->str:   
+    return normalize_changing_semantics(url)
+
 def normalized_url_hash(url:str)->str:
-    normalized_url = normalize_changing_semantics(url)
+    normalized_url = normalize_url(url)
     return generate_url_safe_id(normalized_url)

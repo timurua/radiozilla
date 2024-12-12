@@ -9,11 +9,12 @@ import aiohttp
 import sys
 from .scrape_store import ScraperStore
 from .url_normalize import normalize_changing_semantics
+from abc import ABC, abstractmethod
 
 logger = logging.getLogger("scraper")
 
 class ScraperUrl:
-    def __init__(self, url: str, no_cache: bool = False, max_depth: int = 16):
+    def __init__(self, url: str, *, no_cache: bool = False, max_depth: int = 16):
         self.url = url
         if url:
             self.normalized_url = normalize_changing_semantics(
@@ -29,6 +30,12 @@ class ScraperUrl:
 
     def is_terminal(self):
         return self.max_depth < 0
+    
+class ScraperCallback(ABC):
+        @abstractmethod
+        def on_log(self, text: str) -> None:
+            pass
+
 
 
 class ScraperPage:
@@ -57,7 +64,8 @@ class ScraperConfig:
                  timeout_seconds: int = 30, max_initiated_urls: int = 64 * 1024,
                  http_html_scraper_factory: HttpHtmlScraperFactory, 
                  browser_html_scraper_factory : BrowserHtmlScraperFactory|None = None,
-                 scraper_store: ScraperStore|None = None):
+                 scraper_store: ScraperStore|None = None,
+                 scraper_callback: ScraperCallback|None = None):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.allowed_domains = allowed_domains
@@ -71,8 +79,13 @@ class ScraperConfig:
         self.browser_html_scraper_factory = browser_html_scraper_factory
         self.http_html_scraper_factory = http_html_scraper_factory
         self.scraper_store = scraper_store  
+        self.scraper_callback = scraper_callback
 
-
+    def log(self, text: str) -> None:
+        logger.info(text)
+        if self.scraper_callback:
+            self.scraper_callback.on_log(text)
+            
 class ScraperLoopResult:
     def __init__(self, completed_url_count: int):
         self.completed_urls_count = completed_url_count
@@ -88,13 +101,7 @@ class Scraper:
             maxsize=config.max_queue_size)
         self.pages: dict[str, Optional[ScraperPage]] = {}
 
-    def __enter__(self):
-        return self
-    
-    async def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-    async def scrape(self):
+    async def start(self):
         for scraper_url in self.config.scraper_urls:
             await self.url_queue.put(scraper_url)
 
@@ -102,8 +109,6 @@ class Scraper:
         for i in range(self.config.max_parallel_requests):
             task = asyncio.create_task(self.scrape_loop(f"Scraper-{i}"))
             tasks.append(task)
-
-        results = await asyncio.gather(*tasks)
 
     async def scrape_loop(self, name: str) -> ScraperLoopResult:
         completed_urls_count = 0
@@ -131,7 +136,7 @@ class Scraper:
 
             for outgoing_url in page.outgoing_urls:
                 outgoing_scraper_url = ScraperUrl(
-                    outgoing_url, False, max_depth=scraper_url.max_depth-1)
+                    outgoing_url, no_cache=False, max_depth=scraper_url.max_depth-1)
                 await self.queue_if_allowed(outgoing_scraper_url)
 
             self.terminate_all_loops_if_needed()
@@ -167,9 +172,18 @@ class Scraper:
         if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
             page = await self.config.browser_html_scraper_factory.newScraper().scrape(url.normalized_url)
         else:
+            try:
+                scraper = self.config.http_html_scraper_factory.newScraper()
+            finally:
+                scraper.close()
             with self.config.http_html_scraper_factory.newScraper() as scraper_page_http:
                 page = await scraper_page_http.scrape(url.normalized_url)
         return page
+    
+    async def stop(self) -> None:
+        for i in range(self.config.max_parallel_requests):
+            await self.url_queue.put(ScraperUrl.create_terminal())
+        return
 
 
 async def main():
@@ -208,7 +222,7 @@ async def main():
                     browser_html_scraper_factory=browser_html_scraper_factory
                 ),
             )
-            await scraper.scrape()
+            await scraper.start()
 
 if __name__ == "__main__":
     asyncio.run(main())

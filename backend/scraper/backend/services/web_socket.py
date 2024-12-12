@@ -1,8 +1,8 @@
 # backend/main.py
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from typing import Set, Callable
-import asyncio
 from datetime import datetime
+import logging
 
 class Connection:
     def __init__(self, websocket: WebSocket, on_deleted: Callable | None = None) -> None:
@@ -21,11 +21,13 @@ class ConnectionManager:
         self.heartbeat_interval = 30  # seconds
 
     async def connect(self, websocket: WebSocket):
+        logging.info("WebSocket connected")
         await websocket.accept()
         connection = Connection(websocket)
         self.active_connections[websocket] = connection
 
     async def disconnect(self, websocket: WebSocket):
+        logging.info("WebSocket connected")
         connection = self.active_connections.get(websocket)
         del self.active_connections[websocket]
         if connection and connection.on_deleted:

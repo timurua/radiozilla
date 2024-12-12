@@ -11,13 +11,21 @@ from datetime import datetime
 from fastapi import WebSocket
 from typing import List
 from ...services.web_socket import get_connection_manager, ConnectionManager
-from ...services.scraper import get_scraper_service, ScraperService
+from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 from enum import Enum
 
 router = APIRouter()
 
 async def get_health_service(db: AsyncSession = Depends(get_db)) -> HealthService:
     return HealthService(db)
+
+_scraper_service: ScraperService|None = None
+
+def get_scraper_service(db: AsyncSession = Depends(get_db)) -> ScraperService:
+    global _scraper_service
+    if not _scraper_service:
+        _scraper_service = ScraperService(db)
+    return _scraper_service
 
 @router.get("/health")
 async def health_check(
@@ -88,17 +96,44 @@ class ScraperStartRequest(BaseModel):
 @router.post("/scraper-start")
 async def scraper_start(
     request: ScraperStartRequest,
-    scraper_service: ScraperService  = Depends(get_connection_manager)
+    scraper_service: ScraperService  = Depends(get_scraper_service),
+    connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ):
+    class Callback(ScraperCallback):
+        def on_log(self, text: str) -> None:
+            connection_manager.broadcast(text)
     
-
+    try:
+        logging.info(f"Starting scraper for url: {request.url}")
+        urls = list(ScraperUrl(url=request.url, max_depth=0))
+        await scraper_service.start(urls, request.max_depth, Callback())
+        return {"status": "success"}
+    except Exception as e:
+        logging.error(f"Error scraper-start: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
     
-@router.websocket("/scraper-start")
-async def scraper_start_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
-    await connection_manager.connect(websocket)
+@router.post("/scraper-stop")
+async def scraper_stop(
+    scraper_service: ScraperService  = Depends(get_scraper_service)
+):
+    try:
+        logging.info(f"Stopping scraper")
+        await scraper_service.stop()
+        return {"status": "success"}
+    except Exception as e:
+        logging.error(f"Error scraper-start: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    
+    
 
 @router.websocket("/scraper-ws")
 async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
+    logging.info(f"Creating new socket")
     await connection_manager.connect(websocket)
 
 

@@ -5,11 +5,13 @@ from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import logging
 from .scrape_store import ScraperStore
 from .scrape_model import HttpResponse
+from .url_normalize import normalized_url_hash, normalize_url  
+
 
 logger = logging.getLogger("scrape_html_http")
 
 class HttpHtmlScraper:
-    def __init__(self, client_session: aiohttp.ClientSession, scraper_store: ScraperStore | None = None, timeout_seconds: int = 30):
+    def __init__(self, client_session: aiohttp.ClientSession, timeout_seconds: int = 30, scraper_store: ScraperStore | None = None):
         self.client_session = client_session
         self.timeout_seconds = timeout_seconds
         self.scraper_store = scraper_store
@@ -39,17 +41,12 @@ class HttpHtmlScraper:
                 headers=None,
                 content=html_content.encode("utf-8") if html_content is not None else None,
                 url=url,
-                normalized_url=url
+                normalized_url=normalize_url(url),
+                normalized_url_hash=normalized_url_hash(url),
             )
             await self.scraper_store.store_url_response(response)
 
         return HtmlScraperProcessor(url, html_content).extract()
-
-    def __enter__(self) -> 'HttpHtmlScraper':
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
 
 
 class HttpHtmlScraperFactory:
@@ -63,13 +60,6 @@ class HttpHtmlScraperFactory:
             })
         self.timeout_seconds = timeout_seconds
         self.scraper_store = scraper_store
-
-    async def __aenter__(self) -> 'HttpHtmlScraperFactory':
-        return self
-    
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        logger.info("Closing client session")
-        await self.close()
 
     async def close(self) -> None:
         await self.client_session.close()
@@ -92,8 +82,9 @@ if __name__ == "__main__":
                 'Chrome/115.0.0.0 Safari/537.36'
             }
         ) as session:
-            scraper_factory = HttpHtmlScraperFactory()
-            with (scraper_factory.newScraper()) as scraper:
+            try:
+                scraper_factory = HttpHtmlScraperFactory()
+                scraper = scraper_factory.newScraper()
                 result = await scraper.scrape("http://cnn.com/")
                 if result:
                     print("Canonical URL:", result.canonical_url)
@@ -101,5 +92,7 @@ if __name__ == "__main__":
                     print("Text Content:", result.visible_text)
                     print("Sitemap URL:", result.sitemap_url)
                     print("Robots Content:", result.robots_content)
+            finally:
+                await scraper_factory.close()
 
     asyncio.run(main())

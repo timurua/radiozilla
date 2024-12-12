@@ -31,9 +31,6 @@ async def detailed_health_check(
     """
     return await health_service.get_detailed_health()
 
-class EmbeddingRequest(BaseModel):
-    text: str
-
 async def get_embedding_service(db: AsyncSession = Depends(get_db)) -> EmbeddingService:
     return EmbeddingService(db)
 
@@ -62,6 +59,9 @@ async def fetch_embeddings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+    
+class EmbeddingRequest(BaseModel):
+    text: str
 
 @router.post("/embeddings")
 async def upsert_embeddings(

@@ -1,7 +1,6 @@
 import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select
-from sentence_transformers import SentenceTransformer
 from pywebscraper.scrape_store import ScraperStore
 from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperPageCache
 from pywebscraper.scrape_html_browser import BrowserHtmlScraperFactory
@@ -18,14 +17,12 @@ class ScraperService:
         self._version = "1.0.0"
         logging.info("Scraper service initialized")
 
-    async def scrape(self, store: ScraperStore) -> None:
+    async def scrape(self, scraper_urls: list[ScraperUrl], store: ScraperStore) -> None:
         async with HttpHtmlScraperFactory(scraper_store=store) as http_html_scraper_factory:
             async with BrowserHtmlScraperFactory(scraper_store=store) as browser_html_scraper_factory:
                 scraper = Scraper(
                     ScraperConfig(
-                        scraper_urls=[
-                            ScraperUrl("https://www.anthropic.com/news", max_depth=2)
-                        ],
+                        scraper_urls=scraper_urls,
                         max_parallel_requests=16,
                         use_headless_browser=True,
                         allowed_domains=["anthropic.com"],

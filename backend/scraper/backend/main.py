@@ -38,5 +38,5 @@ app.add_middleware(
 app.include_router(endpoints.router, prefix=settings.API_V1_STR)
 
 # Mount React static files
-app.mount("/", StaticFiles(directory="ui/build", html=True), name="static")
+app.mount("/", StaticFiles(directory="ui/dist", html=True), name="static")
  

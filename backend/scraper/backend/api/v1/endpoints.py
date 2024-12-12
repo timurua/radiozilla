@@ -8,6 +8,11 @@ from ...services.web_page import WebPageService
 import logging
 from pydantic import BaseModel
 from datetime import datetime
+from fastapi import WebSocket
+from typing import List
+from ...services.web_socket import get_connection_manager, ConnectionManager
+from ...services.scraper import get_scraper_service, ScraperService
+from enum import Enum
 
 router = APIRouter()
 
@@ -32,9 +37,6 @@ async def detailed_health_check(
     """
     return await health_service.get_detailed_health()
 
-class EmbeddingRequest(BaseModel):
-    text: str
-
 async def get_web_page_service(db: AsyncSession = Depends(get_db)) -> WebPageService:
     return WebPageService(db)
 
@@ -51,9 +53,8 @@ class FAWebPage(BaseModel):
     content_date: datetime
     updated_at: datetime
 
-
 @router.get("/web-pages")
-async def read_embeddings(
+async def read_web_pages(
     url: str,
     web_page_service: WebPageService = Depends(get_web_page_service)
 ):
@@ -79,4 +80,26 @@ async def read_embeddings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+    
+class ScraperStartRequest(BaseModel):
+    url: str
+    max_depth: int = 2
+
+@router.post("/scraper-start")
+async def scraper_start(
+    request: ScraperStartRequest,
+    scraper_service: ScraperService  = Depends(get_connection_manager)
+):
+    
+
+    
+@router.websocket("/scraper-start")
+async def scraper_start_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
+    await connection_manager.connect(websocket)
+
+@router.websocket("/scraper-ws")
+async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
+    await connection_manager.connect(websocket)
+
+
 

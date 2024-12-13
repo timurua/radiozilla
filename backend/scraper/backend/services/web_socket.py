@@ -4,46 +4,39 @@ from typing import Set, Callable
 from datetime import datetime
 import logging
 
-class Connection:
-    def __init__(self, websocket: WebSocket, on_deleted: Callable | None = None) -> None:
-        self.websocket = websocket
-        self.last_heartbeat = datetime.now()
-        self.on_deleted = on_deleted
-
-    def update_heartbeat(self):
-        self.last_heartbeat = datetime.now()
-
-    
+logger = logging.getLogger("web_socket_connection")
 
 class ConnectionManager:
     def __init__(self) -> None:
-        self.active_connections: dict[WebSocket, Connection] = {}
+        self.active_connections: set[WebSocket] = set()
         self.heartbeat_interval = 30  # seconds
 
     async def connect(self, websocket: WebSocket):
-        logging.info("WebSocket connected")
+        logger.info("WebSocket connected")
         await websocket.accept()
-        connection = Connection(websocket)
-        self.active_connections[websocket] = connection
+        self.active_connections.add(websocket)
 
     async def disconnect(self, websocket: WebSocket):
-        logging.info("WebSocket connected")
-        connection = self.active_connections.get(websocket)
-        del self.active_connections[websocket]
-        if connection and connection.on_deleted:
-            await connection.on_deleted()
-        
+        logger.info("WebSocket connected")
+        await websocket.close()
+        self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
         disconnected = set()
+        if len(self.active_connections) == 0:
+            logger.info("WebSocket skipping broadcast, no active connections")
+            return
         for connection in self.active_connections:
             try:
+                logger.info(f"WebSocket sending message to connection: {connection}")
                 await connection.send_text(message)
-            except Exception:
+            except Exception as e:
+                logger.error(f"WebSocket error broadcasting message to connection: {connection}, exception {e}", exc_info=True)
                 disconnected.add(connection)
 
         # Remove disconnected clients
         for connection in disconnected:
+            logger.info(f"WebSocket Disconnecting connection: {connection}")
             await self.disconnect(connection)
 
 manager = ConnectionManager()

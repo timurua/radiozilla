@@ -9,10 +9,11 @@ import logging
 from pydantic import BaseModel
 from datetime import datetime
 from fastapi import WebSocket
-from typing import List
+from typing import List, override
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 from enum import Enum
+import asyncio
 
 router = APIRouter()
 
@@ -91,7 +92,7 @@ async def read_web_pages(
     
 class ScraperStartRequest(BaseModel):
     url: str
-    max_depth: int = 2
+    max_depth: int
 
 @router.post("/scraper-start")
 async def scraper_start(
@@ -102,12 +103,16 @@ async def scraper_start(
 ):
     class Callback(ScraperCallback):
         def on_log(self, text: str) -> None:
-            connection_manager.broadcast(text)
+            asyncio.create_task(connection_manager.broadcast(text))
+
+    callback = Callback()
+
+    callback.on_log("Starting scraper")
     
     try:
         logging.info(f"Starting scraper for url: {request.url}")
         urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
-        await scraper_service.start(urls, web_page_service.get_scraper_store(), Callback())
+        await scraper_service.start(urls, web_page_service.get_scraper_store(), callback)
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error scraper-start: {str(e)}", exc_info=True)

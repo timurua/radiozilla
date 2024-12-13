@@ -15,6 +15,8 @@ const Scraper: React.FC = () => {
     useEffect(() => {
         // Create WebSocket connection
         const ws = new WebSocket(getScraperSocketPath());
+        var reconnect = true;
+        setSocket(ws);
 
         ws.onopen = () => {
             console.log('Connected to WebSocket');
@@ -25,14 +27,24 @@ const Scraper: React.FC = () => {
             setMessages(prev => [...prev, event.data]);
         };
 
-        ws.onclose = () => {
-            console.log('Disconnected from WebSocket');
+        ws.onerror = function(error) {
+            console.log(`Error from WebSocket ${error}`);
         };
 
-        setSocket(ws);
+        ws.onclose = () => {
+            console.log('Disconnected from WebSocket');
+            if (reconnect){
+                setTimeout(() => {
+                    console.log('Attempting to reconnect...');
+                    const newWs = new WebSocket(getScraperSocketPath());
+                    setSocket(newWs);
+                }, 5000);
+            }
+        };
 
         // Cleanup on component unmount
         return () => {
+            reconnect = false;
             ws.close();
         };
     }, []);

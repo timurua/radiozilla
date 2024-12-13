@@ -87,6 +87,7 @@ class Scraper:
         self.pages: dict[str, Optional[HtmlContent]] = {}
 
     async def start(self):
+        self.config.log("Starting scraping")
         for scraper_url in self.config.scraper_urls:
             await self.url_queue.put(scraper_url)
 

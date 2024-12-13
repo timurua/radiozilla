@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...database import get_db
 from ...services.health import HealthService
@@ -8,7 +8,6 @@ from ...services.web_page import WebPageService
 import logging
 from pydantic import BaseModel
 from datetime import datetime
-from fastapi import WebSocket
 from typing import List, override
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
@@ -94,6 +93,13 @@ class ScraperStartRequest(BaseModel):
     url: str
     max_depth: int
 
+class Callback(ScraperCallback):
+        def __init__(self, connection_manager: ConnectionManager):
+            self.connection_manager = connection_manager
+
+        def on_log(self, text: str) -> None:
+            asyncio.create_task(self.connection_manager.broadcast(text))    
+
 @router.post("/scraper-start")
 async def scraper_start(
     request: ScraperStartRequest,
@@ -101,14 +107,7 @@ async def scraper_start(
     web_page_service: WebPageService  = Depends(get_web_page_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ):
-    class Callback(ScraperCallback):
-        def on_log(self, text: str) -> None:
-            asyncio.create_task(connection_manager.broadcast(text))
-
-    callback = Callback()
-
-    callback.on_log("Starting scraper")
-    
+    callback = Callback(connection_manager)
     try:
         logging.info(f"Starting scraper for url: {request.url}")
         urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
@@ -123,11 +122,12 @@ async def scraper_start(
     
 @router.post("/scraper-stop")
 async def scraper_stop(
-    scraper_service: ScraperService  = Depends(get_scraper_service)
+    scraper_service: ScraperService  = Depends(get_scraper_service),
+    connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ):
     try:
         logging.info(f"Stopping scraper")
-        await scraper_service.stop()
+        await scraper_service.stop(Callback(connection_manager))
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error scraper-stop: {str(e)}", exc_info=True)
@@ -141,6 +141,11 @@ async def scraper_stop(
 async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
     logging.info(f"Creating new socket")
     await connection_manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        connection_manager.disconnect(websocket)
 
 
 

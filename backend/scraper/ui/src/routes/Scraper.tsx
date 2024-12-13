@@ -69,7 +69,7 @@ const Scraper: React.FC = () => {
             const response = await stopScraper();
             setResponse(response);
         } catch (error) {
-            console.error('Error calculating embedding:', error);
+            console.error('Error stopping scraper:', error);
         } finally {
             setLoading(false);
         }
@@ -128,8 +128,8 @@ const Scraper: React.FC = () => {
             </Row>
             <div className="border rounded-lg p-4 h-64 overflow-y-auto">
                 {messages.map((msg, index) => (
-                <div key={index} className="mb-2 p-2 bg-gray-100 rounded">
-                    <pre><JsonViewer data={msg} /></pre>
+                <div key={index} className="mb-2 bg-gray-100 rounded">
+                    <pre>{msg}</pre>
                 </div>
                 ))}
             </div>

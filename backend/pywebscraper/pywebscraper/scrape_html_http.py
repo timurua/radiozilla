@@ -6,6 +6,7 @@ import logging
 from .scrape_store import ScraperStore
 from .scrape_model import HttpResponse
 from .url_normalize import normalized_url_hash, normalize_url  
+from .scrape_model import ScraperUrl
 
 
 logger = logging.getLogger("scrape_html_http")
@@ -16,14 +17,14 @@ class HttpHtmlScraper:
         self.timeout_seconds = timeout_seconds
         self.scraper_store = scraper_store
 
-    async def scrape(self, url: str) -> Optional[HtmlContent]:
-        if self.scraper_store:
-            cached_response = await self.scraper_store.load_url_response(url)
+    async def scrape(self, url: ScraperUrl) -> Optional[HtmlContent]:
+        if (not url.no_cache) and self.scraper_store:
+            cached_response = await self.scraper_store.load_url_response(url.normalized_url)
             if cached_response and cached_response.content:
-                return HtmlScraperProcessor(url, cached_response.content.decode("utf-8")).extract()
+                return HtmlScraperProcessor(url.normalized_url, cached_response.content.decode("utf-8")).extract()
     
         try:
-            async with self.client_session.get(url) as http_response:
+            async with self.client_session.get(url.normalized_url) as http_response:
                 if not http_response.status == 200:
                     logger.error(f"Error fetching {url}: {http_response.status}")
                     return None
@@ -33,9 +34,9 @@ class HttpHtmlScraper:
                     status_code=http_response.status,
                     headers={str(k): str(v) for k, v in dict(http_response.headers).items()},
                     content=html_content.encode("utf-8") if html_content is not None else None,
-                    url=url,
-                    normalized_url=normalize_url(url),
-                    normalized_url_hash=normalized_url_hash(url),
+                    url=url.normalized_url,
+                    normalized_url=url.normalized_url,
+                    normalized_url_hash=normalized_url_hash(url.normalized_url),
                 )
                     await self.scraper_store.store_url_response(cached_response)
                 
@@ -49,7 +50,7 @@ class HttpHtmlScraper:
             logger.error(f"Error decoding text for {url}: {e}")
             return None
 
-        return HtmlScraperProcessor(url, html_content).extract()
+        return HtmlScraperProcessor(url.normalized_url, html_content).extract()
 
 
 class HttpHtmlScraperFactory:
@@ -88,7 +89,7 @@ if __name__ == "__main__":
             try:
                 scraper_factory = HttpHtmlScraperFactory()
                 scraper = scraper_factory.newScraper()
-                result = await scraper.scrape("http://cnn.com/")
+                result = await scraper.scrape(ScraperUrl("http://cnn.com/", no_cache=True))
                 if result:
                     print("Canonical URL:", result.canonical_url)
                     print("Outgoing URLs:", result.outgoing_urls)

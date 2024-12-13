@@ -10,27 +10,9 @@ import sys
 from .scrape_store import ScraperStore
 from .url_normalize import normalize_url
 from abc import ABC, abstractmethod
+from .scrape_model import ScraperUrl
 
 logger = logging.getLogger("scraper")
-
-class ScraperUrl:
-    def __init__(self, url: str, *, no_cache: bool = False, max_depth: int = 16):
-        self.url = url
-        if url:
-            self.normalized_url = normalize_url(
-                url)
-        else:
-            self.normalized_url = ""
-        self.no_cache = no_cache
-        self.max_depth = max_depth
-
-    @staticmethod
-    def create_terminal():
-        return ScraperUrl("", max_depth=- 1)
-
-    def is_terminal(self):
-        return self.max_depth < 0
-
 
 class ScraperCallback(ABC):
     @abstractmethod
@@ -166,10 +148,10 @@ class Scraper:
 
     async def scrape_url(self, url: ScraperUrl) -> Optional[HtmlContent]:
         if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
-            page = await self.config.browser_html_scraper_factory.newScraper().scrape(url.normalized_url)
+            page = await self.config.browser_html_scraper_factory.newScraper().scrape(url)
         else:
             scraper = self.config.http_html_scraper_factory.newScraper()
-            page = await scraper.scrape(url.normalized_url)
+            page = await scraper.scrape(url)
 
         return page
 

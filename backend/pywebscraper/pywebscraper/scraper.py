@@ -6,14 +6,12 @@ from .scrape_html_http import HttpHtmlScraperFactory
 from .scrape_html_browser import BrowserHtmlScraperFactory
 from .scrape_model import HttpResponse
 from .scrape_html_processor import HtmlContent
-import aiohttp
 import sys
 from .scrape_store import ScraperStore
 from .url_normalize import normalize_url
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger("scraper")
-
 
 class ScraperUrl:
     def __init__(self, url: str, *, no_cache: bool = False, max_depth: int = 16):
@@ -38,6 +36,16 @@ class ScraperCallback(ABC):
     @abstractmethod
     def on_log(self, text: str) -> None:
         pass
+
+class InMemoryScraperStore(ScraperStore):
+    def __init__(self):
+        self.responses = {}
+
+    async def store_url_response(self, response: HttpResponse) -> None:
+        self.responses[response.normalized_url] = response
+
+    async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
+        return self.responses.get(normalized_url)
 
 
 class ScraperConfig:
@@ -99,21 +107,21 @@ class Scraper:
     async def scrape_loop(self, name: str) -> ScraperLoopResult:
         completed_urls_count = 0
         while True:
-            logging.info(
+            logger.info(
                 f"waiting - looper: {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} URLs")
             scraper_url = await self.url_queue.get()
             if scraper_url.is_terminal():
-                logging.info(
+                logger.info(
                     f"terminating - looper: {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} URLs")
                 break
 
-            logging.info(
+            logger.info(
                 f"initiating - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}")
             page = await self.scrape_url(scraper_url)
             self.pages[scraper_url.normalized_url] = page
             self.completed_urls_count += 1
             completed_urls_count += 1
-            logging.info(
+            logger.info(
                 f"completed - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}, i:c={self.initiated_urls_count}:{self.completed_urls_count}")
 
             if page is None or len(page.outgoing_urls) == 0 or scraper_url.max_depth <= 0:
@@ -182,16 +190,6 @@ async def main():
         ]
     )
 
-    class InMemoryScraperStore(ScraperStore):
-        def __init__(self):
-            self.responses = {}
-
-        async def store_url_response(self, response: HttpResponse) -> None:
-            self.responses[response.normalized_url] = response
-
-        async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
-            return self.responses.get(normalized_url)
-
     store = ScraperStore()
     async with HttpHtmlScraperFactory(scraper_store=store) as http_html_scraper_factory:
         async with BrowserHtmlScraperFactory(scraper_store=store) as browser_html_scraper_factory:
@@ -207,7 +205,8 @@ async def main():
                     max_queue_size=1024*1024,
                     timeout_seconds=30,
                     http_html_scraper_factory=http_html_scraper_factory,
-                    browser_html_scraper_factory=browser_html_scraper_factory
+                    browser_html_scraper_factory=browser_html_scraper_factory,
+                    scraper_store=InMemoryScraperStore(),
                 ),
             )
             await scraper.start()

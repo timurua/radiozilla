@@ -5,6 +5,8 @@ from pywebscraper.scrape_store import ScraperStore
 from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperCallback
 from pywebscraper.scrape_html_browser import BrowserHtmlScraperFactory
 from pywebscraper.scrape_html_http import HttpHtmlScraperFactory
+from urllib.parse import urlparse
+
 
 import logging
 
@@ -27,12 +29,14 @@ class ScraperService:
         callback.on_log("Starting scraper")
         ScraperService._http_html_scraper_factory = HttpHtmlScraperFactory(scraper_store=store)
         ScraperService._browser_html_scraper_factory = BrowserHtmlScraperFactory(scraper_store=store)
+        allowed_domains = list(set(urlparse(url.url).netloc for url in scraper_urls))
+        
         ScraperService._scraper = Scraper(
             ScraperConfig(
                 scraper_urls=scraper_urls,
                 max_parallel_requests=16,
                 use_headless_browser=True,
-                allowed_domains=["anthropic.com"],
+                allowed_domains=allowed_domains,
                 max_queue_size=1024*1024,
                 timeout_seconds=30, 
                 http_html_scraper_factory=ScraperService._http_html_scraper_factory,

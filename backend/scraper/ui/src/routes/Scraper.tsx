@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
 import { startScraper, stopScraper, getScraperSocketPath } from '../services/api';
 import JsonViewer from '../components/JsonViewer';
+import ListGroup from 'react-bootstrap/ListGroup';
 
 const Scraper: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
@@ -126,13 +127,13 @@ const Scraper: React.FC = () => {
                     <pre><JsonViewer data={response} /></pre>
                 </Col>
             </Row>
-            <div className="border rounded-lg p-4 h-64 overflow-y-auto">
+            <ListGroup>
                 {messages.map((msg, index) => (
-                <div key={index} className="mb-2 bg-gray-100 rounded">
-                    <pre>{msg}</pre>
-                </div>
+                <ListGroup.Item key={index}>
+                    {msg}
+                </ListGroup.Item>
                 ))}
-            </div>
+            </ListGroup>
         </Container>
     );
 };

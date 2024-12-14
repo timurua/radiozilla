@@ -21,10 +21,10 @@ async def get_health_service(db: AsyncSession = Depends(get_db)) -> HealthServic
 
 _scraper_service: ScraperService|None = None
 
-def get_scraper_service(db: AsyncSession = Depends(get_db)) -> ScraperService:
+def get_scraper_service() -> ScraperService:
     global _scraper_service
     if not _scraper_service:
-        _scraper_service = ScraperService(db)
+        _scraper_service = ScraperService()
     return _scraper_service
 
 @router.get("/health")
@@ -104,14 +104,13 @@ class Callback(ScraperCallback):
 async def scraper_start(
     request: ScraperStartRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
-    web_page_service: WebPageService  = Depends(get_web_page_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ):
     callback = Callback(connection_manager)
     try:
         logging.info(f"Starting scraper for url: {request.url}")
-        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
-        await scraper_service.start(urls, web_page_service.get_scraper_store(), callback)
+        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
+        await scraper_service.start(urls, callback)
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
@@ -140,11 +139,12 @@ async def scraper_stop(
 @router.websocket("/scraper-ws")
 async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: ConnectionManager  = Depends(get_connection_manager)):
     logging.info(f"Creating new socket")
-    await connection_manager.connect(websocket)
     try:
+        await connection_manager.connect(websocket)
         while True:
             data = await websocket.receive_text()
-    except WebSocketDisconnect:
+    except Exception as e:
+        logging.error(f"Error scraper-ws: {str(e)}", exc_info=True) 
         connection_manager.disconnect(websocket)
 
 

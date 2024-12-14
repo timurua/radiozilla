@@ -3,7 +3,7 @@ import aiohttp
 from typing import Optional
 from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import logging
-from .scrape_store import ScraperStore
+from .store import ScraperStore, ScraperStoreFactory
 from .scrape_model import HttpResponse
 from .url_normalize import normalized_url_hash, normalize_url  
 from .scrape_model import ScraperUrl
@@ -31,13 +31,13 @@ class HttpHtmlScraper:
                 html_content = await http_response.text()
                 if self.scraper_store:
                     cached_response=HttpResponse(
-                    status_code=http_response.status,
-                    headers={str(k): str(v) for k, v in dict(http_response.headers).items()},
-                    content=html_content.encode("utf-8") if html_content is not None else None,
-                    url=url.normalized_url,
-                    normalized_url=url.normalized_url,
-                    normalized_url_hash=normalized_url_hash(url.normalized_url),
-                )
+                        status_code=http_response.status,
+                        headers={str(k): str(v) for k, v in dict(http_response.headers).items()},
+                        content=html_content.encode("utf-8") if html_content is not None else None,
+                        url=url.normalized_url,
+                        normalized_url=url.normalized_url,
+                        normalized_url_hash=normalized_url_hash(url.normalized_url),
+                    )
                     await self.scraper_store.store_url_response(cached_response)
                 
                 
@@ -54,7 +54,7 @@ class HttpHtmlScraper:
 
 
 class HttpHtmlScraperFactory:
-    def __init__(self, *, timeout_seconds: int = 30, scraper_store: ScraperStore | None = None):
+    def __init__(self, *, timeout_seconds: int = 30):
         self.client_session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False),
             headers={
@@ -63,13 +63,12 @@ class HttpHtmlScraperFactory:
                 'Chrome/115.0.0.0 Safari/537.36'
             })
         self.timeout_seconds = timeout_seconds
-        self.scraper_store = scraper_store
 
     async def close(self) -> None:
         await self.client_session.close()
 
-    def newScraper(self) -> HttpHtmlScraper:
-        return HttpHtmlScraper(self.client_session, self.timeout_seconds)
+    def new_scraper(self, scraper_store: ScraperStore | None) -> HttpHtmlScraper:
+        return HttpHtmlScraper(self.client_session, self.timeout_seconds, scraper_store)
 
     def returnScraper(self, scraper: HttpHtmlScraper) -> None:
         pass

@@ -14,6 +14,10 @@ async def get_db():
         finally:
             await session.close()
 
+async def get_db_session():
+    async with AsyncSessionLocal() as session:
+        return session
+
 async def create_vector_index(conn: AsyncConnection, table_name: str, column_name: str, lists: int):
     sql = text(f"""
         CREATE INDEX IF NOT EXISTS idx_{table_name}_{column_name}_ivfflat 

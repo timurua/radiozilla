@@ -11,3 +11,8 @@ class ScraperStore(ABC):
         async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
             pass
 
+class ScraperStoreFactory(ABC):
+    @abstractmethod
+    def new_store(self) -> ScraperStore:
+        pass        
+

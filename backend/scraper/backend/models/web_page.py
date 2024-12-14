@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, DateTime, event,LargeBinary
+from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
@@ -17,6 +17,8 @@ class WebPageSeed(Base):
     url: Mapped[str] = mapped_column(String)
     max_depth: Mapped[int] = mapped_column(Integer)
     url_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    use_headless_browser: Mapped[bool] = mapped_column(Boolean, default=False)
+    allowed_domains: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
         
 # Automatically set hash when content is modified
 @event.listens_for(WebPageSeed.normalized_url, 'set')

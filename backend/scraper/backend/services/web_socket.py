@@ -18,7 +18,10 @@ class ConnectionManager:
 
     async def disconnect(self, websocket: WebSocket):
         logger.info("WebSocket connected")
-        await websocket.close()
+        try:
+            await websocket.close()
+        except Exception as e:
+            logger.error(f"Error closing websocket connection: {e}", exc_info=True)
         self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):

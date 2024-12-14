@@ -4,19 +4,20 @@ from selenium.webdriver.chrome.options import Options
 from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
 import concurrent.futures
 import concurrent
-from .scrape_store import ScraperStore
+from .store import ScraperStore, ScraperStoreFactory
 from .scrape_model import HttpResponse
 from typing import Callable, Tuple
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from .scrape_model import ScraperUrl
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
 
 
 class BrowserHtmlScraperFactory:
-    def __init__(self, *, scraper_store: ScraperStore | None = None):
-        self.scraper_store = scraper_store
+    def __init__(self):
         self.drivers: list[webdriver.Chrome] = []
 
     async def close(self) -> None:
@@ -25,8 +26,8 @@ class BrowserHtmlScraperFactory:
             loop.run_in_executor(executor, driver.quit)
         self.drivers = []
 
-    def newScraper(self) -> 'BrowserHtmlScraper':
-        return BrowserHtmlScraper(self._getDriver, self._returnDriver, self.scraper_store)
+    def new_scraper(self, scraper_store: ScraperStore| None ) -> 'BrowserHtmlScraper':
+        return BrowserHtmlScraper(self._getDriver, self._returnDriver, scraper_store)
 
     def _getDriver(self) -> webdriver.Chrome:
         if len(self.drivers) == 0:
@@ -82,6 +83,9 @@ class BrowserHtmlScraper:
         try:
             driver = self.driver_get()
             def get_driver_data()-> Tuple[str, str, str]:
+                WebDriverWait(driver, 10).until(
+                    expected_conditions.presence_of_element_located(("tag name", "body"))
+                )
                 elements = driver.find_elements(By.XPATH, "//*")
                 def is_displayed(element):
                     try:

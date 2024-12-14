@@ -1,15 +1,16 @@
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from .scrape_html_processor import HtmlContent, HtmlScraperProcessor
+from .html import HtmlContent, HtmlScraperProcessor
 import concurrent.futures
 import concurrent
 from .store import ScraperStore, ScraperStoreFactory
-from .scrape_model import HttpResponse
+from .model import ScraperWebPage
 from typing import Callable, Tuple
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from .scrape_model import ScraperUrl
+from .model import ScraperUrl
+from .url_normalize import normalized_url_hash
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 
@@ -26,8 +27,8 @@ class BrowserHtmlScraperFactory:
             loop.run_in_executor(executor, driver.quit)
         self.drivers = []
 
-    def new_scraper(self, scraper_store: ScraperStore| None ) -> 'BrowserHtmlScraper':
-        return BrowserHtmlScraper(self._getDriver, self._returnDriver, scraper_store)
+    def new_scraper(self) -> 'BrowserHtmlScraper':
+        return BrowserHtmlScraper(self._getDriver, self._returnDriver)
 
     def _getDriver(self) -> webdriver.Chrome:
         if len(self.drivers) == 0:
@@ -69,16 +70,11 @@ class BrowserHtmlScraperFactory:
 
 
 class BrowserHtmlScraper:
-    def __init__(self, driver_get: Callable[[], webdriver.Chrome], driver_return: Callable[[webdriver.Chrome], None], scraper_store: ScraperStore | None = None):
+    def __init__(self, driver_get: Callable[[], webdriver.Chrome], driver_return: Callable[[webdriver.Chrome], None]):
         self.driver_get = driver_get
         self.driver_return = driver_return
-        self.scraper_store = scraper_store
 
-    async def scrape(self, url: ScraperUrl) -> HtmlContent|None:
-        if (not url.no_cache) and self.scraper_store:
-            response = await self.scraper_store.load_url_response(url.normalized_url)
-            if response and response.content:
-                return HtmlScraperProcessor(url.normalized_url, response.content.decode("utf-8")).extract()
+    async def scrape(self, url: ScraperUrl) -> ScraperWebPage|None:
         loop = asyncio.get_event_loop()
         try:
             driver = self.driver_get()
@@ -106,35 +102,18 @@ class BrowserHtmlScraper:
             
         finally:
             if driver:
-                self.driver_return(driver)
+                self.driver_return(driver)        
         
-        
-        if self.scraper_store:
-            response = HttpResponse(
-                status_code=200,
-                headers={},
-                content=html.encode("utf-8"),
-                title=title,
-                visible_text=visible_text,
-                url=url.url,
-                normalized_url=url.normalized_url,
-                normalized_url_hash=None,
-                updated_at=None
-            )
-            await self.scraper_store.store_url_response(response)
-    
-        return HtmlScraperProcessor(url.normalized_url, html, visible_text).extract()
-    
-# Example usage:
-if __name__ == "__main__":
-    async def main() -> None:
-        scraper_factory = BrowserHtmlScraperFactory()
-        scraper = scraper_factory.newScraper()
-        result = await scraper.scrape(ScraperUrl("http://cnn.com/"))
-        if result:
-            print("Canonical URL:", result.canonical_url)
-            print("Outgoing URLs:", result.outgoing_urls)
-            print("Text Content:", result.visible_text)
-            print("Sitemap URL:", result.sitemap_url)
-            print("Robots Content:", result.robots_content)
-    asyncio.run(main())
+        page = ScraperWebPage(
+            status_code=200,
+            headers=None,
+            content=html.encode("utf-8"),
+            visible_text=visible_text,
+            content_type="text/html",
+            content_charset="utf-8",
+            headless_browser=True,
+            url=url.url,
+            normalized_url=url.normalized_url,
+            normalized_url_hash=normalized_url_hash(url.normalized_url),
+        )
+        return page

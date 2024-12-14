@@ -1,14 +1,14 @@
 from typing import Optional
-from .scrape_model import HttpResponse
+from .model import ScraperWebPage
 from abc import ABC, abstractmethod
 
 class ScraperStore(ABC):
         @abstractmethod
-        async def store_url_response(self, response: HttpResponse) -> None:
+        async def store_page(self, response: ScraperWebPage) -> None:
             pass
 
         @abstractmethod
-        async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
+        async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:
             pass
 
 class ScraperStoreFactory(ABC):

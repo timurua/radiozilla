@@ -4,14 +4,15 @@ import logging
 from urllib.parse import urlparse
 from .scrape_html_http import HttpHtmlScraperFactory
 from .scrape_html_browser import BrowserHtmlScraperFactory
-from .scrape_model import HttpResponse
-from .scrape_html_processor import HtmlContent
+from .model import ScraperWebPage
+from .html import HtmlContent, HtmlScraperProcessor
 import sys
 from .store import ScraperStore, ScraperStoreFactory
 from .url_normalize import normalize_url
 from abc import ABC, abstractmethod
-from .scrape_model import ScraperUrl
+from .model import ScraperUrl
 from .domains import ScraperDomains
+from .extract import extract_metadata
 
 logger = logging.getLogger("scraper")
 
@@ -24,10 +25,10 @@ class InMemoryScraperStore(ScraperStore):
     def __init__(self):
         self.responses = {}
 
-    async def store_url_response(self, response: HttpResponse) -> None:
+    async def store_page(self, response: ScraperWebPage) -> None:
         self.responses[response.normalized_url] = response
 
-    async def load_url_response(self, normalized_url: str) -> Optional[HttpResponse]:
+    async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:
         return self.responses.get(normalized_url)
 
 
@@ -42,7 +43,10 @@ class ScraperConfig:
                 browser_html_scraper_factory: BrowserHtmlScraperFactory | None = None,
                 scraper_store_factory: ScraperStoreFactory | None = None,
                 allow_l2_domains: bool = True,
-                scraper_callback: ScraperCallback | None = None):
+                scraper_callback: ScraperCallback | None = None,
+                user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                'Chrome/115.0.0.0 Safari/537.36'):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.domains = ScraperDomains(allow_l2_domains, [url.url for url in scraper_urls])
@@ -54,6 +58,7 @@ class ScraperConfig:
         self.http_html_scraper_factory = http_html_scraper_factory
         self.scraper_store_factory = scraper_store_factory
         self.scraper_callback = scraper_callback
+        self.user_agent = user_agent
 
     def log(self, text: str) -> None:
         logger.info(text)
@@ -74,7 +79,7 @@ class Scraper:
         self.completed_urls_count = 0
         self.url_queue: asyncio.Queue[ScraperUrl] = asyncio.Queue(
             maxsize=config.max_queue_size)
-        self.pages: dict[str, Optional[HtmlContent]] = {}
+        self.pages: dict[str, Optional[ScraperWebPage]] = {}
 
     async def start(self):
         for scraper_url in self.config.scraper_urls:
@@ -103,10 +108,22 @@ class Scraper:
                 f"initiating - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}")
             
             self.config.log("Scraping URL: " + scraper_url.normalized_url)
-            if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
-                page = await self.config.browser_html_scraper_factory.new_scraper(scraper_store).scrape(scraper_url)
-            else:
-                page = await self.config.http_html_scraper_factory.new_scraper(scraper_store).scrape(scraper_url)
+
+            if (not scraper_url.no_cache) and scraper_store:
+                page = await scraper_store.load_page(scraper_url.normalized_url)
+                if page:
+                    page = extract_metadata(page)
+
+            if page is None:
+                if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
+                    page = await self.config.browser_html_scraper_factory.new_scraper().scrape(scraper_url)
+                else:
+                    page = await self.config.http_html_scraper_factory.new_scraper().scrape(scraper_url)
+            
+            if page is not None:
+                page = extract_metadata(page)
+                if scraper_store:
+                    await scraper_store.store_page(page)
 
             self.pages[scraper_url.normalized_url] = page
             self.completed_urls_count += 1
@@ -114,7 +131,7 @@ class Scraper:
             logger.info(
                 f"completed - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}, i:c={self.initiated_urls_count}:{self.completed_urls_count}")
 
-            if page is None or len(page.outgoing_urls) == 0 or scraper_url.max_depth <= 0:
+            if page is None or page.outgoing_urls is None or len(page.outgoing_urls) == 0 or scraper_url.max_depth <= 0:
                 await self.terminate_all_loops_if_needed()
                 continue
 

@@ -144,7 +144,7 @@ class Scraper:
         return self.config.domains.is_allowed(normalized_url)
 
     async def terminate_all_loops_if_needed(self):
-        if self.completed_urls_count <= self.initiated_urls_count:
+        if self.completed_urls_count < self.initiated_urls_count:
             return
         logger.info(
             f"terminating all loops - i:c={self.initiated_urls_count}:{self.completed_urls_count}")

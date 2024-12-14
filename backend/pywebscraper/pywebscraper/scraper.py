@@ -77,7 +77,6 @@ class Scraper:
         self.pages: dict[str, Optional[HtmlContent]] = {}
 
     async def start(self):
-        self.config.log("Starting scraping")
         for scraper_url in self.config.scraper_urls:
             await self.queue_if_allowed(scraper_url)
 
@@ -103,6 +102,7 @@ class Scraper:
             logger.info(
                 f"initiating - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}")
             
+            self.config.log("Scraping URL: " + scraper_url.normalized_url)
             if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
                 page = await self.config.browser_html_scraper_factory.new_scraper(scraper_store).scrape(scraper_url)
             else:

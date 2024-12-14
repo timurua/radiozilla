@@ -27,7 +27,6 @@ class ScraperService:
         await self.stop(callback)
 
         scraper_store_factory = get_scraper_store_factory()
-        callback.on_log("Starting scraper")
         ScraperService._http_html_scraper_factory = HttpHtmlScraperFactory()
         ScraperService._browser_html_scraper_factory = BrowserHtmlScraperFactory()
     

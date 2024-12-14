@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...database import get_db
 from ...services.health import HealthService
@@ -13,6 +14,7 @@ from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 from enum import Enum
 import asyncio
+from ...models.web_page import WebPageSeed
 
 router = APIRouter()
 
@@ -144,8 +146,83 @@ async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: C
         while True:
             data = await websocket.receive_text()
     except Exception as e:
-        logging.error(f"Error scraper-ws: {str(e)}", exc_info=True) 
         connection_manager.disconnect(websocket)
 
 
+class FAWebPageSeed(BaseModel):
+    normalized_url_hash: str
+    normalized_url: str
+    url: str
+    max_depth: int
+    url_patterns: List[str] | None
+    use_headless_browser: bool
+    allowed_domains: List[str] | None
 
+@router.get("/web-page-seeds")
+async def read_web_page_seeds(db: AsyncSession = Depends(get_db)):
+    try:
+        result = await db.execute(select(WebPageSeed))
+        web_page_seeds = result.scalars()
+        return [
+            FAWebPageSeed(
+                normalized_url_hash=seed.normalized_url_hash,
+                normalized_url=seed.normalized_url,
+                url=seed.url,
+                max_depth=seed.max_depth,
+                url_patterns=seed.url_patterns,
+                use_headless_browser=seed.use_headless_browser,
+                allowed_domains=seed.allowed_domains
+            ) for seed in web_page_seeds
+        ]
+    except Exception as e:
+        logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    
+class UpsertWebPageSeedRequest(BaseModel):
+    normalized_url_hash: str
+    normalized_url: str
+    url: str
+    max_depth: int
+    url_patterns: List[str] | None
+    use_headless_browser: bool
+    allowed_domains: List[str] | None
+
+@router.post("/web-page-seeds")
+async def upsert_web_page_seed(
+    request: UpsertWebPageSeedRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        result = await db.execute(select(WebPageSeed).where(WebPageSeed.normalized_url_hash == request.normalized_url_hash))
+        web_page_seed = result.scalar_one_or_none()
+
+        if web_page_seed:
+            web_page_seed.normalized_url = request.normalized_url
+            web_page_seed.url = request.url
+            web_page_seed.max_depth = request.max_depth
+            web_page_seed.url_patterns = request.url_patterns
+            web_page_seed.use_headless_browser = request.use_headless_browser
+            web_page_seed.allowed_domains = request.allowed_domains
+        else:
+            web_page_seed = WebPageSeed(
+                normalized_url_hash=request.normalized_url_hash,
+                normalized_url=request.normalized_url,
+                url=request.url,
+                max_depth=request.max_depth,
+                url_patterns=request.url_patterns,
+                use_headless_browser=request.use_headless_browser,
+                allowed_domains=request.allowed_domains
+            )
+            db.add(web_page_seed)
+
+        await db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        logging.error(f"Error upserting web page seed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

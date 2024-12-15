@@ -4,8 +4,7 @@ import logging
 from urllib.parse import urlparse
 from .scrape_html_http import HttpHtmlScraperFactory
 from .scrape_html_browser import BrowserHtmlScraperFactory
-from .model import ScraperWebPage
-from .html import HtmlContent, HtmlScraperProcessor
+from .model import ScraperWebPage, ScraperUrl
 import sys
 from .store import ScraperStore, ScraperStoreFactory
 from .url_normalize import normalize_url
@@ -39,8 +38,6 @@ class ScraperConfig:
                 timeout_seconds: int = 30,
                 max_initiated_urls: int = 64 * 1024,
                 max_queue_size: int = 1024 * 1024,
-                http_html_scraper_factory: HttpHtmlScraperFactory,
-                browser_html_scraper_factory: BrowserHtmlScraperFactory | None = None,
                 scraper_store_factory: ScraperStoreFactory | None = None,
                 allow_l2_domains: bool = True,
                 scraper_callback: ScraperCallback | None = None,
@@ -54,8 +51,6 @@ class ScraperConfig:
         self.use_headless_browser = use_headless_browser
         self.timeout_seconds = timeout_seconds
         self.max_initiated_urls = max_initiated_urls
-        self.browser_html_scraper_factory = browser_html_scraper_factory
-        self.http_html_scraper_factory = http_html_scraper_factory
         self.scraper_store_factory = scraper_store_factory
         self.scraper_callback = scraper_callback
         self.user_agent = user_agent
@@ -80,8 +75,10 @@ class Scraper:
         self.url_queue: asyncio.Queue[ScraperUrl] = asyncio.Queue(
             maxsize=config.max_queue_size)
         self.pages: dict[str, Optional[ScraperWebPage]] = {}
-
-    async def start(self):
+        self.http_html_scraper_factory = HttpHtmlScraperFactory(user_agent=config.user_agent)
+        self.browser_html_scraper_factory = BrowserHtmlScraperFactory() if self.config.use_headless_browser else None
+        
+    async def run(self):
         for scraper_url in self.config.scraper_urls:
             await self.queue_if_allowed(scraper_url)
 
@@ -91,6 +88,13 @@ class Scraper:
             tasks.append(task)
         
         await asyncio.gather(*tasks)
+
+    async def close(self):
+        if self.http_html_scraper_factory:
+            await self.http_html_scraper_factory.close()
+        if self.browser_html_scraper_factory:
+            await self.browser_html_scraper_factory.close()
+    
 
     async def scrape_loop(self, name: str) -> ScraperLoopResult:
         loop_completed_urls_count = 0
@@ -109,16 +113,17 @@ class Scraper:
             
             self.config.log("Scraping URL: " + scraper_url.normalized_url)
 
+            page = None
             if (not scraper_url.no_cache) and scraper_store:
                 page = await scraper_store.load_page(scraper_url.normalized_url)
                 if page:
                     page = extract_metadata(page)
 
             if page is None:
-                if self.config.use_headless_browser and self.config.browser_html_scraper_factory:
-                    page = await self.config.browser_html_scraper_factory.new_scraper().scrape(scraper_url)
+                if self.config.use_headless_browser and self.browser_html_scraper_factory:
+                    page = await self.browser_html_scraper_factory.new_scraper().scrape(scraper_url)
                 else:
-                    page = await self.config.http_html_scraper_factory.new_scraper().scrape(scraper_url)
+                    page = await self.http_html_scraper_factory.new_scraper().scrape(scraper_url)
             
             if page is not None:
                 page = extract_metadata(page)

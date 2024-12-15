@@ -20,6 +20,5 @@ class Base(DeclarativeBase):
 class TimestampModel(Base):
     __abstract__ = True
 
-    id = Column(Integer, primary_key=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

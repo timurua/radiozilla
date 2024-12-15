@@ -55,13 +55,22 @@ class FAWebPage(BaseModel):
     normalized_url: str
     url: str
     status_code: int
-    headers: dict[str, str]
-    content: bytes
-    content_type: str
-    title: str
-    visible_text: str
-    content_date: datetime
-    updated_at: datetime
+    headers: dict[str, str]|None
+    content: bytes|None
+    content_type: str|None
+    content_charset: str|None
+
+    metadata_title: str|None
+    metadata_description: str|None
+    metadata_image_url: str|None
+    metadata_published_at: datetime|None
+
+    canonical_url: str|None
+    outgoing_urls: list[str]|None
+    visible_text: str|None
+    sitemap_url: str|None
+    robots_content: list[str]|None
+    text_chunks: list[str]|None
 
 @router.get("/web-pages")
 async def read_web_pages(
@@ -79,10 +88,17 @@ async def read_web_pages(
             headers=web_page.headers,
             content=web_page.content,
             content_type=web_page.content_type,
-            title=web_page.title,
+            content_charset=web_page.content_charset,
+            metadata_title=web_page.metadata_title,
+            metadata_description=web_page.metadata_description,
+            metadata_image_url=web_page.metadata_image_url,
+            metadata_published_at=web_page.metadata_published_at,
+            canonical_url=web_page.canonical_url,
+            outgoing_urls=web_page.outgoing_urls,
             visible_text=web_page.visible_text,
-            content_date=web_page.content_date,
-            updated_at=web_page.updated_at
+            sitemap_url=web_page.sitemap_url,
+            robots_content=web_page.robots_content,
+            text_chunks=web_page.text_chunks
         ) if web_page else {} 
     except Exception as e:
         logging.error(f"Error similar-embeddings: {str(e)}")

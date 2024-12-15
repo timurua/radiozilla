@@ -1,4 +1,4 @@
-import { HealthResponse, WebPageSeed } from '../types/api';
+import { HealthResponse, WebPageSeed, WebPage } from '../types/api';
 import axios from 'axios';
 
 export const createURL = (api: string, params?: Record<string, string>): string => {
@@ -51,6 +51,15 @@ export const stopScraper = async (): Promise<any> => {
 
 export const fetchWebPageSeeds = async (): Promise<WebPageSeed[]> => {
     return await fetchURL<WebPageSeed[]>('/api/v1/web-page-seeds');
+};
+
+export const fetchWebPage = async (url: string): Promise<WebPage> => {
+    const response = await axios.get(createURL('/api/v1/web-pages', {"url": url }), {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data;
 };
 
 export const addWebPageSeed = async (seed: WebPageSeed): Promise<any> => {

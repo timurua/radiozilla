@@ -1,6 +1,5 @@
 from .html import HtmlContent, HtmlScraperProcessor
 from .metadata import MetadataExtractor
-from .text import TextChunkExtractor
 from bs4 import BeautifulSoup
 from .model import ScraperWebPage
 from .text import chunk_text

@@ -45,12 +45,19 @@ class WebPage(TimestampModel):
     headers: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=True, default=None)
     content: Mapped[bytes] = mapped_column(LargeBinary, nullable=True, default=None)
     content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
-
+    content_charset: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    
     metadata_title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     metadata_description: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    metadata_image: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    metadata_image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     metadata_published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+
+    canonical_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    outgoing_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    sitemap_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    robots_content: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    text_chunks: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.url, 'set')

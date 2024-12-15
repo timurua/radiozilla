@@ -5,6 +5,7 @@ import Health from './routes/Health';
 import Root from './components/Root';
 import Scraper from './routes/Scraper';
 import WebPageSeeds from './routes/WebPageSeeds';
+import ViewWebPage from './routes/ViewWebPage';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
           <Route path="/health" element={<Health />} />
           <Route path="/scraper" element={<Scraper />} />
           <Route path="/web-page-seeds" element={<WebPageSeeds />} />
+          <Route path="/web-pages" element={<ViewWebPage />} />
         </Routes>
       </Root>
       </BrowserRouter>

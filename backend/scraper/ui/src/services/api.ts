@@ -1,4 +1,4 @@
-import { HealthResponse, WebPageSeed, WebPage } from '../types/api';
+import { HealthResponse, WebPageSeed, WebPage, ScraperStats } from '../types/api';
 import axios from 'axios';
 
 export const createURL = (api: string, params?: Record<string, string>): string => {
@@ -31,14 +31,24 @@ export const getScraperSocketPath = (): string => {
     return createURL('/api/v1/scraper-ws');
 }
 
-export const startScraper = async (url: string, maxDepth: number, noCache: boolean): Promise<any> => {
-    const response = await axios.post(createURL('/api/v1/scraper-start'), { url, "max_depth": maxDepth, "no_cache": noCache }, {
+export const scraperRun = async (url: string, maxDepth: number, noCache: boolean): Promise<ScraperStats> => {
+    const response = await axios.post(createURL('/api/v1/scraper-run'), { url, "max_depth": maxDepth, "no_cache": noCache }, {
         headers: {
             'Content-Type': 'application/json',
         },
     });
     return response.data;
 }
+
+export const summarizerRun = async (url: string): Promise<ScraperStats> => {
+    const response = await axios.post(createURL('/api/v1/summarizer-run'), { url }, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data;
+}
+
 
 export const stopScraper = async (): Promise<any> => {
     const response = await axios.post(createURL('/api/v1/scraper-stop'), { reason: "Manual Stop" }, {

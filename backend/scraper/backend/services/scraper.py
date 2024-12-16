@@ -2,6 +2,7 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select
 from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperCallback
+from pywebscraper.stats import ScraperStats, DomainStats
 from urllib.parse import urlparse
 from .web_page import get_scraper_store_factory
 
@@ -16,7 +17,7 @@ class ScraperService:
         self._version = "1.0.0"
         logging.info("Scraper service initialized")
 
-    async def run(self, scraper_urls: list[ScraperUrl], callback: ScraperCallback, no_cache: bool = False) -> None:
+    async def run(self, scraper_urls: list[ScraperUrl], callback: ScraperCallback, no_cache: bool = False) -> ScraperStats:
 
         await self.stop(callback)
 
@@ -36,7 +37,7 @@ class ScraperService:
             ),
         )
         try:
-            await ScraperService._scraper.run()
+            return await ScraperService._scraper.run()
         finally:
             await ScraperService._scraper.close()
 

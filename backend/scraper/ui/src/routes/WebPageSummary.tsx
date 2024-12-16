@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
 import { scraperRun, stopScraper, getScraperSocketPath } from '../services/api';
-import JsonViewer from '../components/JsonViewer';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { ScraperStats } from '../types/api';
 
-const Scraper: React.FC = () => {
+const WebPageSummary: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
     const [maxDepth, setMaxDepth] = useState(5);
     const [noCache, setNoCache] = useState(true);
@@ -48,7 +47,7 @@ const Scraper: React.FC = () => {
         };
     }, []);
 
-    const handleStartScraping = async () => {
+    const handleSummarizationRun = async () => {
         try {
             setLoading(true);
             const scraperStats = await scraperRun(
@@ -116,7 +115,7 @@ const Scraper: React.FC = () => {
             </Row>
             <Row>
                 <Col>
-                    <Button variant="primary" onClick={handleStartScraping}>
+                    <Button variant="primary" onClick={handleSummarizationRun}>
                         Start Scraping
                     </Button>
                 </Col>
@@ -157,4 +156,4 @@ const Scraper: React.FC = () => {
     );
 };
 
-export default Scraper;
+export default WebPageSummary;

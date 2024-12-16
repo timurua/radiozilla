@@ -12,8 +12,6 @@ import numpy as np
 from pgvector.sqlalchemy import Vector
 import hashlib
 
-
-
 class Base(DeclarativeBase):
     pass
 

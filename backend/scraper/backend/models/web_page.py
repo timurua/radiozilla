@@ -79,12 +79,42 @@ class WebPageSummary(TimestampModel):
     
     normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
     normalized_url: Mapped[str] = mapped_column(String)
-    url: Mapped[str] = mapped_column(String)
-    status_code: Mapped[int] = mapped_column(Integer)
-    headers: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=True, default=None)
-    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=True, default=None)
-    content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
+
     title: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    content_date: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    text: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    summarized_text: Mapped[str] = mapped_column(String, nullable=True, default=None) 
+    summarized_text_audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+
+
+# Automatically set hash when content is modified
+@event.listens_for(WebPageSummary.normalized_url, 'set')
+def set_content_hash(target: WebPageSummary, value, oldvalue, initiator):
+    target.normalized_url_hash = normalized_url_hash(value)
+
+# Set hash before insert/update
+@event.listens_for(WebPageSummary, 'before_insert')
+@event.listens_for(WebPageSummary, 'before_update')
+def ensure_hash(mapper, connection, target: WebPageSummary):
+    if target.normalized_url:
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+    
+class WebPageSummarizationRule(TimestampModel):
+    __tablename__ = "web_page_summarization_rules"
+    
+    normalized_url_prefix_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url_prefix: Mapped[str] = mapped_column(String)
+
+# Automatically set hash when content is modified
+@event.listens_for(WebPageSummarizationRule.normalized_url_prefix, 'set')
+def set_content_hash(target: WebPageSummarizationRule, value, oldvalue, initiator):
+    target.normalized_url_prefix_hash = normalized_url_hash(value)
+
+# Set hash before insert/update
+@event.listens_for(WebPageSummarizationRule, 'before_insert')
+@event.listens_for(WebPageSummarizationRule, 'before_update')
+def ensure_hash(mapper, connection, target: WebPageSummarizationRule):
+    if target.normalized_url_prefix:
+        target.normalized_url_prefix_hash = normalized_url_hash(target.normalized_url_prefix)

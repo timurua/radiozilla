@@ -12,9 +12,9 @@ from datetime import datetime
 from typing import List, override
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
-from enum import Enum
 import asyncio
 from ...models.web_page import WebPageSeed
+from pywebscraper.stats import ScraperStats
 
 router = APIRouter()
 
@@ -117,20 +117,40 @@ class Callback(ScraperCallback):
             self.connection_manager = connection_manager
 
         def on_log(self, text: str) -> None:
-            asyncio.create_task(self.connection_manager.broadcast(text))    
+            asyncio.create_task(self.connection_manager.broadcast(text))
 
-@router.post("/scraper-start")
+class FADomainStats(BaseModel):
+    domain: str
+    frequent_subpaths: dict[str, int]
+
+class FAScraperStats(BaseModel):
+    initiated_urls_count: int
+    requested_urls_count: int
+    completed_urls_count: int
+    domain_stats: dict[str, FADomainStats]
+
+@router.post("/scraper-run")
 async def scraper_start(
     request: ScraperStartRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
-):
+) -> FAScraperStats:
     callback = Callback(connection_manager)
     try:
         logging.info(f"Starting scraper for url: {request.url}")
         urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
-        await scraper_service.run(urls, callback, no_cache=request.no_cache)
-        return {"status": "success"}
+        scraper_stats = await scraper_service.run(urls, callback, no_cache=request.no_cache)
+        return FAScraperStats(
+            initiated_urls_count=scraper_stats.initiated_urls_count,
+            requested_urls_count=scraper_stats.requested_urls_count,
+            completed_urls_count=scraper_stats.completed_urls_count,
+            domain_stats={
+                domain: FADomainStats(
+                    domain=domain,
+                    frequent_subpaths=domain_stats.frequent_subpaths
+                ) for domain, domain_stats in scraper_stats.domain_stats.items()
+            }
+        )
     except Exception as e:
         logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -176,7 +196,7 @@ class FAWebPageSeed(BaseModel):
     allowed_domains: List[str] | None
 
 @router.get("/web-page-seeds")
-async def read_web_page_seeds(db: AsyncSession = Depends(get_db)):
+async def read_web_page_seeds(db: AsyncSession = Depends(get_db)) -> List[FAWebPageSeed]:
     try:
         result = await db.execute(select(WebPageSeed))
         web_page_seeds = result.scalars()

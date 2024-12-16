@@ -87,4 +87,6 @@ class ScraperWebPage:
         self.sitemap_url = sitemap_url
         self.robots_content = robots_content
         self.text_chunks = text_chunks
+
+
         

@@ -8,7 +8,7 @@ interface RootProps {
 
 const Root: React.FC<RootProps> = ({ children }) => {
     return (
-        <>
+        <div>
             <Navbar bg="dark" variant="dark" expand="lg">
                 <Container>
                     <Navbar.Brand href="#">Radiozilla Scrapper</Navbar.Brand>
@@ -19,14 +19,14 @@ const Root: React.FC<RootProps> = ({ children }) => {
                             <Nav.Link as={Link} to="/scraper">Scraper</Nav.Link>
                             <Nav.Link as={Link} to="/web-page-seeds">Seeds</Nav.Link>
                             <Nav.Link as={Link} to="/web-pages">Pages</Nav.Link>
+                            <Nav.Link as={Link} to="/web-page-summary">Summary</Nav.Link>
                         </Nav>
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-            <Container>
-                {children}
-            </Container>
-        </>
+            {children}
+
+        </div>
     );
 };
 

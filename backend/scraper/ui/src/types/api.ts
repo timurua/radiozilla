@@ -32,3 +32,20 @@ export interface WebPage {
     robots_content?: string[];
     text_chunks?: string[];
 }
+
+export interface WebPageSummary {
+    normalized_url_hash: string;
+    normalized_url: string;
+}
+
+export interface DomainStats {
+    domain: string;
+    frequent_subpaths: Map<string, number>;
+}
+
+export interface ScraperStats {
+    initiated_urls_count: number;
+    requested_urls_count: number;
+    completed_urls_count: number;
+    domain_stats: Map<string, DomainStats>;
+}

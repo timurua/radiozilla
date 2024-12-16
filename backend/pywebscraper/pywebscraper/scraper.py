@@ -36,24 +36,26 @@ class ScraperConfig:
                 max_parallel_requests: int = 16,
                 use_headless_browser: bool = False,
                 timeout_seconds: int = 30,
-                max_initiated_urls: int = 64 * 1024,
+                max_requested_urls: int = 64 * 1024,
                 max_queue_size: int = 1024 * 1024,
                 scraper_store_factory: ScraperStoreFactory | None = None,
                 allow_l2_domains: bool = True,
                 scraper_callback: ScraperCallback | None = None,
                 user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                 'AppleWebKit/537.36 (KHTML, like Gecko) '
-                'Chrome/115.0.0.0 Safari/537.36'):
+                'Chrome/115.0.0.0 Safari/537.36',
+                no_cache: bool = False):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
         self.domains = ScraperDomains(allow_l2_domains, [url.url for url in scraper_urls])
         self.max_queue_size = max_queue_size
         self.use_headless_browser = use_headless_browser
         self.timeout_seconds = timeout_seconds
-        self.max_initiated_urls = max_initiated_urls
+        self.max_requested_urls = max_requested_urls
         self.scraper_store_factory = scraper_store_factory
         self.scraper_callback = scraper_callback
         self.user_agent = user_agent
+        self.no_cache = no_cache
 
     def log(self, text: str) -> None:
         logger.info(text)
@@ -71,6 +73,7 @@ class Scraper:
         self.config = config
         self.initiated_urls: dict[str, ScraperUrl] = {}
         self.initiated_urls_count = 0
+        self.requested_urls_count = 0
         self.completed_urls_count = 0
         self.url_queue: asyncio.Queue[ScraperUrl] = asyncio.Queue(
             maxsize=config.max_queue_size)
@@ -108,17 +111,26 @@ class Scraper:
                     f"terminating - looper: {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} URLs")
                 break
 
+            if self.requested_urls_count >= self.config.max_requested_urls:
+                logger.info(
+                    f"terminating - max requested urls reached - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count}")
+                break
+
             logger.info(
                 f"initiating - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}")
             
             self.config.log("Scraping URL: " + scraper_url.normalized_url)
 
             page = None
-            if (not scraper_url.no_cache) and scraper_store:
+            if (not self.config.no_cache) and (not scraper_url.no_cache) and scraper_store:
+                logger.info(
+                    f"loading from store - {name} i:c={self.initiated_urls_count}:{self.completed_urls_count} url: {scraper_url.normalized_url}")
                 page = await scraper_store.load_page(scraper_url.normalized_url)
+                # re-extracting metadata
                 if page:
-                    page = extract_metadata(page)
+                    page = extract_metadata(page)                
 
+            self.requested_urls_count += 1
             if page is None:
                 if self.config.use_headless_browser and self.browser_html_scraper_factory:
                     page = await self.browser_html_scraper_factory.new_scraper().scrape(scraper_url)
@@ -152,15 +164,17 @@ class Scraper:
     async def queue_if_allowed(self, outgoing_scraper_url: ScraperUrl) -> None:
         if outgoing_scraper_url.normalized_url in self.initiated_urls:
             return
-        if self.is_domain_allowed(outgoing_scraper_url.normalized_url):
-            logger.info(f"queueing url i:c={self.initiated_urls_count}:{
-                        self.completed_urls_count} - url: {outgoing_scraper_url.normalized_url}")
-            self.initiated_urls_count += 1
-            self.initiated_urls[outgoing_scraper_url.normalized_url] = outgoing_scraper_url
-            await self.url_queue.put(outgoing_scraper_url)
-        else:
+        if not self.is_domain_allowed(outgoing_scraper_url.normalized_url):
             logger.info(f"skipping url i:c={self.initiated_urls_count}:{
                         self.completed_urls_count} - url: {outgoing_scraper_url.normalized_url}")
+            return
+                
+        logger.info(f"queueing url i:c={self.initiated_urls_count}:{
+                    self.completed_urls_count} - url: {outgoing_scraper_url.normalized_url}")
+        self.initiated_urls_count += 1
+        self.initiated_urls[outgoing_scraper_url.normalized_url] = outgoing_scraper_url
+        await self.url_queue.put(outgoing_scraper_url)
+    
 
     def is_domain_allowed(self, normalized_url: str) -> bool:
         return self.config.domains.is_allowed(normalized_url)
@@ -170,6 +184,9 @@ class Scraper:
             return
         logger.info(
             f"terminating all loops - i:c={self.initiated_urls_count}:{self.completed_urls_count}")
+        await self.terminate_all_loops();
+        
+    async def terminate_all_loops(self):
         for i in range(self.config.max_parallel_requests):
             await self.url_queue.put(ScraperUrl.create_terminal())
 

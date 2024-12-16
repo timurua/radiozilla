@@ -59,7 +59,7 @@ class ScraperWebPage:
                 headless_browser: bool = False,
                 metadata_title: str | None = None,
                 metadata_description: str | None = None,
-                metadata_image: str | None = None,
+                metadata_image_url: str | None = None,
                 metadata_published_at: datetime | None = None,
                 canonical_url: str | None = None,
                 outgoing_urls: list[str] | None = None,
@@ -79,7 +79,7 @@ class ScraperWebPage:
         self.headless_browser = headless_browser
         self.metadata_title = metadata_title
         self.metadata_description = metadata_description
-        self.metadata_image = metadata_image
+        self.metadata_image_url = metadata_image_url
         self.metadata_published_at = metadata_published_at
         self.canonical_url = canonical_url
         self.outgoing_urls = outgoing_urls

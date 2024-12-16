@@ -110,6 +110,7 @@ async def read_web_pages(
 class ScraperStartRequest(BaseModel):
     url: str
     max_depth: int
+    no_cache: bool
 
 class Callback(ScraperCallback):
         def __init__(self, connection_manager: ConnectionManager):
@@ -128,7 +129,7 @@ async def scraper_start(
     try:
         logging.info(f"Starting scraper for url: {request.url}")
         urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
-        await scraper_service.start(urls, callback)
+        await scraper_service.run(urls, callback, no_cache=request.no_cache)
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error scraper-start: {str(e)}", exc_info=True)

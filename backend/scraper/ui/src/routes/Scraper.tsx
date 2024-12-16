@@ -7,6 +7,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 const Scraper: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
     const [maxDepth, setMaxDepth] = useState(5);
+    const [noCache, setNoCache] = useState(true);
     const [loading, setLoading] = useState(false);
 
     const [_, setSocket] = useState<WebSocket|null>(null);
@@ -20,23 +21,19 @@ const Scraper: React.FC = () => {
         setSocket(ws);
 
         ws.onopen = () => {
-            console.log('Connected to WebSocket');
         };
 
         ws.onmessage = (event) => {
-            console.log(`Receved event on WebSocket ${JSON.stringify(event.data)}`);
-            setMessages(prev => [...prev, event.data]);
+            setMessages(prev => [event.data, ...prev]);
         };
 
         ws.onerror = function(error) {
-            console.log(`Error from WebSocket ${error}`);
         };
 
         ws.onclose = () => {
             console.log('Disconnected from WebSocket');
             if (reconnect){
                 setTimeout(() => {
-                    console.log('Attempting to reconnect...');
                     const newWs = new WebSocket(getScraperSocketPath());
                     setSocket(newWs);
                 }, 5000);
@@ -55,7 +52,8 @@ const Scraper: React.FC = () => {
             setLoading(true);
             const response = await startScraper(
                 url,
-                maxDepth
+                maxDepth,
+                noCache
             );
             setResponse(response);
         } catch (error) {
@@ -105,6 +103,12 @@ const Scraper: React.FC = () => {
                             type="number"
                             value={maxDepth}
                             onChange={(e) => setMaxDepth(parseInt(e.target.value))}
+                        />
+                        <Form.Label>No Cache</Form.Label>
+                        <Form.Check
+                            type="checkbox"
+                            checked={noCache}
+                            onChange={(e) => setNoCache(e.target.checked)}
                         />
                     </Form.Group>
                 </Col>

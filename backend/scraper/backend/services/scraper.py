@@ -16,7 +16,7 @@ class ScraperService:
         self._version = "1.0.0"
         logging.info("Scraper service initialized")
 
-    async def start(self, scraper_urls: list[ScraperUrl], callback: ScraperCallback) -> None:
+    async def run(self, scraper_urls: list[ScraperUrl], callback: ScraperCallback, no_cache: bool = False) -> None:
 
         await self.stop(callback)
 
@@ -32,6 +32,7 @@ class ScraperService:
                 timeout_seconds=30, 
                 scraper_store_factory=scraper_store_factory,
                 scraper_callback=callback,
+                no_cache=no_cache,
             ),
         )
         try:

@@ -31,8 +31,8 @@ export const getScraperSocketPath = (): string => {
     return createURL('/api/v1/scraper-ws');
 }
 
-export const startScraper = async (url: string, maxdepth: number): Promise<any> => {
-    const response = await axios.post(createURL('/api/v1/scraper-start'), { url, "max_depth": maxdepth }, {
+export const startScraper = async (url: string, maxDepth: number, noCache: boolean): Promise<any> => {
+    const response = await axios.post(createURL('/api/v1/scraper-start'), { url, "max_depth": maxDepth, "no_cache": noCache }, {
         headers: {
             'Content-Type': 'application/json',
         },

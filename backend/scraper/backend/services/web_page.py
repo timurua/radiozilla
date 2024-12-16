@@ -67,7 +67,6 @@ class ServiceScraperStore(ScraperStore):
                     status_code = web_page.status_code,
                     url = web_page.url,
                     normalized_url = web_page.normalized_url,
-                    normalized_url_hash = web_page.normalized_url_hash,
                     headers = web_page.headers,
                     content = web_page.content,
                     content_type = web_page.content_type,

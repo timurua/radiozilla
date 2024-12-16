@@ -138,25 +138,25 @@ export interface HTTPValidationError {
 /**
  * 
  * @export
- * @interface ScraperStartRequest
+ * @interface ScraperRunRequest
  */
-export interface ScraperStartRequest {
+export interface ScraperRunRequest {
     /**
      * 
      * @type {string}
-     * @memberof ScraperStartRequest
+     * @memberof ScraperRunRequest
      */
     'url': string;
     /**
      * 
      * @type {number}
-     * @memberof ScraperStartRequest
+     * @memberof ScraperRunRequest
      */
     'max_depth': number;
     /**
      * 
      * @type {boolean}
-     * @memberof ScraperStartRequest
+     * @memberof ScraperRunRequest
      */
     'no_cache': boolean;
 }
@@ -377,14 +377,14 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Scraper Start
-         * @param {ScraperStartRequest} scraperStartRequest 
+         * @summary Scraper Run
+         * @param {ScraperRunRequest} scraperRunRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        scraperStartApiV1ScraperRunPost: async (scraperStartRequest: ScraperStartRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'scraperStartRequest' is not null or undefined
-            assertParamExists('scraperStartApiV1ScraperRunPost', 'scraperStartRequest', scraperStartRequest)
+        scraperRunApiV1ScraperRunPost: async (scraperRunRequest: ScraperRunRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'scraperRunRequest' is not null or undefined
+            assertParamExists('scraperRunApiV1ScraperRunPost', 'scraperRunRequest', scraperRunRequest)
             const localVarPath = `/api/v1/scraper-run`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -404,7 +404,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(scraperStartRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(scraperRunRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -538,15 +538,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Scraper Start
-         * @param {ScraperStartRequest} scraperStartRequest 
+         * @summary Scraper Run
+         * @param {ScraperRunRequest} scraperRunRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async scraperStartApiV1ScraperRunPost(scraperStartRequest: ScraperStartRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAScraperStats>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.scraperStartApiV1ScraperRunPost(scraperStartRequest, options);
+        async scraperRunApiV1ScraperRunPost(scraperRunRequest: ScraperRunRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAScraperStats>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.scraperRunApiV1ScraperRunPost(scraperRunRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.scraperStartApiV1ScraperRunPost']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.scraperRunApiV1ScraperRunPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -623,13 +623,13 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
-         * @summary Scraper Start
-         * @param {ScraperStartRequest} scraperStartRequest 
+         * @summary Scraper Run
+         * @param {ScraperRunRequest} scraperRunRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        scraperStartApiV1ScraperRunPost(scraperStartRequest: ScraperStartRequest, options?: RawAxiosRequestConfig): AxiosPromise<FAScraperStats> {
-            return localVarFp.scraperStartApiV1ScraperRunPost(scraperStartRequest, options).then((request) => request(axios, basePath));
+        scraperRunApiV1ScraperRunPost(scraperRunRequest: ScraperRunRequest, options?: RawAxiosRequestConfig): AxiosPromise<FAScraperStats> {
+            return localVarFp.scraperRunApiV1ScraperRunPost(scraperRunRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -707,14 +707,14 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
-     * @summary Scraper Start
-     * @param {ScraperStartRequest} scraperStartRequest 
+     * @summary Scraper Run
+     * @param {ScraperRunRequest} scraperRunRequest 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public scraperStartApiV1ScraperRunPost(scraperStartRequest: ScraperStartRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).scraperStartApiV1ScraperRunPost(scraperStartRequest, options).then((request) => request(this.axios, this.basePath));
+    public scraperRunApiV1ScraperRunPost(scraperRunRequest: ScraperRunRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).scraperRunApiV1ScraperRunPost(scraperRunRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

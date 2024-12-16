@@ -107,7 +107,7 @@ async def read_web_pages(
             detail=str(e)
         )
     
-class ScraperStartRequest(BaseModel):
+class ScraperRunRequest(BaseModel):
     url: str
     max_depth: int
     no_cache: bool
@@ -130,8 +130,8 @@ class FAScraperStats(BaseModel):
     domain_stats: dict[str, FADomainStats]
 
 @router.post("/scraper-run")
-async def scraper_start(
-    request: ScraperStartRequest,
+async def scraper_run(
+    request: ScraperRunRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ) -> FAScraperStats:

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HealthStatus } from '../components/HealthStatus';
-import { fetchHealth } from '../services/api';
+import Client from '../api/client';
 
 const App: React.FC = () => {
   const [health, setHealth] = useState<string | null>(null);
@@ -9,8 +9,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const getHealthStatus = async () => {
       try {
-        const response = await fetchHealth();
-        setHealth(response.status);
+        const response = await Client.healthCheckApiV1HealthGet();
+        setHealth(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }

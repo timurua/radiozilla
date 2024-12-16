@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { fetchWebPageSeeds, addWebPageSeed } from '../services/api';
-import { WebPageSeed } from '../types/api';
 import { Table } from 'react-bootstrap';
 import { Button, Modal, Form } from 'react-bootstrap';
+import Client from '../api/client';
+import { FAWebPageSeed } from '../api';
 
 
 const AddWebPageSeeds: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
-    const [newSeed, setNewSeed] = useState<WebPageSeed>({
+    const [newSeed, setNewSeed] = useState<FAWebPageSeed>({
         normalized_url_hash: '',
         normalized_url: '',
         url: '',
         max_depth: 0,
-        url_patterns: [],
+        url_patterns: [] as string[],
         use_headless_browser: false,
-        allowed_domains: []
+        allowed_domains: [] as string[]
     });
 
     const handleShow = () => setShowModal(true);
@@ -28,8 +28,8 @@ const AddWebPageSeeds: React.FC = () => {
         }));
     };
 
-    const handleSubmit = () => {
-        addWebPageSeed(newSeed);
+    const handleSubmit = async () => {
+        await Client.upsertWebPageSeedApiV1WebPageSeedsPost(newSeed);
         handleClose();
     };
 
@@ -68,7 +68,7 @@ const AddWebPageSeeds: React.FC = () => {
                             <Form.Control
                                 type="text"
                                 name="url_patterns"
-                                value={newSeed.url_patterns.join(', ')}
+                                value={(newSeed.url_patterns ?? []).join(', ')}
                                 onChange={e => setNewSeed(prevState => ({
                                     ...prevState,
                                     url_patterns: e.target.value.split(',').map(pattern => pattern.trim())
@@ -92,7 +92,7 @@ const AddWebPageSeeds: React.FC = () => {
                             <Form.Control
                                 type="text"
                                 name="allowed_domains"
-                                value={newSeed.allowed_domains.join(', ')}
+                                value={(newSeed.allowed_domains ?? []).join(', ')}
                                 onChange={e => setNewSeed(prevState => ({
                                     ...prevState,
                                     allowed_domains: e.target.value.split(',').map(domain => domain.trim())
@@ -114,14 +114,14 @@ const AddWebPageSeeds: React.FC = () => {
 };
 
 const WebPageSeeds: React.FC = () => {
-    const [seeds, setSeeds] = useState<WebPageSeed[] | null>(null);
+    const [seeds, setSeeds] = useState<FAWebPageSeed[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const getSeedsFromServer = async () => {
             try {
-                const seeds = await fetchWebPageSeeds();
-                setSeeds(seeds);
+                const seeds = await Client.readWebPageSeedsApiV1WebPageSeedsGet();
+                setSeeds(seeds.data);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
             }

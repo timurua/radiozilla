@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Table, Alert } from 'react-bootstrap';
-import { WebPage } from '../types/api';
-import { fetchWebPage } from '../services/api';
+import Client from '../api/client';
+import { FAWebPage } from '../api';
 
 const ViewWebPage: React.FC = () => {
     const [url, setUrl] = useState('');
-    const [pageData, setPageData] = useState<WebPage | null>(null);
+    const [pageData, setPageData] = useState<FAWebPage | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -15,8 +15,8 @@ const ViewWebPage: React.FC = () => {
         setLoading(true);
 
         try {
-            const webPage = await fetchWebPage(url);
-            setPageData(webPage);
+            const webPage = await Client.readWebPagesApiV1WebPagesGet(url);
+            setPageData(webPage.data);
         } catch (err) {
             setError('Failed to fetch webpage data');
             setPageData(null);
@@ -89,7 +89,7 @@ const ViewWebPage: React.FC = () => {
                         <td>Preview Image</td>
                         <td>
                             <img 
-                                src={pageData.metadata_image_url} 
+                                src={pageData.metadata_image_url ?? undefined} 
                                 alt="Page preview" 
                                 style={{ maxWidth: '300px' }}
                             />
@@ -145,7 +145,7 @@ const ViewWebPage: React.FC = () => {
                             </ul>
                         </td>
                     </tr>
-                    
+
                 </tbody>
             </Table>
             )}

@@ -76,6 +76,121 @@ export interface FAScraperStats {
 /**
  * 
  * @export
+ * @interface FAWebPage
+ */
+export interface FAWebPage {
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'normalized_url_hash': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'normalized_url': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'url': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof FAWebPage
+     */
+    'status_code': number;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof FAWebPage
+     */
+    'headers': { [key: string]: string; } | null;
+    /**
+     * 
+     * @type {File}
+     * @memberof FAWebPage
+     */
+    'content': File | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'content_type': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'content_charset': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'metadata_title': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'metadata_description': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'metadata_image_url': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'metadata_published_at': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'canonical_url': string | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof FAWebPage
+     */
+    'outgoing_urls': Array<string> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'visible_text': string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAWebPage
+     */
+    'sitemap_url': string | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof FAWebPage
+     */
+    'robots_content': Array<string> | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof FAWebPage
+     */
+    'text_chunks': Array<string> | null;
+}
+/**
+ * 
+ * @export
  * @interface FAWebPageSeed
  */
 export interface FAWebPageSeed {
@@ -530,7 +645,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async readWebPagesApiV1WebPagesGet(url: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<any>> {
+        async readWebPagesApiV1WebPagesGet(url: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAWebPage>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.readWebPagesApiV1WebPagesGet(url, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.readWebPagesApiV1WebPagesGet']?.[localVarOperationServerIndex]?.url;
@@ -618,7 +733,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        readWebPagesApiV1WebPagesGet(url: string, options?: RawAxiosRequestConfig): AxiosPromise<any> {
+        readWebPagesApiV1WebPagesGet(url: string, options?: RawAxiosRequestConfig): AxiosPromise<FAWebPage> {
             return localVarFp.readWebPagesApiV1WebPagesGet(url, options).then((request) => request(axios, basePath));
         },
         /**

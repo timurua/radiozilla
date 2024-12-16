@@ -76,7 +76,7 @@ class FAWebPage(BaseModel):
 async def read_web_pages(
     url: str,
     web_page_service: WebPageService = Depends(get_web_page_service)
-):
+) -> FAWebPage | None:
     try:
         logging.info(f"Finding web page for url: {url}")
         web_page = await web_page_service.find_web_page_by_url(url)
@@ -99,13 +99,14 @@ async def read_web_pages(
             sitemap_url=web_page.sitemap_url,
             robots_content=web_page.robots_content,
             text_chunks=web_page.text_chunks
-        ) if web_page else {} 
+        ) if web_page else None 
     except Exception as e:
         logging.error(f"Error similar-embeddings: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+    return None
     
 class ScraperRunRequest(BaseModel):
     url: str
@@ -193,7 +194,7 @@ class FAWebPageSeed(BaseModel):
     max_depth: int
     url_patterns: List[str] | None
     use_headless_browser: bool
-    allowed_domains: List[str] | None
+    allowed_domains: List[str] | None 
 
 @router.get("/web-page-seeds")
 async def read_web_page_seeds(db: AsyncSession = Depends(get_db)) -> List[FAWebPageSeed]:

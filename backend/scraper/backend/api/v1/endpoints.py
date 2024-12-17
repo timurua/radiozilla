@@ -159,6 +159,39 @@ async def scraper_run(
             detail=str(e)
         )
     
+class SummarizerRunRequest(BaseModel):
+    url: str
+    
+@router.post("/summarizer-run")
+async def summarizer_run(
+    request: SummarizerRunRequest,
+    scraper_service: ScraperService  = Depends(get_scraper_service),
+    connection_manager: ConnectionManager  = Depends(get_connection_manager)
+) -> FAScraperStats:
+    callback = Callback(connection_manager)
+    try:
+        logging.info(f"Starting scraper for url: {request.url}")
+        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
+        scraper_stats = await scraper_service.run(urls, callback, no_cache=request.no_cache)
+        return FAScraperStats(
+            initiated_urls_count=scraper_stats.initiated_urls_count,
+            requested_urls_count=scraper_stats.requested_urls_count,
+            completed_urls_count=scraper_stats.completed_urls_count,
+            domain_stats={
+                domain: FADomainStats(
+                    domain=domain,
+                    frequent_subpaths=domain_stats.frequent_subpaths
+                ) for domain, domain_stats in scraper_stats.domain_stats.items()
+            }
+        )
+    except Exception as e:
+        logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+    
 @router.post("/scraper-stop")
 async def scraper_stop(
     scraper_service: ScraperService  = Depends(get_scraper_service),

@@ -2,13 +2,15 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
 from sentence_transformers import SentenceTransformer
-from ..models.web_page import WebPage
+from ..models.web_page import WebPage, WebPageChunk
 from pywebscraper.store import ScraperStore, ScraperStoreFactory
 from pywebscraper.model import ScraperWebPage
 import logging
 from typing import Optional
 from pywebscraper.url_normalize import normalized_url_hash
 from ..database import get_db_session
+
+logger = logging.getLogger("web_page_service")
 
 class WebPageService:
     _model = None
@@ -18,7 +20,7 @@ class WebPageService:
 
     async def upsert_web_page(self, web_page: WebPage) -> None:
         async with self.session.begin():
-            logging.info(f"Inserting web page for url: {web_page.url}")
+            logger.info(f"Inserting web page for url: {web_page.url}")
             await self.session.merge(web_page)
         
 
@@ -27,6 +29,11 @@ class WebPageService:
         stmt = select(WebPage).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+    
+    async def upsert_web_page_chunk(self, web_page_chunk: WebPageChunk) -> None:
+        async with self.session.begin():
+            logger.info(f"Inserting web page chunk for web page id: {web_page_chunk.web_page_id}")
+            await self.session.merge(web_page_chunk)
     
 class ServiceScraperStore(ScraperStore):     
 

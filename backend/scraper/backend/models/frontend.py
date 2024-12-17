@@ -1,0 +1,74 @@
+from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean
+from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import String
+from sqlalchemy.future import select
+from typing import List, Dict
+from datetime import datetime
+from .base import TimestampModel
+from pywebscraper.url_normalize import normalized_url_hash, normalize_url
+from pywebscraper.hash import generate_url_safe_id
+from pgvector.sqlalchemy import Vector
+
+class FrontendAuthor(TimestampModel):
+    __tablename__ = "frontend_authors"
+
+    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url: Mapped[str] = mapped_column(String)
+
+    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+        
+# Automatically set hash when content is modified
+@event.listens_for(FrontendAuthor.normalized_url, 'set')
+def set_content_hash(target: FrontendAuthor, value, oldvalue, initiator):
+    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+# Set hash before insert/update
+@event.listens_for(FrontendAuthor, 'before_insert')
+@event.listens_for(FrontendAuthor, 'before_update')
+def ensure_hash(mapper, connection, target: FrontendAuthor):
+    if target.normalized_url:
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+class FrontendChannel(TimestampModel):
+    __tablename__ = "frontend_channels"
+
+    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url: Mapped[str] = mapped_column(String)
+
+    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    source_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+        
+# Automatically set hash when content is modified
+@event.listens_for(FrontendChannel.normalized_url, 'set')
+def set_content_hash(target: FrontendChannel, value, oldvalue, initiator):
+    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+# Set hash before insert/update
+@event.listens_for(FrontendChannel, 'before_insert')
+@event.listens_for(FrontendChannel, 'before_update')
+def ensure_hash(mapper, connection, target: FrontendAuthor):
+    if target.normalized_url:
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+class FrontendAudio(TimestampModel):
+    __tablename__ = "frontend_audios"
+    
+    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url: Mapped[str] = mapped_column(String)
+    url: Mapped[str] = mapped_column(String)
+    title: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    author_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    channel_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    tags: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    vector: Mapped[Vector] = mapped_column(Vector, nullable=True, default=None)
+

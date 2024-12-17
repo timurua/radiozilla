@@ -8,6 +8,8 @@ from typing import List, Dict
 from datetime import datetime
 from .base import TimestampModel
 from pywebscraper.url_normalize import normalized_url_hash, normalize_url
+from pywebscraper.hash import generate_url_safe_id
+from pgvector.sqlalchemy import Vector
 
 class WebPageSeed(TimestampModel):
     __tablename__ = "web_page_seeds"
@@ -118,3 +120,23 @@ def set_content_hash(target: WebPageSummarizationRule, value, oldvalue, initiato
 def ensure_hash(mapper, connection, target: WebPageSummarizationRule):
     if target.normalized_url_prefix:
         target.normalized_url_prefix_hash = normalized_url_hash(target.normalized_url_prefix)
+
+class WebPageChunk(TimestampModel):
+    __tablename__ = "web_page_chunks"
+    
+    content_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    content: Mapped[str] = mapped_column(String)
+    web_page_id: Mapped[str] = mapped_column(String)
+    embedding: Mapped[list[float]] = mapped_column(Vector(dim=384))
+
+@event.listens_for(WebPageChunk.content, 'set')
+def set_content_hash(target: WebPageChunk, value, oldvalue, initiator):
+    target.content_hash = generate_url_safe_id(value)
+
+# Set hash before insert/update
+@event.listens_for(WebPageChunk, 'before_insert')
+@event.listens_for(WebPageChunk, 'before_update')
+def ensure_hash(mapper, connection, target: WebPageSummarizationRule):
+    if target.content:
+        target.content_hash = generate_url_safe_id(target.content)
+

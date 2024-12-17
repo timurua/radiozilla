@@ -7,6 +7,7 @@ from .database import init_db
 from contextlib import asynccontextmanager
 import logging
 from .scheduler import ScraperScheduler
+import logging
 
 schedule = ScraperScheduler()
 
@@ -22,6 +23,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+logger = logging.getLogger("main")
+logger.info(f"Starting application {settings.PROJECT_NAME}")
 
 app = FastAPI(title=settings.PROJECT_NAME , lifespan=lifespan)
 

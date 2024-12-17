@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import { scraperRun, stopScraper, getScraperSocketPath } from '../services/api';
+import Client from '../api/client';
+import { basePath } from '../api/client';
 import ListGroup from 'react-bootstrap/ListGroup';
-import { ScraperStats } from '../types/api';
+import { FAScraperStats } from '../api';
 
-const WebPageSummary: React.FC = () => {
+const Scraper: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
     const [maxDepth, setMaxDepth] = useState(5);
     const [noCache, setNoCache] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [scraperStats, setScraperStats] = useState<ScraperStats | null>(null);
+    const [scraperStats, setScraperStats] = useState<FAScraperStats | null>(null);
 
     const [_, setSocket] = useState<WebSocket | null>(null);
     const [messages, setMessages] = useState<string[]>([]);
 
     useEffect(() => {
         // Create WebSocket connection
-        const ws = new WebSocket(getScraperSocketPath());
+        const ws = new WebSocket(basePath);
         var reconnect = true;
         setSocket(ws);
 
@@ -34,7 +35,7 @@ const WebPageSummary: React.FC = () => {
             console.log('Disconnected from WebSocket');
             if (reconnect) {
                 setTimeout(() => {
-                    const newWs = new WebSocket(getScraperSocketPath());
+                    const newWs = new WebSocket(basePath);
                     setSocket(newWs);
                 }, 5000);
             }
@@ -47,15 +48,15 @@ const WebPageSummary: React.FC = () => {
         };
     }, []);
 
-    const handleSummarizationRun = async () => {
+    const handleStartScraping = async () => {
         try {
             setLoading(true);
-            const scraperStats = await scraperRun(
+            const response = await Client.scraperRunApiV1ScraperRunPost({
                 url,
-                maxDepth,
-                noCache
-            );
-            setScraperStats(scraperStats);
+                "max_depth": maxDepth,
+                "no_cache": noCache
+            });
+            setScraperStats(response.data);
 
         } catch (error) {
             console.error('Error searching similar:', error);
@@ -66,7 +67,7 @@ const WebPageSummary: React.FC = () => {
 
     const handleStopScraping = async () => {
         try {
-            await stopScraper();
+            await Client.scraperStopApiV1ScraperStopPost();
         } catch (error) {
             console.error('Error stopping scraper:', error);
         } finally {
@@ -115,7 +116,7 @@ const WebPageSummary: React.FC = () => {
             </Row>
             <Row>
                 <Col>
-                    <Button variant="primary" onClick={handleSummarizationRun}>
+                    <Button variant="primary" onClick={handleStartScraping}>
                         Start Scraping
                     </Button>
                 </Col>
@@ -156,4 +157,4 @@ const WebPageSummary: React.FC = () => {
     );
 };
 
-export default WebPageSummary;
+export default Scraper;

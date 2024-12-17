@@ -35,7 +35,7 @@ const Scraper: React.FC = () => {
             console.log('Disconnected from WebSocket');
             if (reconnect) {
                 setTimeout(() => {
-                    const newWs = new WebSocket(getScraperSocketPath());
+                    const newWs = new WebSocket(configuration.basePath?? '');
                     setSocket(newWs);
                 }, 5000);
             }

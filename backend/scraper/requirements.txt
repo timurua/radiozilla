@@ -21,3 +21,7 @@ lxml>=5.3.0
 w3lib>=2.2.1
 extruct>=0.18.0
 python-dateutil>=2.9.0
+minio>=7.2.12
+pgvector>=0.3.6
+pydantic-settings>=2.7.0
+lru_cache>=0.2.3

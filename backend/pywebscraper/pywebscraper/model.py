@@ -1,7 +1,7 @@
 from typing import Dict
 from dataclasses import dataclass
 from datetime import datetime
-from .scrape_hash import generate_url_safe_id
+from .hash import generate_url_safe_id
 from .url_normalize import normalize_url, normalized_url_hash as do_normalized_url_hash
 
 class ScraperUrl:

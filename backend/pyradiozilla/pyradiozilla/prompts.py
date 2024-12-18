@@ -26,8 +26,8 @@ class SummaryConfig:
         self.focuses = focuses
 
 
-class SummaryPropmpt:
-    def __init__(self, text: str, config: SummaryConfig) -> str:
+class SummaryPrompt:
+    def __init__(self, text: str, config: SummaryConfig) -> None:
         self.text = text
         self.config = config
 
@@ -57,7 +57,7 @@ class RssWeeklySummaryPropmpt:
         return monday_midnight
 
     def get_prompts(self)-> list[RssPrompt]:
-        weekly_data = {}
+        weekly_data: dict[datetime, list[RssEntry]] = {}
         for entry in self.entries:    
             week_start_date = self.get_week_start(entry.published_date)
             if week_start_date not in weekly_data:

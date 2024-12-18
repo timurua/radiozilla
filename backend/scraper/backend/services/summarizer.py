@@ -9,6 +9,9 @@ import logging
 from ..models.web_page import WebPageSummary, WebPageChunk
 from pywebscraper.url_normalize import normalized_url_hash, normalize_url
 from ..services.web_page import WebPageService
+from pyradiozilla.ollama import OllamaClient
+from pyradiozilla.prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt
+from ..config import settings
 
 logger = logging.getLogger("summarizer_service")
 
@@ -25,11 +28,25 @@ class SummarizerService:
             logger.error(f"Web page not found for url: {url}")
             return None
         
-        for chunk in web_page.text_chunks:
-            web_page_chunk = WebPageChunk(
-                web_page_id = web_page.id,
-                content = chunk,
-            )
-            await self.web_page_service.upsert_web_page_chunk(web_page_chunk)
+        summary_confug = SummaryConfig(
+            "English",
+            SummaryLength.medium,
+            SummaryTone.neutral,
+            [SummaryFocus.key_points],
+        )
+
+        summary_prompt = SummaryPrompt(
+            web_page.visible_text,
+            summary_confug,
+        )
+
+        prompt = summary_prompt.get_prompt() 
+        
+        summary = OllamaClient().generate(prompt.prompt)
+        
+        
+        
+        
+
 
         return None

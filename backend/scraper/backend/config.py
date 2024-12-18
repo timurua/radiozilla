@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_USE_SSL: bool = False
 
+    # For prod: "gemma2:27b"
+    OLLAMA_MODEL: str = "gemma2"
+    OLLAMA_BASE_URL: str = "http://localhost:8000"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

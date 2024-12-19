@@ -17,7 +17,7 @@ def parse_requirements():
     return requirements
 
 setup(
-    name="api",
+    name="scraper",
     version="0.1.0",
     packages=find_packages(),
     install_requires=parse_requirements(),

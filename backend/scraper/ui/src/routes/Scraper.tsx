@@ -28,7 +28,7 @@ const Scraper: React.FC = () => {
             setMessages(prev => [event.data, ...prev]);
         };
 
-        ws.onerror = function (error) {
+        ws.onerror = function (_) {
         };
 
         ws.onclose = () => {

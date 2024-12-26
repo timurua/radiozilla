@@ -7,9 +7,11 @@ from sqlalchemy.future import select
 from typing import List, Dict
 from datetime import datetime
 from .base import TimestampModel
-from pywebscraper.url_normalize import normalized_url_hash, normalize_url
-from pywebscraper.hash import generate_url_safe_id
+from pywebscraper.url_normalize import normalized_url_hash
 from pgvector.sqlalchemy import Vector
+from .database_utils import create_vector_index
+from sqlalchemy.ext.asyncio import AsyncConnection
+
 
 class FrontendAuthor(TimestampModel):
     __tablename__ = "frontend_authors"
@@ -43,6 +45,7 @@ class FrontendChannel(TimestampModel):
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     source_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendChannel.normalized_url, 'set')
@@ -70,5 +73,21 @@ class FrontendAudio(TimestampModel):
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     tags: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    vector: Mapped[Vector] = mapped_column(Vector, nullable=True, default=None)
+    embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
 
+# Automatically set hash when content is modified
+@event.listens_for(FrontendAudio.normalized_url, 'set')
+def set_content_hash(target: FrontendAudio, value, oldvalue, initiator):
+    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+# Set hash before insert/update
+@event.listens_for(FrontendAudio, 'before_insert')
+@event.listens_for(FrontendAudio, 'before_update')
+def ensure_hash(mapper, connection, target: FrontendAudio):
+    if target.normalized_url:
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+
+async def create_vector_indexes(conn: AsyncConnection):    
+    await create_vector_index(conn, "frontend_audios", "embedding_mlml6v2", 100)
+    await create_vector_index(conn, "frontend_channels", "embedding_mlml6v2", 100)

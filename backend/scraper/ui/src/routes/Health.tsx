@@ -10,7 +10,7 @@ const App: React.FC = () => {
     const getHealthStatus = async () => {
       try {
         const response = await Client.healthCheckApiV1HealthGet();
-        setHealth(response.data);
+        setHealth(response.data.status);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }

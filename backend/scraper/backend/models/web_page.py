@@ -10,6 +10,8 @@ from .base import TimestampModel
 from pywebscraper.url_normalize import normalized_url_hash, normalize_url
 from pywebscraper.hash import generate_url_safe_id
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.ext.asyncio import AsyncConnection
+from .database_utils import create_vector_index
 
 class WebPageSeed(TimestampModel):
     __tablename__ = "web_page_seeds"
@@ -127,7 +129,8 @@ class WebPageChunk(TimestampModel):
     content_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
     content: Mapped[str] = mapped_column(String)
     web_page_id: Mapped[str] = mapped_column(String)
-    embedding: Mapped[list[float]] = mapped_column(Vector(dim=384))
+    embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
+    
 
 @event.listens_for(WebPageChunk.content, 'set')
 def set_content_hash(target: WebPageChunk, value, oldvalue, initiator):
@@ -139,4 +142,8 @@ def set_content_hash(target: WebPageChunk, value, oldvalue, initiator):
 def ensure_hash(mapper, connection, target: WebPageSummarizationRule):
     if target.content:
         target.content_hash = generate_url_safe_id(target.content)
+
+async def create_vector_indexes(conn: AsyncConnection):
+    await create_vector_index(conn, "web_page_chunks", "embedding_mlml6v2", 100)
+
 

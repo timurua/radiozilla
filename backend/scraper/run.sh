@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source .venv/bin/activate
+
 export PYTHONPATH=$PYTHONPATH:$(pwd)/../pywebscraper:$(pwd)/../pyradiozilla
 
 # Remove existing .env if it exists

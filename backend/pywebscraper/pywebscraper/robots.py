@@ -28,22 +28,26 @@ class RobotFileParser:
         self.default_entry: Optional[Entry] = None
         self.access_rule: AccessRule = AccessRule.ALLOW_ALL
 
-    async def scrape(self, normalized_url: str, client_session: aiohttp.ClientSession, timeout_seconds: int = 30) -> None:
+    @classmethod
+    async def download_and_parse(cls, normalized_url: str, client_session: aiohttp.ClientSession, timeout_seconds: int = 30) -> Optional["SitemapParser"]:
         try:
-            async with client_session.get(normalized_url) as http_response:
+            async with client_session.get(normalized_url, timeout=aiohttp.ClientTimeout(total=timeout_seconds)) as http_response:
+                robots = cls()
                 if http_response.status in (401, 403):
-                    self.access_rule = AccessRule.DISALLOW_ALL
+                    robots.access_rule = AccessRule.DISALLOW_ALL
                 elif http_response.status >= 400 and http_response.status < 500:
-                    self.access_rule = AccessRule.ALLOW_ALL
+                    robots.access_rule = AccessRule.ALLOW_ALL
                 else:
-                    http_content = await http_response.text()
-                    self.parse(http_content.splitlines())
+                    content = await http_response.text()
+                    robots.parse(content)
+                return robots
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            logger.error(f"Error fetching {self.normalized_url}: {e}")
+            logger.error(f"Error fetching {normalized_url}: {e}")
         except (aiohttp.ClientResponseError, aiohttp.ClientPayloadError) as e:
-            logger.error(f"Error receiving response for {self.normalized_url}: {e}")
+            logger.error(f"Error receiving response for {normalized_url}: {e}")
         except (UnicodeDecodeError) as e:            
-            logger.error(f"Error decoding text for {self.normalized_url}: {e}")                
+            logger.error(f"Error decoding text for {normalized_url}: {e}")
+        return None                
         
     def _add_entry(self, entry: 'Entry') -> None:
         if "*" in entry.useragents:
@@ -52,7 +56,8 @@ class RobotFileParser:
         else:
             self.entries.append(entry)
 
-    def parse(self, lines: List[str]) -> None:
+    def parse(self, content: str) -> None:
+        lines = content.splitlines()
         state = ParseState.NONE
         entry = Entry()
 

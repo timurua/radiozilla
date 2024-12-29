@@ -10,7 +10,7 @@ from .store import ScraperStore, ScraperStoreFactory
 from .url_normalize import normalize_url
 from abc import ABC, abstractmethod
 from .model import ScraperUrl
-from .domains import ScraperDomains
+from .domain_filter import DomainFilter
 from .extract import extract_metadata
 from .stats import DomainStats, ScraperStats, analyze_url_groups
 
@@ -48,7 +48,7 @@ class ScraperConfig:
                 no_cache: bool = False):
         self.scraper_urls = scraper_urls
         self.max_parallel_requests = max_parallel_requests
-        self.domains = ScraperDomains(allow_l2_domains, [url.url for url in scraper_urls])
+        self.domains = DomainFilter(allow_l2_domains, [url.url for url in scraper_urls])
         self.max_queue_size = max_queue_size
         self.use_headless_browser = use_headless_browser
         self.timeout_seconds = timeout_seconds
@@ -57,6 +57,7 @@ class ScraperConfig:
         self.scraper_callback = scraper_callback
         self.user_agent = user_agent
         self.no_cache = no_cache
+        self.domain_metadata: Dict[str, asyncio.Task] = {}
 
     def log(self, text: str) -> None:
         logger.info(text)
@@ -208,7 +209,16 @@ class Scraper:
     async def stop(self) -> None:
         for i in range(self.config.max_parallel_requests):
             await self.url_queue.put(ScraperUrl.create_terminal())
-        return
+
+    async def get_domain_metadata(self, normalized_url: str) -> DomainStats:
+        domain = urlparse(normalized_url).netloc
+        if domain in self.config.domain_metadata:
+            return await self.config.domain_metadata[domain]
+        return None
+    
+                "home_page": urljoin(self.domain, "/"),
+            "sitemap": urljoin(self.domain, "/sitemap.xml"),
+            "robots": urljoin(self.domain, "/robots.txt")
 
 
 async def main():

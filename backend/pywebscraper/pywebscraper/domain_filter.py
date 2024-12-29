@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
+from .robots import RobotFileParser, AccessRule
 
-class ScraperDomains:
+class DomainFilter:
     def __init__(self, allow_l2_domains: bool, urls: list[str])-> None:
         self.domains: set[str] = set()
         self.allow_l2_domains = allow_l2_domains
@@ -20,3 +21,4 @@ class ScraperDomains:
             return l2domain in self.domains
         else:
             return domain in self.domains
+        

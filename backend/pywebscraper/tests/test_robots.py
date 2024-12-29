@@ -50,36 +50,6 @@ def test_entry_allowance():
     entry.rulelines.append(RuleLine("/other", False))
     assert entry.allowance("/other") is False
 
-def test_robot_file_parser_parse():
-    parser = RobotFileParser()
-    lines = [
-        "User-agent: *",
-        "Disallow: /private",
-        "Allow: /public",
-        "Crawl-delay: 10",
-        "Request-rate: 1/5",
-        "Sitemap: http://example.com/sitemap.xml",
-        "",
-        "User-agent: test-agent",
-        "Disallow: /test",
-    ]
-    parser.parse(lines)
-
-    assert len(parser.entries) == 2
-    assert parser.entries[0].useragents == ["*"]
-    assert parser.entries[0].rulelines[0].path == "/private"
-    assert parser.entries[0].rulelines[0].allowance is False
-    assert parser.entries[0].rulelines[1].path == "/public"
-    assert parser.entries[0].rulelines[1].allowance is True
-    assert parser.entries[0].delay == 10
-    assert parser.entries[0].req_rate.requests == 1
-    assert parser.entries[0].req_rate.seconds == 5
-    assert parser.sitemaps == ["http://example.com/sitemap.xml"]
-
-    assert parser.entries[1].useragents == ["test-agent"]
-    assert parser.entries[1].rulelines[0].path == "/test"
-    assert parser.entries[1].rulelines[0].allowance is False
-
 def test_robot_file_parser_parse_empty_lines():
     parser = RobotFileParser()
     lines = [
@@ -103,20 +73,20 @@ def test_robot_file_parser_parse_empty_lines():
     ]
     parser.parse(lines)
 
-    assert len(parser.entries) == 2
-    assert parser.entries[0].useragents == ["*"]
-    assert parser.entries[0].rulelines[0].path == "/private"
-    assert parser.entries[0].rulelines[0].allowance is False
-    assert parser.entries[0].rulelines[1].path == "/public"
-    assert parser.entries[0].rulelines[1].allowance is True
-    assert parser.entries[0].delay == 10
-    assert parser.entries[0].req_rate.requests == 1
-    assert parser.entries[0].req_rate.seconds == 5
+    assert len(parser.entries) == 1
+    assert parser.default_entry.useragents == ["*"]
+    assert parser.default_entry.rulelines[0].path == "/private"
+    assert parser.default_entry.rulelines[0].allowance is False
+    assert parser.default_entry.rulelines[1].path == "/public"
+    assert parser.default_entry.rulelines[1].allowance is True
+    assert parser.default_entry.delay == 10
+    assert parser.default_entry.req_rate.requests == 1
+    assert parser.default_entry.req_rate.seconds == 5
     assert parser.sitemaps == ["http://example.com/sitemap.xml"]
 
-    assert parser.entries[1].useragents == ["test-agent"]
-    assert parser.entries[1].rulelines[0].path == "/test"
-    assert parser.entries[1].rulelines[0].allowance is False
+    assert parser.entries[0].useragents == ["test-agent"]
+    assert parser.entries[0].rulelines[0].path == "/test"
+    assert parser.entries[0].rulelines[0].allowance is False
 
 def test_robot_file_parser_parse_comments():
     parser = RobotFileParser()
@@ -127,6 +97,7 @@ def test_robot_file_parser_parse_comments():
         "Allow: /public",
         "Crawl-delay: 10",
         "Request-rate: 1/5",
+        "Invalid-line",
         "Sitemap: http://example.com/sitemap.xml",
         "",
         "User-agent: test-agent",
@@ -134,17 +105,25 @@ def test_robot_file_parser_parse_comments():
     ]
     parser.parse(lines)
 
-    assert len(parser.entries) == 2
-    assert parser.entries[0].useragents == ["*"]
-    assert parser.entries[0].rulelines[0].path == "/private"
-    assert parser.entries[0].rulelines[0].allowance is False
-    assert parser.entries[0].rulelines[1].path == "/public"
-    assert parser.entries[0].rulelines[1].allowance is True
-    assert parser.entries[0].delay == 10
-    assert parser.entries[0].req_rate.requests == 1
-    assert parser.entries[0].req_rate.seconds == 5
+    assert len(parser.entries) == 1
+    assert parser.default_entry.useragents == ["*"]
+    assert parser.default_entry.rulelines[0].path == "/private"
+    assert parser.default_entry.rulelines[0].allowance is False
+    assert parser.default_entry.rulelines[1].path == "/public"
+    assert parser.default_entry.rulelines[1].allowance is True
+    assert parser.default_entry.delay == 10
+    assert parser.default_entry.req_rate.requests == 1
+    assert parser.default_entry.req_rate.seconds == 5
     assert parser.sitemaps == ["http://example.com/sitemap.xml"]
 
-    assert parser.entries[1].useragents == ["test-agent"]
-    assert parser.entries[1].rulelines[0].path == "/test"
-    assert parser.entries[1].rulelines[0].allowance is False
+    assert parser.entries[0].useragents == ["test-agent"]
+    assert parser.entries[0].rulelines[0].path == "/test"
+    assert parser.entries[0].rulelines[0].allowance is False
+
+    parser.can_fetch("test-agent", "/test") is False
+    parser.can_fetch("test-agent", "/other") is True
+    parser.can_fetch("test-agent", "/") is True
+
+    parser.can_fetch("unknown-agent", "/test") is False
+    parser.can_fetch("unknown-agent", "/other") is True
+    

@@ -1,5 +1,5 @@
 from .html import HtmlContent, HtmlScraperProcessor
-from .metadata import MetadataExtractor
+from .metadata import PageMetadataExtractor
 from bs4 import BeautifulSoup
 from .model import ScraperWebPage
 from .text import chunk_text
@@ -13,7 +13,7 @@ def extract_metadata(web_page: ScraperWebPage) -> ScraperWebPage:
     content = web_page.content.decode(html_charset) 
     soup = BeautifulSoup(content, 'html.parser')
 
-    metadata = MetadataExtractor(web_page.normalized_url, content=content, soup=soup).get_all_metadata()
+    metadata = PageMetadataExtractor(web_page.normalized_url, content=content, soup=soup).get_all_metadata()
     web_page.metadata_title = metadata.title
     web_page.metadata_description = metadata.description
     web_page.metadata_image_url = metadata.image_url

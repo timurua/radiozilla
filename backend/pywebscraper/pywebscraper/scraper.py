@@ -72,6 +72,7 @@ class ScraperLoopResult:
 class Scraper:
     def __init__(self, config: ScraperConfig):
         self.config = config
+        self.domain_tasks: Dict[str, asyncio.Task] = {}
         self.initiated_urls: set[str] = set()
         self.completed_urls: set[str] = set()
         self.initiated_urls_count = 0
@@ -137,7 +138,12 @@ class Scraper:
                 page = await scraper_store.load_page(scraper_url.normalized_url)
                 # re-extracting metadata
                 if page:
-                    page = extract_metadata(page)                
+                    page = extract_metadata(page)
+
+            domain = urlparse(scraper_url.normalized_url).netloc
+            if domain not in self.domain_tasks:
+                self.domain_tasks[domain] = asyncio.create_task(DomainStats(domain, self.config).run())
+                await self.domain_tasks[domain]
 
             self.requested_urls_count += 1
             if page is None:

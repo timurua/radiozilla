@@ -8,14 +8,14 @@ from urllib.parse import urljoin
 from .model import ScraperWebPage
 from dateutil import parser
 
-class Metadata:
+class PageMetadata:
     def __init__(self, title: str| None = None, description: str|None = None, image: str|None = None, published_at: Optional[datetime] = None)->None:
         self.title = title
         self.description = description
         self.image_url = image
         self.published_at = published_at
 
-class MetadataExtractor:
+class PageMetadataExtractor:
     def __init__(self, url: str, content: str, soup: BeautifulSoup) -> None:
         self.url = url
         self.content = content
@@ -123,9 +123,9 @@ class MetadataExtractor:
             return parser.parse(date_string)
         return None
 
-    def get_all_metadata(self) -> Metadata:
+    def get_all_metadata(self) -> PageMetadata:
         """Get all key metadata fields as a Metadata object"""
-        return Metadata(
+        return PageMetadata(
             title=self.get_title(),
             description=self.get_description(),
             image=self.get_image(),

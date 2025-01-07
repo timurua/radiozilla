@@ -15,15 +15,12 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:14
+        image: pgvector/pgvector:0.8.0-pg17
         ports:
         - containerPort: 5432
-        env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
+        envFrom:
+          - secretRef:
               name: postgres-secret
-              key: postgres-password
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data

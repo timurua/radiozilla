@@ -7,8 +7,8 @@ from sqlalchemy.future import select
 from typing import List, Dict
 from datetime import datetime
 from .base import TimestampModel
-from pywebscraper.url_normalize import normalized_url_hash, normalize_url
-from pywebscraper.hash import generate_url_safe_id
+from pyminiscraper.url import normalized_url_hash, normalize_url
+from pyminiscraper.hash import generate_url_safe_id
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.ext.asyncio import AsyncConnection
 from .database_utils import create_vector_index
@@ -50,6 +50,7 @@ class WebPage(TimestampModel):
     content: Mapped[bytes] = mapped_column(LargeBinary, nullable=True, default=None)
     content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
     content_charset: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     
     metadata_title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     metadata_description: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -59,7 +60,7 @@ class WebPage(TimestampModel):
     canonical_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     outgoing_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    sitemap_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    sitemap_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     robots_content: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     text_chunks: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     

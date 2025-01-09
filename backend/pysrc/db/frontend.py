@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from typing import List, Dict
 from datetime import datetime
 from .base import TimestampModel
-from pywebscraper.url_normalize import normalized_url_hash
+from pyminiscraper.url import normalized_url_hash
 from pgvector.sqlalchemy import Vector
 from .database_utils import create_vector_index
 from sqlalchemy.ext.asyncio import AsyncConnection

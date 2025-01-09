@@ -14,7 +14,7 @@ from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 import asyncio
 from ...models.web_page import WebPageSeed
-from pywebscraper.stats import ScraperStats
+from pyminiscraper.stats import ScraperStats
 
 router = APIRouter()
 

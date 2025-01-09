@@ -1,8 +1,9 @@
 import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select
-from pywebscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperCallback
-from pywebscraper.stats import ScraperStats, DomainStats
+from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl
+from pyminiscraper.config import ScraperConfig, ScraperCallback
+from pyminiscraper.stats import ScraperStats, DomainStats
 from urllib.parse import urlparse
 from .web_page import get_scraper_store_factory
 

@@ -11,21 +11,14 @@ from google.oauth2 import service_account
 import logging
 from dotenv import load_dotenv
 import os
+from pysrc.db.database import Database
+from pysrc.logging import Logging
+from pysrc.scraper.store import get_scraper_store_factory
 
 @click.command()
-@click.argument('storage_dir', type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path))
-async def main(storage_dir: pathlib.Path):
-    logging.basicConfig(
-        # Set the log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        level=logging.INFO,
-        # Define the log format
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),  # Log to standard output
-        ]
-    )
-    storage_dir.mkdir(parents=True, exist_ok=True)
-    click.echo(f"Storage directory set to: {storage_dir}")
+async def main():
+
+    await initialize_db()
 
     scraper = Scraper(
         ScraperConfig(
@@ -38,47 +31,25 @@ async def main(storage_dir: pathlib.Path):
             timeout_seconds=30,
             max_requests_per_hour=6*60,
             only_sitemaps=False,
-            scraper_store_factory=FileStoreFactory(storage_dir.absolute().as_posix()),
+            scraper_store_factory=get_scraper_store_factory(Database.get_db_session),
         ),
     )
     await scraper.run()
 
-def setup_logging():
+def initialize_logging():
+    env_name = os.getenv('ENV_NAME', 'unknown_env')
+    service_name = os.getenv('SERVICE_NAME', 'unknown_service')
+    Logging.initialize('./firebase_credentials.json', service_name, env_name)
 
-    env_name = os.getenv('ENV_NAME', 'default_env')
-    service_name = os.getenv('SERVICE_NAME', 'default_service')
+async def initialize_db():
+    db_url = os.getenv('DB_URL')
+    db = Database()
+    db.initialize(db_url)
+    await db.init_db()
     
-    credentials = service_account.Credentials.from_service_account_file(
-        './firebase_credentials.json'
-    )
-    client = google.cloud.logging.Client(credentials=credentials)
-    client.setup_logging()    
-
-    class CloudLoggingHandler(logging.Handler):
-        def __init__(self, log_name=service_name, labels=None):
-            super().__init__()
-            self.cloud_logger = client.logger(log_name)
-            self.labels = labels or {}
-
-        def emit(self, record):
-            msg = self.format(record)
-            self.cloud_logger.log_struct({
-                'message': msg,
-                'severity': record.levelname,
-                'labels': {
-                    **self.labels,
-                    **getattr(record, 'labels', {})
-                }
-            })
-
-    # Usage
-    handler = CloudLoggingHandler(labels={'env': env_name, 'service': service_name})
-    logger = logging.getLogger()
-    logger.addHandler(handler)
-
 def cli():
-    load_dotenv()
-    setup_logging()
+    load_dotenv()    
+    initialize_logging()    
     logging.info("Logging set up")
     """Wrapper function to run async command"""
     return asyncio.run(main())

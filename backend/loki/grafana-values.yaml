@@ -1,0 +1,13 @@
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Loki
+      type: loki
+      url: http://loki-gateway/
+      access: proxy
+      isDefault: true
+
+persistence:
+  enabled: true
+  size: 100Gi

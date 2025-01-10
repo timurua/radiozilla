@@ -8,8 +8,6 @@ from sqlalchemy.future import select
 from typing import List, Dict, Optional, Any
 import json
 from datetime import datetime
-import numpy as np
-from pgvector.sqlalchemy import Vector
 import hashlib
 
 class Base(DeclarativeBase):

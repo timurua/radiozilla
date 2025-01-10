@@ -1,0 +1,30 @@
+# docker-compose.yml
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_password
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pysrc:
+    build:
+      context: .
+      dockerfile: pysrc/Dockerfile
+  
+  scraperjob:
+    build:
+      context: .
+      dockerfile: scraperjob/Dockerfile
+    image: timurua/radiozilla-scraper-job:latest
+    depends_on:
+      - pysrc
+      - postgres
+
+
+volumes:
+  postgres_data:

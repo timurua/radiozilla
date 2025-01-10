@@ -6,7 +6,7 @@ metadata:
     app: python-job
     type: batch-process
 spec:
-  ttlSecondsAfterFinished: 604800  # Keep jobs for 7 days
+  ttlSecondsAfterFinished: 600  # Keep jobs for 7 days
   backoffLimit: 3
   template:
     metadata:

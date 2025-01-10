@@ -1,17 +1,20 @@
-FROM python:3.12-slim as builder
+FROM pysrc:latest
 
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+COPY scraperjob/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the script
-COPY script.py .
+COPY scraperjob/main.py .
+COPY scraperjob/google-account.json .
+COPY scraperjob/.env .
 
 # Use non-root user for security
 RUN useradd -m appuser
 USER appuser
 
 # Command to run the script
-CMD ["python", "script.py"]
+ENV PYTHONPATH=/:/app
+CMD ["python", "main.py"]

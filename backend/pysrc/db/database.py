@@ -4,6 +4,7 @@ from sqlalchemy import text
 from .base import Base
 from .frontend import create_vector_indexes as create_frontend_vector_indexes
 from .web_page import create_vector_indexes as create_web_page_vector_indexes
+import logging
 
 class Database:
     _engine = None
@@ -11,6 +12,7 @@ class Database:
 
     @classmethod
     def initialize(cls, database_url: str):  
+        logging.info(f"Initializing database with url: {database_url}")
         cls._engine = create_async_engine(database_url, echo=True)
         cls._AsyncSessionLocal = async_sessionmaker(cls._engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -34,7 +36,11 @@ class Database:
     @classmethod
     async def init_db(cls):
         async with cls._engine.begin() as conn:
-            # await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            except Exception as e:
+                logging.error(f"Error creating extension: {e}")
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.run_sync(Base.metadata.create_all)
         
         async with cls._engine.begin() as conn:        

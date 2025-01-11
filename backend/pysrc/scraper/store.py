@@ -10,27 +10,11 @@ from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Callable, Awaitable
+from ..db.service import WebPageService
 
-logger = logging.getLogger("web_page_service")
+logger = logging.getLogger("scraper_store")
 
-class WebPageService:
-    _model = None
-    
-    def __init__(self, session: AsyncSession):
-        self.session = session
-
-    async def upsert_web_page(self, web_page: WebPage) -> None:
-        async with self.session.begin():
-            logger.info(f"Inserting web page for url: {web_page.url}")
-            await self.session.merge(web_page)
-        
-
-    async def find_web_page_by_url(self, normalized_url: str) -> WebPage|None:
-        hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPage).where(WebPage.normalized_url_hash == hash)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-        
+       
 class ServiceScraperStore(ScraperStore):    
 
     def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]]):  

@@ -16,14 +16,24 @@ services:
       context: .
       dockerfile: pysrc/Dockerfile
   
-  scraperjob:
+  # scraperjob:
+  #   build:
+  #     context: .
+  #     dockerfile: scraperjob/Dockerfile
+  #   image: timurua/radiozilla-scraper-job:latest
+  #   depends_on:
+  #     - pysrc
+  #     - postgres
+
+  summarizerjob:
     build:
       context: .
-      dockerfile: scraperjob/Dockerfile
-    image: timurua/radiozilla-scraper-job:latest
+      dockerfile: summarizerjob/Dockerfile
+    image: timurua/radiozilla-summarizer-job:latest
     depends_on:
       - pysrc
       - postgres
+
 
 
 volumes:

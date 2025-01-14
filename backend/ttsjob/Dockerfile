@@ -1,20 +1,22 @@
-FROM pysrc:latest
+FROM timurua/radiozilla-tts-job-base:latest
 
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
-COPY scraperjob/requirements.txt .
+COPY ttsjob/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the script
-COPY scraperjob/main.py .
-COPY scraperjob/google-account.json .
-COPY scraperjob/.env .
+COPY pysrc /app/pysrc
+COPY ttsjob/main.py .
+COPY ttsjob/google-account.json .
+COPY ttsjob/.env .
 
-# Use non-root user for security
-RUN useradd -m appuser
-USER appuser
+RUN mkdir -p /app/audio
+VOLUME ["/app/audio"]
 
 # Command to run the script
 ENV PYTHONPATH=/:/app
 CMD ["python", "main.py"]
+
+
+

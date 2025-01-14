@@ -9,16 +9,85 @@ from pysrc.observe.log import Logging
 from pysrc.db.service import WebPageService, WebPageSummaryService
 from pysrc.summarizer.ollama import OllamaClient
 from pysrc.summarizer.summarizer import SummarizerService
+from pysrc.db.web_page import WebPageSummary
+from pysrc.process.runner import ProcessRunner
+import ffmpeg
+from pysrc.dfs.dfs import MinioClient
 
 @click.command()
 async def main():
-
     await initialize_db()
-    web_page_service = WebPageService(await Database.get_db_session())  
-    web_page_summary_service = WebPageSummaryService(await Database.get_db_session())   
-    ollama_client = OllamaClient()
-    summarizer_service = SummarizerService(web_page_service, ollama_client, web_page_summary_service)
-    await summarizer_service.summarizer_web_pages_for_prefix("https://anthropic.com/research/")
+    web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
+    normalized_urls = []
+    async def collect_urls(web_page_summary: WebPageSummary):
+        normalized_urls.append(web_page_summary.normalized_url)
+    await web_page_summary_service.find_web_page_summaries_without_audio(collect_urls)
+    logging.info(f"Found {len(normalized_urls)} summaries without audio")
+    for normalized_url in normalized_urls:
+        web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
+        logging.info(f"Processing summary for URL: {normalized_url}")
+        if web_page_summary:
+            web_page_summary = await run_tts_job(web_page_summary)
+            await web_page_summary_service.upsert_web_page_summary(web_page_summary)
+
+      
+def convert_wav_to_m4a(input_wav_path, output_m4a_path):
+    try:
+        (
+            ffmpeg
+            .input(input_wav_path)
+            .output(output_m4a_path, codec='aac', audio_bitrate='128k')
+            .overwrite_output()
+            .run()
+        )
+        logging.info(f"Conversion successful: {output_m4a_path}")
+    except ffmpeg.Error as e:
+        logging.error(f"An error occurred during conversion: {e.stderr.decode()}")
+    except FileNotFoundError:
+        logging.error("FFmpeg is not installed or not found in system PATH.")                
+                            
+
+async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:    
+    summarized_text = web_page_summary.summarized_text
+    text_file = f"/app/audio/{web_page_summary.normalized_url_hash}.txt"
+    with open(text_file, "w", encoding="utf-8") as f:
+        f.write(summarized_text)
+
+    audio_file_wav = f"/app/audio/{web_page_summary.normalized_url_hash}.wav"
+    audio_file_m4a = f"/app/audio/{web_page_summary.normalized_url_hash}.m4a"
+
+    runner = ProcessRunner(command=[
+        "/usr/local/bin/python", 
+        "/opt/fish-speech/tools/run_cli.py",
+        "--reference-audio-file", 
+        "/opt/fish-speech/reference/reference_audio_01.wav", 
+        "--reference-text-file", 
+        "/opt/fish-speech/reference/reference_text_01.txt", 
+        "--text-file", 
+        f"{text_file}", 
+        "--audio-file", 
+        f"{audio_file_wav}" ], 
+        timeout_minutes=15, 
+        cwd="/opt/fish-speech")
+        
+    try:
+        await runner.run()
+    except Exception as e:
+        logging.error(f"Error occurred: {e}")
+
+    convert_wav_to_m4a(audio_file_wav, audio_file_m4a)
+
+    minio_endpoint = os.getenv('MINIO_ENDPOINT', 'unknown')
+    minio_access_key = os.getenv('MINIO_ACCESS_KEY', 'unknown')
+    minio_secret_key = os.getenv('MINIO_SECRET_KEY', 'unknown')
+    minio_bucket = os.getenv('MINIO_BUCKET', 'unknown')
+
+    minio_client = MinioClient(minio_endpoint, minio_access_key, minio_secret_key)
+    await minio_client.upload_file(minio_bucket, audio_file_m4a)    
+    web_page_summary.summarized_text_audio_url = minio_client.get_presigned_url(minio_bucket, audio_file_m4a)
+    return web_page_summary
+
+
 
 def initialize_logging():
     env_name = os.getenv('ENV_NAME', 'unknown_env')

@@ -30,10 +30,11 @@ class WebPageService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_web_pages_by_url_prefix(self, url_prefix: str) -> list[WebPage]:
-        stmt = select(WebPage).where(WebPage.normalized_url.startswith(url_prefix))
-        result = await self.session.execute(stmt)
-        return result.scalars().all()
+    async def find_web_pages_by_url_prefix(self, url_prefix: str, callback: Callable[[WebPage], Awaitable[None]]) -> None:
+        stmt = select(WebPage).where(WebPage.normalized_url.startswith(url_prefix))        
+        with await self.session.stream(stmt) as stream:
+            async for web_page in stream.scalars():
+                await callback(web_page)
     
 class WebPageSummaryService:
     _model = None
@@ -54,9 +55,10 @@ class WebPageSummaryService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_web_page_summaries_by_url_prefix(self, url_prefix: str) -> list[WebPageSummary]:
-        stmt = select(WebPageSummary).where(WebPageSummary.normalized_url.startswith(url_prefix))
-        result = await self.session.execute(stmt)
-        return result.scalars().all()
+    async def find_web_page_summaries_without_audio(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
+        stmt = select(WebPageSummary).where(WebPageSummary.summarized_text_audio_url == None)
+        with await self.session.stream(stmt) as stream:
+            async for web_page in stream.scalars():
+                await callback(web_page)
     
 

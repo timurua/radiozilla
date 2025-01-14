@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import logging
-from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl
-from pyminiscraper.store_file import FileStoreFactory
 import google.cloud.logging
 from google.oauth2 import service_account
-import logging
 import sys
 
 class Logging:
@@ -35,8 +32,6 @@ class Logging:
 
         # Usage
         handler = CloudLoggingHandler(labels={'env': env_name, 'service': service_name})
-        # logger = logging.getLogger()
-        # logger.addHandler(handler)
 
         logging.basicConfig(
             # Set the log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -44,7 +39,7 @@ class Logging:
             # Define the log format
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
-                handler,
                 logging.StreamHandler(sys.stdout),  # Log to standard output
+                handler,                
             ]
         )

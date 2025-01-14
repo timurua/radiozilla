@@ -18,18 +18,11 @@ class SummarizerService:
         self.ollama_client = ollama_client
         self.logger.info("Summarizer service initialized")
 
+
     async def summarizer_web_pages_for_prefix(self, url_prefix: str) -> WebPageSummary|None:
 
         self.logger.info("Summarizing web pages for prefix: {url_prefix}")
-        web_pages = await self.web_page_service.find_web_pages_by_url_prefix(url_prefix)
-        if len(web_pages) == 0:
-            logger.error(f"No web pages found for url prefix: {url_prefix}")
-            return None
-        
-        self.logger.info(f"Summarizing {len(web_pages)} web pages")
-        
-        for web_page in web_pages:            
-            await self.summarize_web_page(web_page)
+        await self.web_page_service.find_web_pages_by_url_prefix(url_prefix, self.summarize_web_page)
         
     async def summarize_web_page(self, web_page: WebPage) -> None: 
         self.logger.info(f"Summarizing web page: {web_page.url}")

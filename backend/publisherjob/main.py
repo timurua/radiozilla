@@ -6,10 +6,11 @@ from dotenv import load_dotenv
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import WebPageService, WebPageSummaryService
+from pysrc.db.service import FrontendAudioService, WebPageSummaryService
 from pysrc.summarizer.ollama import OllamaClient
 from pysrc.summarizer.summarizer import SummarizerService
 from pysrc.db.web_page import WebPageSummary
+from pysrc.db.frontend import FrontendAudio
 from pysrc.process.runner import ProcessRunner
 from pysrc.config.rzconfig import RzConfig
 import ffmpeg
@@ -17,12 +18,12 @@ from pysrc.dfs.dfs import MinioClient
 import pysrc.fb.rzfb as rzfb
 from pyminiscraper.url import normalized_url_hash,  normalize_url
 from urllib.parse import urlparse
+from sentence_transformers import SentenceTransformer
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channel: rzfb.RzChannel):
         self.rz_author = rz_author
         self.rz_channel = rz_channel
-
 
 
 def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> PublisherContext:
@@ -43,14 +44,39 @@ def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> Pu
     rz_channel.upload_and_save(firebase)
     return PublisherContext(rz_author, rz_channel)
 
+async def publish_frontend_audio(embedding_sentence_transformers: SentenceTransformer, frontend_audio_service: FrontendAudioService, web_page_summary: WebPageSummary, publisher_context: PublisherContext) -> None:
+
+    title_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.title).tolist()
+    description_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.description).tolist()
+
+    frontend_audio = FrontendAudio(
+        normalized_url_hash=normalized_url_hash(web_page_summary.normalized_url),
+        normalized_url=web_page_summary.normalized_url,
+        title=web_page_summary.title,
+        description=web_page_summary.description,
+        image_url=web_page_summary.image_url,
+        topics=web_page_summary.topics if web_page_summary.topics else [],
+        author_id=publisher_context.rz_author.id,
+        channel_id=publisher_context.rz_channel.id,
+        published_at=web_page_summary.published_at,
+        uploaded_at=web_page_summary.uploaded_at,
+        audio_url=web_page_summary.summarized_text_audio_url,
+        title_embedding_mlml6v2=title_embedding_mlml6v2,
+        description_embedding_mlml6v2=description_embedding_mlml6v2,
+    )
+    await frontend_audio_service.upsert(frontend_audio)
+    
+
 @click.command()
 async def main():
     rz_config = RzConfig()  
     initialize_logging(rz_config)    
     logging.info("Starting publisher job")
-    await initialize_db(rz_config)    
+    await initialize_db(rz_config)
+    embedding_sentence_transformers = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')    
     rz_firebase = rzfb.Firebase(rz_config.google_account_file)
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
+    frontend_audio_service = FrontendAudioService(await Database.get_db_session())
 
 
     publisher_context = await asyncio.get_event_loop().run_in_executor(None, publish_firebase_metadata, rz_config, rz_firebase)    
@@ -64,6 +90,7 @@ async def main():
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
             await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
+            await publish_frontend_audio(frontend_audio_service, web_page_summary)
 
       
 def convert_wav_to_m4a(input_wav_path, output_m4a_path):
@@ -123,7 +150,7 @@ def initialize_logging(rz_config: RzConfig):
 async def initialize_db(config: RzConfig) -> None:
     db = Database()
     db.initialize(config.db_url)
-    await db.init_db()
+    await db.create_tables()
     
 def cli():    
     return asyncio.run(main())

@@ -3,9 +3,10 @@ import logging
 from ..db.web_page import WebPageSummary
 from pyminiscraper.url import normalized_url_hash, normalize_url
 from .ollama import OllamaClient
-from .prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt
+from .prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt, DateDeductionPrompt
 from ..db.service import WebPageService, WebPageSummaryService
 from ..db.web_page import WebPage
+from dateutil.parser import parse
 
 logger = logging.getLogger("summarizer")
 
@@ -38,8 +39,20 @@ class SummarizerService:
             summary_confug,
         )
 
-        prompt = summary_prompt.get_prompt()         
+        prompt = summary_prompt.get_prompt()
         summary = await self.ollama_client.generate(prompt)
+
+        published_at = web_page.metadata_published_at
+        if published_at is None:
+            date_deduction_prompt = DateDeductionPrompt(
+                web_page.visible_text,
+            )
+            published_at_text = await self.ollama_client.generate(date_deduction_prompt.get_prompt())
+            try:
+                published_at = parse(published_at_text)
+                self.logger.info(f"Deduced published at date: {published_at} from text")            
+            except Exception as e:
+                self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")            
 
         self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
              
@@ -48,7 +61,7 @@ class SummarizerService:
             title = web_page.metadata_title,
             description = web_page.metadata_description,
             image_url = web_page.metadata_image_url,
-            published_at = web_page.metadata_published_at,
+            published_at = published_at,
             text = web_page.visible_text,
             summarized_text = summary,
             summarized_text_audio_url = None,

@@ -34,7 +34,7 @@ class Database:
             return session
 
     @classmethod
-    async def init_db(cls):
+    async def create_tables(cls):
         async with cls._engine.begin() as conn:
             try:
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))

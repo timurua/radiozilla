@@ -37,6 +37,15 @@ class SummaryPrompt:
                 f"The summary should be {self.config.length.value} in length.\n\n"
                 f"{self.text}")
         return prompt
+    
+class DateDeductionPrompt:
+    def __init__(self, text: str) -> None:
+        self.text = text
+
+    def get_prompt(self)-> str:
+        prompt = (
+                f"Deduce date from the following text. Answer with just the date in format DD.MM.YYYY: {self.text}")
+        return prompt
             
 
                 

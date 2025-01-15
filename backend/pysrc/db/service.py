@@ -87,9 +87,10 @@ class FrontendAudioService:
         self.session = session
         self.logger = logging.getLogger("frontend_audio_service")
 
-    async def merge(self, frontend_audio: FrontendAudio) -> None:
+    async def upsert(self, frontend_audio: FrontendAudio) -> None:
         self.logger.info(f"Inserting frontend audio for url: {frontend_audio.normalized_url}")            
-        await self.session.merge(frontend_audio)
+        await self.session.merge(frontend_audio, load=True)
+        await self.session.commit()
 
     async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
         self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")

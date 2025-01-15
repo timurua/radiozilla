@@ -44,7 +44,7 @@ async def initialize_db():
     db_url = os.getenv('DB_URL')
     db = Database()
     db.initialize(db_url)
-    await db.init_db()
+    await db.create_tables()
     
 def cli():
     load_dotenv()    

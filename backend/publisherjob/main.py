@@ -19,6 +19,7 @@ import pysrc.fb.rzfb as rzfb
 from pyminiscraper.url import normalized_url_hash,  normalize_url
 from urllib.parse import urlparse
 from sentence_transformers import SentenceTransformer
+from datetime import datetime
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channel: rzfb.RzChannel):
@@ -36,21 +37,23 @@ def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> Pu
     rz_author.upload_and_save(firebase)
     rz_channel = rzfb.RzChannel(
         id= normalized_url_hash('https://www.anthropic.com/'),
-        name='rss/python',    
-        description='Latest updates about python programming language.',
+        name='Antropic',
+        description='Latest updates from Antropic.',
         source_urls=[normalize_url('https://www.anthropic.com/')],
         image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/rss.svg")
     )
     rz_channel.upload_and_save(firebase)
     return PublisherContext(rz_author, rz_channel)
 
-async def publish_frontend_audio(embedding_sentence_transformers: SentenceTransformer, frontend_audio_service: FrontendAudioService, web_page_summary: WebPageSummary, publisher_context: PublisherContext) -> None:
+async def publish_frontend_audio(embedding_sentence_transformers: SentenceTransformer, 
+                                 frontend_audio_service: FrontendAudioService, 
+                                 web_page_summary: WebPageSummary, 
+                                 publisher_context: PublisherContext) -> None:
 
     title_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.title).tolist()
     description_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.description).tolist()
 
     frontend_audio = FrontendAudio(
-        normalized_url_hash=normalized_url_hash(web_page_summary.normalized_url),
         normalized_url=web_page_summary.normalized_url,
         title=web_page_summary.title,
         description=web_page_summary.description,
@@ -90,7 +93,10 @@ async def main():
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
             await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-            await publish_frontend_audio(frontend_audio_service, web_page_summary)
+            await publish_frontend_audio(embedding_sentence_transformers=embedding_sentence_transformers, 
+                                         frontend_audio_service=frontend_audio_service, 
+                                         web_page_summary=web_page_summary, 
+                                         publisher_context=publisher_context)
 
       
 def convert_wav_to_m4a(input_wav_path, output_m4a_path):
@@ -136,6 +142,10 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
         image_url=web_page_summary.image_url,
         audio=rzfb.Blob(file_path=temp_audio_file),
         topics=web_page_summary.topics if web_page_summary.topics else [],
+        web_url=web_page_summary.normalized_url,  
+        duration_seconds=web_page_summary.summarized_text_audio_duration,
+        published_at=web_page_summary.published_at,
+        uploaded_at=datetime.now(),
     )    
     rz_audio.upload_and_save(rz_firebase)
     try:

@@ -8,6 +8,7 @@ import uuid
 import hashlib
 from pathlib import Path
 import mimetypes
+from datetime import datetime
 
 class Firebase:
     def __init__(self, google_account_file: str) -> None:
@@ -81,7 +82,7 @@ class RzChannel:
         self.save(firebase)                
             
 class RzAudio:
-    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio: Blob, image_url: str | None, image: Blob | None = None, topics: list[str] = []) -> None:
+    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio: Blob, image_url: str | None, image: Blob | None = None, topics: list[str] = [], duration_seconds: int | None = None, web_url: str | None = None, published_at: datetime | None = None ) -> None:
         self.id = id
         self.created_at = firestore.SERVER_TIMESTAMP
         self.author_id = author_id
@@ -92,6 +93,9 @@ class RzAudio:
         self.image = image
         self.image_url = image_url
         self.topics = topics
+        self.duration_seconds = duration_seconds
+        self.web_url = web_url
+        self.published_at = published_at
         
     def save(self, firebase: Firebase):
         firebase._db.collection('audios').document(self.id).set({
@@ -103,6 +107,8 @@ class RzAudio:
             'audioUrl': self.audio.url,
             'imageUrl': self.image_url if self.image_url is not None else self.image.url,
             'topics': self.topics,
+            'durationSeconds': self.duration_seconds,
+            'webUrl': self.web_url,
         })
         
     def upload_and_save(self, firebase: Firebase):

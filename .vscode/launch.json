@@ -10,8 +10,10 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/backend"
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "ENV_FILE": "/home/timur/radiozilla/backend/config/.env.local"
             }
         }
     ]

@@ -26,7 +26,7 @@ class FrontendAuthor(TimestampModel):
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAuthor.normalized_url, 'set')
 def set_content_hash(target: FrontendAuthor, value, oldvalue, initiator):
-    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+    target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendAuthor, 'before_insert')
@@ -50,7 +50,7 @@ class FrontendChannel(TimestampModel):
 # Automatically set hash when content is modified
 @event.listens_for(FrontendChannel.normalized_url, 'set')
 def set_content_hash(target: FrontendChannel, value, oldvalue, initiator):
-    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+    target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendChannel, 'before_insert')
@@ -64,10 +64,10 @@ class FrontendAudio(TimestampModel):
     
     normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
     normalized_url: Mapped[str] = mapped_column(String)
-    url: Mapped[str] = mapped_column(String)
     title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     author_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     channel_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
@@ -80,7 +80,7 @@ class FrontendAudio(TimestampModel):
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAudio.normalized_url, 'set')
 def set_content_hash(target: FrontendAudio, value, oldvalue, initiator):
-    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+    target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendAudio, 'before_insert')

@@ -2,7 +2,6 @@
 import asyncclick as click
 import asyncio
 import logging
-from dotenv import load_dotenv
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
@@ -13,10 +12,14 @@ from pysrc.db.web_page import WebPageSummary
 from pysrc.process.runner import ProcessRunner
 import ffmpeg
 from pysrc.dfs.dfs import MinioClient
+from pysrc.config.rzconfig import RzConfig
 
 @click.command()
 async def main():
-    await initialize_db()
+    rz_config = RzConfig()
+    initialize_logging(rz_config)    
+    logging.info("Starting TTS job")
+    await initialize_db(rz_config)
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     upsert_web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     normalized_urls = []
@@ -78,6 +81,12 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
     except Exception as e:
         logging.error(f"Error occurred: {e}")
 
+    duration = 0
+    try:
+        duration = int(ffmpeg.probe(audio_file_wav)['format']['duration'])
+    except Exception as e:
+        logging.error(f"Error occurred while deducing the duration: {e}")
+    
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, convert_wav_to_m4a, audio_file_wav, audio_file_m4a)
 
@@ -99,29 +108,19 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
         published_at = web_page_summary.published_at,
         text = web_page_summary.text,
         summarized_text = web_page_summary.summarized_text,
-        summarized_text_audio_url = summarized_text_audio_url
+        summarized_text_audio_url = summarized_text_audio_url,
+        summarized_text_audio_duration = duration
     )
 
 
+def initialize_logging(rz_config: RzConfig):
+    Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
 
-def initialize_logging():
-    env_name = os.getenv('ENV_NAME', 'unknown_env')
-    google_account_file = os.getenv('GOOGLE_ACCOUNT_FILE', './google_account.json')
-    google_account_file = os.path.join(os.path.dirname(__file__), google_account_file)
-    service_name = os.getenv('SERVICE_NAME', 'unknown_service')
-    Logging.initialize(google_account_file, service_name, env_name)
-
-async def initialize_db():
-    db_url = os.getenv('DB_URL')
-    db = Database()
-    db.initialize(db_url)
-    await db.create_tables()
+async def initialize_db(rz_config: RzConfig):
+    Database.initialize(rz_config.db_url)
+    await Database.create_tables()
     
 def cli():
-    load_dotenv()    
-    initialize_logging()    
-    logging.info("Logging set up")
-    """Wrapper function to run async command"""
     return asyncio.run(main())
 
 if __name__ == '__main__':

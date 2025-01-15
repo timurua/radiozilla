@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY pysrc /app/pysrc
 COPY ttsjob/main.py .
-COPY ttsjob/google-account.json .
-COPY ttsjob/.env .
+COPY config/google-account.json .
+COPY config/.env.docker .env
 
 RUN mkdir -p /app/audio
 VOLUME ["/app/audio"]

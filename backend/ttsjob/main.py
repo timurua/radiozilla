@@ -13,6 +13,7 @@ from pysrc.process.runner import ProcessRunner
 import ffmpeg
 from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig
+import soundfile as sf
 
 @click.command()
 async def main():
@@ -83,7 +84,8 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
 
     duration = 0
     try:
-        duration = int(ffmpeg.probe(audio_file_wav)['format']['duration'])
+        f = sf.SoundFile(audio_file_wav)
+        duration = int(f.frames / f.samplerate)
     except Exception as e:
         logging.error(f"Error occurred while deducing the duration: {e}")
     

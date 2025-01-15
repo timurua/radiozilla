@@ -62,6 +62,9 @@ class WebPageSummaryService:
         existing.text = web_page_summary.text
         existing.summarized_text = web_page_summary.summarized_text
         existing.summarized_text_audio_url = web_page_summary.summarized_text_audio_url
+        existing.topics = web_page_summary.topics
+        existing.updated_at = web_page_summary.updated_at
+        existing.summarized_text_audio_duration = web_page_summary.summarized_text_audio_duration
         await self.session.commit()        
 
     async def find_web_page_summary_by_url(self, normalized_url: str) -> WebPageSummary|None:

@@ -18,3 +18,4 @@ sqlalchemy>=2.0.37
 pgvector>=0.3.6
 ffmpeg-python
 minio
+soundfile

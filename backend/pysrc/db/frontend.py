@@ -71,8 +71,9 @@ class FrontendAudio(TimestampModel):
     author_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     channel_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
-    tags: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
 
 # Automatically set hash when content is modified

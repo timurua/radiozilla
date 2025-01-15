@@ -18,6 +18,7 @@ from pysrc.dfs.dfs import MinioClient
 async def main():
     await initialize_db()
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
+    upsert_web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     normalized_urls = []
     async def collect_urls(web_page_summary: WebPageSummary):
         normalized_urls.append(web_page_summary.normalized_url)
@@ -27,8 +28,8 @@ async def main():
         web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
-            web_page_summary = await run_tts_job(web_page_summary)
-            await web_page_summary_service.upsert_web_page_summary(web_page_summary)
+            updated_web_page_summary = await run_tts_job(web_page_summary)
+            await upsert_web_page_summary_service.update_web_page_summary(updated_web_page_summary)
 
       
 def convert_wav_to_m4a(input_wav_path, output_m4a_path):
@@ -54,7 +55,9 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
         f.write(summarized_text)
 
     audio_file_wav = f"/app/audio/{web_page_summary.normalized_url_hash}.wav"
-    audio_file_m4a = f"/app/audio/{web_page_summary.normalized_url_hash}.m4a"
+    audio_filename_m4a  = f"{web_page_summary.normalized_url_hash}.m4a"
+    audio_file_m4a = f"/app/audio/{audio_filename_m4a}"
+    
 
     runner = ProcessRunner(command=[
         "/usr/local/bin/python", 
@@ -75,7 +78,8 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
     except Exception as e:
         logging.error(f"Error occurred: {e}")
 
-    convert_wav_to_m4a(audio_file_wav, audio_file_m4a)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, convert_wav_to_m4a, audio_file_wav, audio_file_m4a)
 
     minio_endpoint = os.getenv('MINIO_ENDPOINT', 'unknown')
     minio_access_key = os.getenv('MINIO_ACCESS_KEY', 'unknown')
@@ -83,9 +87,20 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
     minio_bucket = os.getenv('MINIO_BUCKET', 'unknown')
 
     minio_client = MinioClient(minio_endpoint, minio_access_key, minio_secret_key)
-    await minio_client.upload_file(minio_bucket, audio_file_m4a)    
-    web_page_summary.summarized_text_audio_url = minio_client.get_presigned_url(minio_bucket, audio_file_m4a)
-    return web_page_summary
+    await minio_client.upload_file(minio_bucket, audio_file_m4a, audio_filename_m4a)    
+    summarized_text_audio_url = minio_client.get_presigned_url(minio_bucket, audio_filename_m4a)
+    logging.info(f"Uploaded audio file to MinIO: {summarized_text_audio_url}")
+    return WebPageSummary(
+        normalized_url_hash = web_page_summary.normalized_url_hash,
+        normalized_url = web_page_summary.normalized_url,
+        title = web_page_summary.title,
+        description = web_page_summary.description,
+        image_url = web_page_summary.image_url,
+        published_at = web_page_summary.published_at,
+        text = web_page_summary.text,
+        summarized_text = web_page_summary.summarized_text,
+        summarized_text_audio_url = summarized_text_audio_url
+    )
 
 
 

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: python-job-  # This will append a unique suffix each time
+  labels:
+    app: python-job
+    type: batch-process
+spec:
+  ttlSecondsAfterFinished: 600  # Keep jobs for 7 days
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: python-job
+        type: batch-process
+    spec:
+      containers:
+      - name: python-container
+        image: timurua/radiozilla-scraper-job:latest  # Replace with your image registry
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      restartPolicy: Never

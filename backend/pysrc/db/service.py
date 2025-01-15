@@ -2,10 +2,8 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
 from ..db.web_page import WebPage, WebPageSummary
-from pyminiscraper.store import ScraperStore, ScraperStoreFactory
-from pyminiscraper.model import ScraperWebPage
+from ..db.frontend import FrontendAudio
 import logging
-from typing import Optional
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -21,7 +19,7 @@ class WebPageService:
     async def upsert_web_page(self, web_page: WebPage) -> None:
         async with self.session.begin():
             self.logger.info(f"Inserting web page for url: {web_page.url}")
-            await self.session.merge(web_page)
+            await self.session.merge(web_page, load=True)
         
 
     async def find_web_page_by_url(self, normalized_url: str) -> WebPage|None:
@@ -44,21 +42,67 @@ class WebPageSummaryService:
         self.logger = logging.getLogger("web_page_summary_service")
 
     async def upsert_web_page_summary(self, web_page_summary: WebPageSummary) -> None:
-        async with self.session.begin():
-            self.logger.info(f"Inserting web page summary for url: {web_page_summary.normalized_url}")
+        async with self.session.begin() as tx:
+            self.logger.info(f"Inserting web page summary for url: {web_page_summary.normalized_url}")            
             await self.session.merge(web_page_summary)
+            await tx.commit()
+
+    async def update_web_page_summary(self, web_page_summary: WebPageSummary) -> None:
+        self.logger.info(f"Updating web page summary for url: {web_page_summary.normalized_url}")
+        existing = await self.session.get(WebPageSummary, web_page_summary.normalized_url_hash)
+        if existing is None:
+            raise ValueError(f"Web page summary not found for url: {web_page_summary.normalized_url}")
         
+        
+        existing.normalized_url = web_page_summary.normalized_url
+        existing.title = web_page_summary.title
+        existing.description = web_page_summary.description
+        existing.image_url = web_page_summary.image_url
+        existing.published_at = web_page_summary.published_at
+        existing.text = web_page_summary.text
+        existing.summarized_text = web_page_summary.summarized_text
+        existing.summarized_text_audio_url = web_page_summary.summarized_text_audio_url
+        await self.session.commit()        
 
     async def find_web_page_summary_by_url(self, normalized_url: str) -> WebPageSummary|None:
         hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPageSummary).where(WebPageSummary.normalized_url_hash == hash)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return await self.session.get(WebPageSummary, hash)
     
     async def find_web_page_summaries_without_audio(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
         stmt = select(WebPageSummary).where(WebPageSummary.summarized_text_audio_url == None)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)
+
+    async def find_all_web_page_summaries(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
+        stmt = select(WebPageSummary)
+        with await self.session.stream(stmt) as stream:
+            async for web_page in stream.scalars():
+                await callback(web_page)                
     
+class FrontendAudioService:
+    _model = None
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("frontend_audio_service")
+
+    async def merge(self, frontend_audio: FrontendAudio) -> None:
+        self.logger.info(f"Inserting frontend audio for url: {frontend_audio.normalized_url}")            
+        await self.session.merge(frontend_audio)
+
+    async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
+        self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")
+        existing = await self.session.get(WebPageSummary, normalized_url_hash)
+        if existing is None:
+            raise ValueError(f"Frontend Audio not found for url: {normalized_url_hash}")
+        
+        await modifier(existing)
+        await self.session.commit()        
+
+    async def get(self, normalized_url_hash: str) -> FrontendAudio|None:
+        return await self.session.get(WebPageSummary, normalized_url_hash)
+    
+    
+
 

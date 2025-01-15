@@ -92,6 +92,8 @@ class WebPageSummary(TimestampModel):
     text: Mapped[str] = mapped_column(String, nullable=True, default=None)
     summarized_text: Mapped[str] = mapped_column(String, nullable=True, default=None) 
     summarized_text_audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
 
 
 # Automatically set hash when content is modified

@@ -18,8 +18,8 @@ from pysrc.dfs.dfs import MinioClient
 import pysrc.fb.rzfb as rzfb
 from pyminiscraper.url import normalized_url_hash,  normalize_url
 from urllib.parse import urlparse
-from sentence_transformers import SentenceTransformer
 from datetime import datetime
+from pysrc.summarizer.texts import EmbeddingService
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channel: rzfb.RzChannel):
@@ -45,13 +45,13 @@ def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> Pu
     rz_channel.upload_and_save(firebase)
     return PublisherContext(rz_author, rz_channel)
 
-async def publish_frontend_audio(embedding_sentence_transformers: SentenceTransformer, 
+async def publish_frontend_audio( 
                                  frontend_audio_service: FrontendAudioService, 
                                  web_page_summary: WebPageSummary, 
                                  publisher_context: PublisherContext) -> None:
 
-    title_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.title).tolist()
-    description_embedding_mlml6v2 = embedding_sentence_transformers.encode(web_page_summary.description).tolist()
+    title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title)
+    description_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.description)
 
     frontend_audio = FrontendAudio(
         normalized_url=web_page_summary.normalized_url,
@@ -76,7 +76,6 @@ async def main():
     initialize_logging(rz_config)    
     logging.info("Starting publisher job")
     await initialize_db(rz_config)
-    embedding_sentence_transformers = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')    
     rz_firebase = rzfb.Firebase(rz_config.google_account_file)
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     frontend_audio_service = FrontendAudioService(await Database.get_db_session())
@@ -93,8 +92,7 @@ async def main():
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
             await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-            await publish_frontend_audio(embedding_sentence_transformers=embedding_sentence_transformers, 
-                                         frontend_audio_service=frontend_audio_service, 
+            await publish_frontend_audio(frontend_audio_service=frontend_audio_service, 
                                          web_page_summary=web_page_summary, 
                                          publisher_context=publisher_context)
 
@@ -122,7 +120,7 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
     
     parsed_url = urlparse(url)
     path = parsed_url.path
-    bucket, filename = os.path.split(path)
+    _, filename = os.path.split(path)
 
     temp_audio_file = f"{rz_config.audio_dir}/temp_{filename}"
     try:

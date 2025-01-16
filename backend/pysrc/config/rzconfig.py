@@ -2,6 +2,12 @@ import os
 from dotenv import load_dotenv
 
 class RzConfig:
+
+    @classmethod
+    def initialize(cls) -> 'RzConfig':
+        RzConfig.instance = RzConfig()
+        return RzConfig.instance
+
     def __init__(self):
         env_path = os.getenv('ENV_FILE', '.env')
         load_dotenv(env_path)

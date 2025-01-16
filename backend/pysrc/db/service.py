@@ -1,13 +1,15 @@
 import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
-from ..db.web_page import WebPage, WebPageSummary
-from ..db.frontend import FrontendAudio
+from .web_page import WebPage, WebPageSummary
+from .frontend import FrontendAudio
 import logging
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Callable, Awaitable
+from ..summarizer.texts import EmbeddingService
+from dataclasses import dataclass
 
 class WebPageService:
     _model = None
@@ -82,6 +84,12 @@ class WebPageSummaryService:
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)                
+
+@dataclass
+class FrontendAudioSearchResult:
+    normalized_url_hash: str
+    similarity_score: float
+
     
 class FrontendAudioService:
     _model = None
@@ -106,6 +114,28 @@ class FrontendAudioService:
 
     async def get(self, normalized_url_hash: str) -> FrontendAudio|None:
         return await self.session.get(WebPageSummary, normalized_url_hash)
+    
+    async def find_similar_for_text(self, text, limit: int = 10, probes: int = 10) -> list[FrontendAudioSearchResult]:
+        probes = 10
+        text_embeddings = EmbeddingService.calculate_embeddings(text)
+        await self.session.execute(sql_text(f"SET LOCAL ivfflat.probes = {probes}"))
+        stmt = select(
+            FrontendAudio.normalized_url_hash,
+            FrontendAudio.title_embedding_mlml6v2.op("<=>")
+            (text_embeddings).label('similarity_score')
+        ).order_by(
+            FrontendAudio.title_embedding_mlml6v2.op("<=>")
+            (text_embeddings)
+        ).limit(limit)
+        results = await self.session.execute(stmt)
+        similarity_results = [
+            FrontendAudioSearchResult(
+                normalized_url_hash=row.normalized_url_hash,
+                similarity_score=row.similarity_score
+            )
+            for row in results
+        ]
+        return similarity_results
     
     
 

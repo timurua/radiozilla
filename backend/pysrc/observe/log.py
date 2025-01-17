@@ -11,35 +11,8 @@ class Logging:
             account_file
         )
         client = google.cloud.logging.Client(credentials=credentials)
-        client.setup_logging()    
+        client.setup_logging(log_level=logging.INFO)
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
 
-        class CloudLoggingHandler(logging.Handler):
-            def __init__(self, log_name=service_name, labels=None):
-                super().__init__()
-                self.cloud_logger = client.logger(log_name)
-                self.labels = labels or {}
-
-            def emit(self, record):
-                msg = self.format(record)
-                self.cloud_logger.log_struct({
-                    'message': msg,
-                    'severity': record.levelname,
-                    'labels': {
-                        **self.labels,
-                        **getattr(record, 'labels', {})
-                    }
-                })
-
-        # Usage
-        handler = CloudLoggingHandler(labels={'env': env_name, 'service': service_name})
-
-        logging.basicConfig(
-            # Set the log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            level=logging.INFO,
-            # Define the log format
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            handlers=[
-                logging.StreamHandler(sys.stdout),  # Log to standard output
-                handler,                
-            ]
-        )

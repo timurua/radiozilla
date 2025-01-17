@@ -20,6 +20,7 @@ const Root: React.FC<RootProps> = ({ children }) => {
                             <Nav.Link as={Link} to="/web-page-seeds">Seeds</Nav.Link>
                             <Nav.Link as={Link} to="/web-pages">Pages</Nav.Link>
                             <Nav.Link as={Link} to="/web-page-summary">Summary</Nav.Link>
+                            <Nav.Link as={Link} to="/frontend-audios">Audios</Nav.Link>
                         </Nav>
                     </Navbar.Collapse>
                 </Container>

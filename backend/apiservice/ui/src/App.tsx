@@ -7,6 +7,7 @@ import Scraper from './routes/Scraper';
 import WebPageSeeds from './routes/WebPageSeeds';
 import ViewWebPage from './routes/ViewWebPage';
 import WebPageSummary from './routes/WebPageSummary';
+import FrontendAudios from './routes/FrontendAudios';
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,7 @@ const App: React.FC = () => {
           <Route path="/web-page-seeds" element={<WebPageSeeds />} />
           <Route path="/web-pages" element={<ViewWebPage />} />
           <Route path="/web-page-summary" element={<WebPageSummary />} />
+          <Route path="/frontend-audios" element={<FrontendAudios />} />
         </Routes>
       </Root>
       </BrowserRouter>

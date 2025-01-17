@@ -42,6 +42,24 @@ class FAScraperStats(BaseModel):
     completed_urls_count: int
     domain_stats: dict[str, FADomainStats]    
 
+class FAFrontendAudio(BaseModel):
+    normalized_url_hash: str
+    normalized_url: str
+    title: str|None
+    description: str|None
+    audio_text: str|None
+    image_url: str|None
+    audio_url: str|None
+    author_id: str|None
+    channel_id: str|None
+    published_at: datetime|None
+    uploaded_at: datetime|None
+    duration: int|None
+    topics: list[str]|None
+    similarity_score: float|None = None
+
+    
+
 class FAFrontendAudioSearchResult(BaseModel):
     normalized_url_hash: str
     similarity_score: float

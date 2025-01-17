@@ -1,7 +1,8 @@
 import time
+from sqlalchemy.ext.asyncio import AsyncSession
 from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl
 from pyminiscraper.config import ScraperConfig, ScraperCallback
-from pyminiscraper.stats import ScraperStats
+from pyminiscraper.stats import ScraperStats, DomainStats
 from pysrc.scraper.store import get_scraper_store_factory
 from pysrc.db.database import Database
 

@@ -11,7 +11,7 @@ from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 import asyncio
 from pysrc.db.web_page import WebPageSeed
-from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult
+from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio
 
 router = APIRouter()
 
@@ -254,23 +254,92 @@ async def upsert_web_page_seed(
             detail=str(e)
         )
     
+@router.post("/frontend-audio-results-similar-for-text")
+async def frontend_audios_similar_for_text(
+    text: str,
+    db: AsyncSession = Depends(Database.get_db)
+) -> list[FAFrontendAudioSearchResult]:
+    try:        
+        logging.info(f"Finding similar front end audios for text: {text}")
+        frontend_audio_service = FrontendAudioService(db)
+        return await frontend_audio_service.find_similar_for_text(text)
+    except Exception as e:
+        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    
+
+    
 @router.post("/frontend-audios-similar-for-text")
 async def frontend_audios_similar_for_text(
     text: str,
     db: AsyncSession = Depends(Database.get_db)
-):
-    try:
+) -> list[FAFrontendAudio]:
+    try:        
         logging.info(f"Finding similar front end audios for text: {text}")
-        frontend_audio_ids = await FrontendAudioService(db).find_similar_for_text(text)
-        return [FAFrontendAudioSearchResult(
-            normalized_url_hash=frontend_audio.normalized_url_hash,
-            similarity_score=frontend_audio.similarity_score
-        ) for frontend_audio in frontend_audio_ids]
+        frontend_audio_service = FrontendAudioService(db)
+        frontend_audio_results = await frontend_audio_service.find_similar_for_text(text)
+        frontend_audios = []
+        for frontend_audio_result in frontend_audio_results:
+            frontend_audio = await frontend_audio_service.get(frontend_audio_result.normalized_url_hash)
+            if frontend_audio is None:
+                continue
+            frontend_audios.append(FAFrontendAudio(
+                normalized_url_hash=frontend_audio.normalized_url_hash,
+                normalized_url=frontend_audio.normalized_url,
+                title=frontend_audio.title,
+                description=frontend_audio.description,
+                audio_text=frontend_audio.audio_text,
+                image_url=frontend_audio.image_url,
+                audio_url=frontend_audio.audio_url,
+                author_id=frontend_audio.author_id,
+                channel_id=frontend_audio.channel_id,
+                published_at=frontend_audio.published_at,
+                uploaded_at=frontend_audio.uploaded_at,
+                duration=frontend_audio.duration,
+                topics=frontend_audio.topics,
+                similarity_score=frontend_audio_result.similarity_score
+            ))
+        return frontend_audios
 
     except Exception as e:
-        logging.error(f"Error similar-embeddings: {str(e)}")
+        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-    return None
+
+@router.post("/frontend-audio-for-url")
+async def frontend_audio_for_url(
+    url: str,
+    db: AsyncSession = Depends(Database.get_db)
+) -> FAFrontendAudio | None:
+    try:
+        logging.info(f"Finding frontend audios for url: {url}")
+        frontend_audio = await FrontendAudioService(db).get_by_url(url)
+        if not frontend_audio:
+            return None
+        
+        return FAFrontendAudio(
+            normalized_url_hash=frontend_audio.normalized_url_hash,
+            normalized_url=frontend_audio.normalized_url,
+            title=frontend_audio.title,
+            description=frontend_audio.description,
+            audio_text=frontend_audio.audio_text,
+            image_url=frontend_audio.image_url,
+            audio_url=frontend_audio.audio_url,
+            author_id=frontend_audio.author_id,
+            channel_id=frontend_audio.channel_id,
+            published_at=frontend_audio.published_at,
+            uploaded_at=frontend_audio.uploaded_at,
+            duration=frontend_audio.duration,
+            topics=frontend_audio.topics,
+            similarity_score=None
+        )
+    except Exception as e:
+        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )

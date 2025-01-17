@@ -10,6 +10,7 @@ from sqlalchemy.future import select
 from typing import Callable, Awaitable
 from ..summarizer.texts import EmbeddingService
 from dataclasses import dataclass
+from sqlalchemy.orm import Mapped, mapped_column
 
 class WebPageService:
     _model = None
@@ -105,28 +106,48 @@ class FrontendAudioService:
 
     async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
         self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")
-        existing = await self.session.get(WebPageSummary, normalized_url_hash)
+        existing = await self.session.get(FrontendAudio, normalized_url_hash)
         if existing is None:
             raise ValueError(f"Frontend Audio not found for url: {normalized_url_hash}")
         
         await modifier(existing)
         await self.session.commit()        
 
+    async def get_by_url(self, url: str) -> FrontendAudio|None:
+        hash = normalized_url_hash(url)
+        return await self.session.get(FrontendAudio, hash)        
+
     async def get(self, normalized_url_hash: str) -> FrontendAudio|None:
-        return await self.session.get(WebPageSummary, normalized_url_hash)
+        return await self.session.get(FrontendAudio, normalized_url_hash)
     
     async def find_similar_for_text(self, text, limit: int = 10, probes: int = 10) -> list[FrontendAudioSearchResult]:
         probes = 10
         text_embeddings = EmbeddingService.calculate_embeddings(text)
         await self.session.execute(sql_text(f"SET LOCAL ivfflat.probes = {probes}"))
+
+        title_similars = await self.select_with_similarity(FrontendAudio.title_embedding_mlml6v2, limit, text_embeddings)
+        description_similars = await self.select_with_similarity(FrontendAudio.description_embedding_mlml6v2, limit, text_embeddings)
+        audio_text_similars = await self.select_with_similarity(FrontendAudio.audio_text_embedding_mlml6v2, limit, text_embeddings)
+        combined = title_similars + description_similars + audio_text_similars
+        best_by_hash = {}
+        for item in combined:
+            if item.normalized_url_hash not in best_by_hash or item.similarity_score < best_by_hash[item.normalized_url_hash].similarity_score:
+                best_by_hash[item.normalized_url_hash] = item
+
+        results = sorted(best_by_hash.values(), key=lambda x: x.similarity_score)
+        return results
+
+    async def select_with_similarity(self, column: Mapped[list[float]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
+        similarity_expr = (
+            column.cosine_distance(text_embeddings)
+        ).label("similarity_score")
+        
         stmt = select(
             FrontendAudio.normalized_url_hash,
-            FrontendAudio.title_embedding_mlml6v2.op("<=>")
-            (text_embeddings).label('similarity_score')
+            similarity_expr
         ).order_by(
-            FrontendAudio.title_embedding_mlml6v2.op("<=>")
-            (text_embeddings)
-        ).limit(limit)
+            similarity_expr.asc()
+        ).limit(int(limit))
         results = await self.session.execute(stmt)
         similarity_results = [
             FrontendAudioSearchResult(

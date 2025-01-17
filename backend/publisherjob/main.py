@@ -52,10 +52,12 @@ async def publish_frontend_audio(
 
     title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title)
     description_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.description)
+    audio_text_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.summarized_text)
 
     frontend_audio = FrontendAudio(
         normalized_url=web_page_summary.normalized_url,
-        title=web_page_summary.title,
+        title=web_page_summary.title,        
+        audio_text=web_page_summary.summarized_text,
         description=web_page_summary.description,
         image_url=web_page_summary.image_url,
         topics=web_page_summary.topics if web_page_summary.topics else [],
@@ -66,6 +68,7 @@ async def publish_frontend_audio(
         audio_url=web_page_summary.summarized_text_audio_url,
         title_embedding_mlml6v2=title_embedding_mlml6v2,
         description_embedding_mlml6v2=description_embedding_mlml6v2,
+        audio_text_embedding_mlml6v2=audio_text_embedding_mlml6v2
     )
     await frontend_audio_service.upsert(frontend_audio)
     
@@ -144,6 +147,7 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
         duration_seconds=web_page_summary.summarized_text_audio_duration,
         published_at=web_page_summary.published_at,
         uploaded_at=datetime.now(),
+        audio_text=web_page_summary.summarized_text
     )    
     rz_audio.upload_and_save(rz_firebase)
     try:

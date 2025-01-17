@@ -1,7 +1,5 @@
 # backend/main.py
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from typing import Set, Callable
-from datetime import datetime
+from fastapi import WebSocket
 import logging
 
 logger = logging.getLogger("web_socket_connection")

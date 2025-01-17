@@ -4,15 +4,14 @@ class EmbeddingService:
     _model:SentenceTransformer = None
 
     @staticmethod
-    def calculate_embeddings(self, texts)->list[float]:
-        lines = [line.strip() for line in texts.split('\n') if line.strip()]
-        model = self.initialize_model_if_needed()
-        embeddings = model.encode(lines)
+    def calculate_embeddings(text)->list[float]:        
+        model = EmbeddingService.initialize_model_if_needed()
+        embeddings = model.encode(text)
         return embeddings.tolist()
     
     @staticmethod
-    def initialize_model_if_needed(cls):
+    def initialize_model_if_needed()->SentenceTransformer:
         if not EmbeddingService._model:
-            EmbeddingService._model = SentenceTransformer('all-MiniLM-L6-v2')
+            EmbeddingService._model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
         model = EmbeddingService._model
         return model

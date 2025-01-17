@@ -5,11 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Debug Radiozilla Job",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "ENV_FILE": "/home/timur/radiozilla/backend/config/.env.local"
+            }
+        },
+        {
+            "name": "Debug apiservice (uvicorn)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "apiservice.backend.main:app",
+                "--reload",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8001"
+            ],
+            "jinja": true,
+            "justMyCode": true,
             "cwd": "${workspaceFolder}/backend",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/backend",

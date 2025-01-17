@@ -66,6 +66,7 @@ class FrontendAudio(TimestampModel):
     normalized_url: Mapped[str] = mapped_column(String)
     title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    audio_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     author_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -76,6 +77,8 @@ class FrontendAudio(TimestampModel):
     topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     title_embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
     description_embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
+    audio_text_embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
+
 
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAudio.normalized_url, 'set')
@@ -93,4 +96,5 @@ def ensure_hash(mapper, connection, target: FrontendAudio):
 async def create_vector_indexes(conn: AsyncConnection):    
     await create_vector_index(conn, "frontend_audios", "title_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_audios", "description_embedding_mlml6v2", 1000)
+    await create_vector_index(conn, "frontend_audios", "audio_text_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_channels", "embedding_mlml6v2", 1000)

@@ -82,7 +82,7 @@ class RzChannel:
         self.save(firebase)                
             
 class RzAudio:
-    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio: Blob, image_url: str | None, image: Blob | None = None, topics: list[str] = [], duration_seconds: int | None = None, web_url: str | None = None, published_at: datetime | None = None ) -> None:
+    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio_text: str, audio: Blob, image_url: str | None, image: Blob | None = None, topics: list[str] = [], duration_seconds: int | None = None, web_url: str | None = None, published_at: datetime | None = None, uploaded_at: datetime | None = None ) -> None:
         self.id = id
         self.created_at = firestore.SERVER_TIMESTAMP
         self.author_id = author_id
@@ -96,6 +96,8 @@ class RzAudio:
         self.duration_seconds = duration_seconds
         self.web_url = web_url
         self.published_at = published_at
+        self.uploaded_at = uploaded_at
+        self.audio_text = audio_text
         
     def save(self, firebase: Firebase):
         firebase._db.collection('audios').document(self.id).set({
@@ -109,6 +111,9 @@ class RzAudio:
             'topics': self.topics,
             'durationSeconds': self.duration_seconds,
             'webUrl': self.web_url,
+            'publishedAt': self.published_at,
+            'uploadedAt': self.uploaded_at,
+            'audioText': self.audio_text
         })
         
     def upload_and_save(self, firebase: Firebase):

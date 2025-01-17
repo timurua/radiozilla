@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Table, Alert } from 'react-bootstrap';
-import Client from '../api/client';
+import Client from '../client';
 import { FAWebPage } from '../api';
 
 const ViewWebPage: React.FC = () => {

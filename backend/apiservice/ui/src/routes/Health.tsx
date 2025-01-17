@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HealthStatus } from '../components/HealthStatus';
-import Client from '../api/client';
+import Client from '../client';
 
 const App: React.FC = () => {
   const [health, setHealth] = useState<string | null>(null);

@@ -2,7 +2,7 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
 from .web_page import WebPage, WebPageSummary
-from .frontend import FrontendAudio
+from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from typing import Callable, Awaitable
 from ..summarizer.texts import EmbeddingService
 from dataclasses import dataclass
 from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
 
 class WebPageService:
     _model = None
@@ -159,5 +160,32 @@ class FrontendAudioService:
         return similarity_results
     
     
+class FrontendAudioPlayService:
+    _model = None
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("frontend_audio_plays_service")
+
+    async def upsert(self, frontend_audio_play: FrontendAudioPlay) -> None:
+        self.logger.info(f"Inserting frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
+        await self.session.merge(frontend_audio_play, load=True)
+        await self.session.commit()
+
+    async def update(self, frontend_audio_play: FrontendAudioPlay) -> None:
+        self.logger.info(f"Updating frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
+        existing = await self.session.get(FrontendAudioPlay, (frontend_audio_play.user_id, frontend_audio_play.audio_id))
+        if existing is None:
+            raise ValueError(f"Frontend Audio not found for url: {normalized_url_hash}")
+        
+        existing.user_id = frontend_audio_play.user_id
+        existing.audio_id = frontend_audio_play.audio_id
+        existing.played_at = datetime.now()
+        existing.duration_seconds = max(frontend_audio_play.duration_seconds, existing.duration_seconds)        
+        await self.session.commit()
+    
+    
+
+
 
 

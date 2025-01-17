@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...services.health import HealthService
 from pysrc.db.database import Database
 from fastapi import HTTPException, status
-from pysrc.db.service import WebPageService, FrontendAudioService
+from pysrc.db.service import WebPageService, FrontendAudioService, FrontendAudioPlayService
 import logging
 from pydantic import BaseModel
 from ...services.web_socket import get_connection_manager, ConnectionManager
@@ -12,6 +12,8 @@ from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 import asyncio
 from pysrc.db.web_page import WebPageSeed
 from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio
+from pysrc.db.frontend import FrontendAudioPlay
+from datetime import datetime
 
 router = APIRouter()
 
@@ -271,7 +273,7 @@ async def frontend_audios_similar_for_text(
         )    
 
     
-@router.post("/frontend-audios-similar-for-text")
+@router.get("/frontend-audios-similar-for-text")
 async def frontend_audios_similar_for_text(
     text: str,
     db: AsyncSession = Depends(Database.get_db)
@@ -309,8 +311,28 @@ async def frontend_audios_similar_for_text(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-
-@router.post("/frontend-audio-for-url")
+    
+@router.get("/frontend-audio-results-similar-for-text")
+async def frontend_audio_results_similar_for_text(
+    text: str,
+    db: AsyncSession = Depends(Database.get_db)
+) -> list[FAFrontendAudioSearchResult]:
+    try:        
+        logging.info(f"Finding similar front end audio results for text: {text}")
+        frontend_audio_service = FrontendAudioService(db)
+        frontend_audio_results = await frontend_audio_service.find_similar_for_text(text)
+        return [FAFrontendAudioSearchResult(
+            normalized_url_hash=frontend_audio_result.normalized_url_hash,
+            similarity_score=frontend_audio_result.similarity_score
+        ) for frontend_audio_result in frontend_audio_results]
+    except Exception as e:
+        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    
+    
+@router.get("/frontend-audio-for-url")
 async def frontend_audio_for_url(
     url: str,
     db: AsyncSession = Depends(Database.get_db)
@@ -343,3 +365,53 @@ async def frontend_audio_for_url(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+@router.post("/frontend-audio-play")
+async def frontend_audio_play(
+    user_id: str,
+    audio_id: str,
+    duration_seconds: int,
+    db: AsyncSession = Depends(Database.get_db)
+) -> None:
+    try:
+        logging.info(f"Upserting front end audio play for user: {user_id}, audio: {audio_id}")
+        frontend_audio_play_service = FrontendAudioPlayService(db)
+        frontend_audio_play = FrontendAudioPlay(
+            user_id=user_id,
+            audio_id=audio_id,
+            duration_seconds=duration_seconds,
+            played_at=datetime.now()
+        )
+
+        await frontend_audio_play_service.upsert(frontend_audio_play)
+        
+    except Exception as e:
+        logging.error(f"Error upsert front end audio play: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    
+@router.post("/frontend-audio-play")
+async def frontend_audio_plays(
+    user_id: str,
+    db: AsyncSession = Depends(Database.get_db)
+) -> list[FAFrontendAudioPlay]:
+    try:
+        logging.info(f"Upserting front end audio play for user: {user_id}, audio: {audio_id}")
+        frontend_audio_play_service = FrontendAudioPlayService(db)
+        frontend_audio_play = FrontendAudioPlay(
+            user_id=user_id,
+            audio_id=audio_id,
+            duration_seconds=duration_seconds,
+            played_at=datetime.now()
+        )
+
+        frontend_audio_play_service.upsert(frontend_audio_play)
+        
+    except Exception as e:
+        logging.error(f"Error upsert front end audio play: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    

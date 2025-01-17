@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import Client from '../api/client';
-import { configuration } from '../api/client';
+import Client from '../client';
+import { configuration } from '../client';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { FAScraperStats } from '../api';
 

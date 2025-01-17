@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table } from 'react-bootstrap';
 import { Button, Modal, Form } from 'react-bootstrap';
-import Client from '../api/client';
+import Client from '../client';
 import { FAWebPageSeed } from '../api';
 
 

@@ -1,6 +1,6 @@
 import React, {useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import Client from '../api/client';
+import Client from '../client';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { FAFrontendAudio } from '../api';
 

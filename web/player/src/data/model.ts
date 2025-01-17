@@ -98,14 +98,17 @@ export class RZAudio {
     public createdAt: Date,
     public name: string,
     public imageUrl: string,
-    public audioUrl: string,
+    public audioUrl: string,    
     public topics: string[],
     public author: RZAuthor,
     public channel: RZChannel,
+    public audioText: string,
+    public durationSeconds: number,
+    public webUrl: string,
   ) {
   }
 
-  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[] }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
+  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object
@@ -115,6 +118,9 @@ export class RZAudio {
       obj.topics,
       author,
       channel,
+      obj.audioText,
+      obj.durationSeconds,
+      obj.webUrl,
     );
   }
 }

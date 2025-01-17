@@ -11,6 +11,7 @@ from pyminiscraper.url import normalized_url_hash
 from pgvector.sqlalchemy import Vector
 from .database_utils import create_vector_index
 from sqlalchemy.ext.asyncio import AsyncConnection
+from pysrc.db.base import Base
 
 
 class FrontendAuthor(TimestampModel):
@@ -98,3 +99,11 @@ async def create_vector_indexes(conn: AsyncConnection):
     await create_vector_index(conn, "frontend_audios", "description_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_audios", "audio_text_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_channels", "embedding_mlml6v2", 1000)
+
+class FrontendAudioPlay(Base):
+    __tablename__ = "frontend_audio_plays"
+    
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    audio_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    played_at: Mapped[datetime] = mapped_column(DateTime, primary_key=True, default=func.now())
+    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)

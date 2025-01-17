@@ -6,6 +6,7 @@ import { storageUtils } from '../firebase';
 import { useAudio } from "../providers/AudioProvider";
 import { audioSortingState, rzAudiosState } from "../state/audio";
 import logger from '../utils/logger';
+import { useNavigate } from 'react-router-dom';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -98,11 +99,24 @@ export default AudioList;
 function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     const { rzAudio: currentPlayable } = useAudio();
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+    const navigate = useNavigate();
 
     const { play } = useAudio();
     
     function playAudio(audio: RZAudio) {
         play(audio);
+    }
+
+    function openAudio(audio: RZAudio) {
+        navigate(`/audio/${audio.id}`);
+    }
+
+    function onAudioClick(isPlaying: boolean, rzAudio: RZAudio) {
+        if (isPlaying) {
+            openAudio(rzAudio);
+        } else {
+            playAudio(rzAudio);
+        }
     }
 
     useEffect(() => {
@@ -118,8 +132,10 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         fetchImage();
     }, [rzAudio?.imageUrl, setImageUrl]);
 
+    const isPlaying = !!(currentPlayable && currentPlayable.id === rzAudio.id);
+
     return (
-        <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + ((currentPlayable && currentPlayable.id === rzAudio.id) ? "bg-secondary rounded" : "bg-dark")} onClick={() => playAudio(rzAudio)}>
+        <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + (isPlaying ? "bg-secondary rounded" : "bg-dark")} onClick={() => onAudioClick(isPlaying, rzAudio)}>
             <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
             <div>
                 <div>{rzAudio.name}</div>
@@ -160,7 +176,6 @@ function AudioListImpl({ searchString }: PlayableListProps) {
                                     <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
                                 ))
                             }
-
                         </ListGroup>
                     </div>
                 ))

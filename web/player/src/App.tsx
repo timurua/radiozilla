@@ -7,6 +7,7 @@ import {
 
 // Import your components
 import Listen from './pages/Listen';
+import Audio from './pages/Audio';
 import Explore from './pages/Explore';
 import Profile from './pages/Profile';
 import { AudioProvider } from './providers/AudioProvider';
@@ -23,12 +24,13 @@ const App: React.FC = () => {
               <div>
                 {/* Main Content */}
                 <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
-                  <Routes>
+                    <Routes>
                     <Route path="/" element={<Listen />} />
+                    <Route path="/audio/:audio_id" element={<Audio />} />
                     <Route path="/listen" element={<Listen />} />
                     <Route path="/explore" element={<Explore />} />
                     <Route path="/profile" element={<Profile />} />
-                  </Routes>
+                    </Routes>
                 </div>
               </div>
             </AudioProvider>

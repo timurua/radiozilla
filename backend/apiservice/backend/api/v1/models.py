@@ -63,3 +63,9 @@ class FAFrontendAudio(BaseModel):
 class FAFrontendAudioSearchResult(BaseModel):
     normalized_url_hash: str
     similarity_score: float
+
+class FAFrontendAudioPlay(BaseModel):
+    user_id: str
+    audio_id: str
+    played_at: datetime
+    duration_seconds: int

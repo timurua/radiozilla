@@ -56,6 +56,9 @@ export const rzAudiosState = selector({
             const createdAt = data.createdAt.toDate();
             const authorId = data.author;
             const channelId = data.channel;
+            const audioText = data.audioText;
+            const durationSeconds = data.durationSeconds;
+            const webUrl = data.webUrl;
             const author = await getAuthor(authorId);            
             const channel = await getChannel(channelId);
             const audioData = {
@@ -63,6 +66,9 @@ export const rzAudiosState = selector({
                 audioUrl: data.audioUrl,
                 imageUrl: data.imageUrl,
                 topics: data.topics,
+                audioText,
+                durationSeconds,
+                webUrl,
             };
             return RZAudio.fromObject(audioData, doc.id, createdAt, author, channel);
         }));

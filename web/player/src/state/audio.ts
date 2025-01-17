@@ -46,9 +46,12 @@ const getChannel = async (reference: string): Promise<RZChannel> => {
     }
 }
 
+
+
 export const rzAudiosState = selector({
     key: 'RzAudios',
-    get: async () => {
+    get: async ({get}) => {
+        const sorting = get(audioSortingState);
         const querySnapshot = await getDocs(collection(db, 'audios'));
 
         const audios: RZAudio[] = await Promise.all(querySnapshot.docs.map(async (doc) => {
@@ -72,7 +75,19 @@ export const rzAudiosState = selector({
             };
             return RZAudio.fromObject(audioData, doc.id, createdAt, author, channel);
         }));
-        log.info(`Fetched ${audios.length} audios`);
-        return audios;
+
+        const sortedAudios = [...audios].sort((a, b) => {
+            switch (sorting) {
+                case PlayableSorting.Date:
+                    return b.createdAt.getTime() - a.createdAt.getTime();
+                case PlayableSorting.Topic:
+                    return a.name.localeCompare(b.name);
+                default:
+                    return 0;
+            }
+        });
+
+        log.info(`Fetched ${sortedAudios.length} audios, sorted by ${sorting}`);
+        return sortedAudios;
     },
 });

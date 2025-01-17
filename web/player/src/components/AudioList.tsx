@@ -43,22 +43,6 @@ function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
     return buckets;
 }
 
-function buucketByTopic(playables: RZAudio[]): Map<string, RZAudio[]> {
-    const buckets = new Map<string, RZAudio[]>();
-
-    playables.forEach((playable) => {
-        playable.topics.forEach((topic) => {
-            if (!buckets.has(topic)) {
-                buckets.set(topic, []);
-            }
-
-            buckets.get(topic)!.push(playable);
-        });
-    });
-
-    return buckets;
-}
-
 function removeEmptyBuckets(map: Map<string, RZAudio[]>): Map<string, RZAudio[]> {
     const filteredMap = new Map<string, RZAudio[]>();
 
@@ -82,14 +66,13 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 interface PlayableListProps {
-    searchString: string | undefined;
     // other props
 }
 
-export const AudioList: React.FC<PlayableListProps> = ({ searchString, ...props }) => {
+export const AudioList: React.FC<PlayableListProps> = ({ ...props }) => {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <AudioListImpl searchString={searchString} {...props} />
+            <AudioListImpl {...props} />
         </Suspense>
     );
 };
@@ -144,7 +127,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         </ListGroup.Item>);
 }
 
-function AudioListImpl({ searchString }: PlayableListProps) {
+function AudioListImpl() {
     const rzAudios = useRecoilValue(rzAudiosState);
     const audioSorting = useRecoilValue(audioSortingState);
 
@@ -155,32 +138,39 @@ function AudioListImpl({ searchString }: PlayableListProps) {
         setPlayablesList(rzAudios);
     }, [rzAudios, setPlayablesList]);
 
-    let bucketedAudioList = (audioSorting === PlayableSorting.Date) ? bucketByDate(rzAudios) : buucketByTopic(rzAudios);
-    bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
+    if(audioSorting === PlayableSorting.Date) {
+        let bucketedAudioList = bucketByDate(rzAudios)
+        bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
+        return (
+            <Suspense fallback={<div>Loading...</div>}>
+                {
+                    Array.from(bucketedAudioList).map(([name, audios]) => (
+                        <div key={name}>
+                            <h5 className="mt-4 text-light">{name}</h5>
+                            <ListGroup variant="flush" key={name} className="w-100">
+                                {audios
+                                    .map((rzAudio) => (
+                                        <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
+                                    ))
+                                }
+                            </ListGroup>
+                        </div>
+                    ))
+                }
+            </Suspense>
+        );
+    } else {
+        return (
+            <Suspense fallback={<div>Loading...</div>}>
+                <ListGroup variant="flush" className="w-100">
+                {
+                    Array.from(rzAudios).map(rzAudio => (
+                        <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
+                    ))
+                }
+                </ListGroup>
+            </Suspense>
+        );
+    }
 
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            {
-                Array.from(bucketedAudioList).map(([name, audios]) => (
-                    <div key={name}>
-                        <h5 className="mt-4 text-light">{name}</h5>
-                        <ListGroup variant="flush" key={name} className="w-100">
-                            {audios
-                                .filter(rzAudio => {
-                                    if (!searchString) {
-                                        return true;
-                                    }
-                                    rzAudio.name.toLowerCase().includes(searchString.toLowerCase())
-                                })
-                                .map((rzAudio) => (
-                                    <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
-                                ))
-                            }
-                        </ListGroup>
-                    </div>
-                ))
-            }
-
-        </Suspense>
-    );
 }

@@ -1,7 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { AudioList } from '../components/AudioList';
 import { AudioPlayer } from '../components/AudioPlayer';
-import PlayerScreen, { PlayerPosition } from '../components/PlayerScreen';
+import PlayerScreen from '../components/PlayerScreen';
 import { BootstrapBackButton } from '../components/BackButton';
 
 function Listen() { 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, ButtonProps } from 'react-bootstrap';
-import { ArrowDown, ArrowLeft } from 'lucide-react';
-import { ChevronCompactDown, ChevronCompactLeft } from 'react-bootstrap-icons';
+import { Button, ButtonProps } from 'react-bootstrap';
+import { ArrowLeft } from 'lucide-react';
+import { ChevronCompactLeft } from 'react-bootstrap-icons';
 
 // Interfaces
 export interface BaseBackButtonProps extends Omit<ButtonProps, 'onClick'> {

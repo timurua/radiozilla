@@ -12,11 +12,17 @@ function Listen() {
         setSearchValue(event.target.value);
     };
 
-    const handleButtonClick = () => {
+    const handleDeleteButtonClick = () => {
         if (searchValue) {
             setSearchValue('');
         }
     };
+
+    const handleSearchButtonClick = () => {
+        if (searchValue) {
+            setSearchValue('');
+        }
+    };    
 
     return (
         <PlayerScreen>
@@ -31,18 +37,30 @@ function Listen() {
                             className="border-end-0 border rounded-start-pill"
                             placeholder='Search'
                         />
+                        { 
+                            searchValue ? 
+                            <Button
+                                variant="outline-secondary"
+                                className="bg-white border-0"
+                                type="button"
+                                onClick={handleDeleteButtonClick}
+                            >
+                                <FaTimes className="mr-20" />
+                            </Button> 
+                            : null
+                        }                        
                         <Button
                             variant="outline-secondary"
-                            className="bg-white border-bottom-0 border rounded-end-pill ms-n5"
+                            className="bg-white border-0 rounded-end-pill ms-n5"
                             type="button"
-                            onClick={handleButtonClick}
+                            onClick={handleSearchButtonClick}
                         >
-                            {searchValue ? <FaTimes /> : <FaSearch />}
+                            {<FaSearch />}
                         </Button>
                     </InputGroup>
                 </Col>
             </Row>
-            <AudioList searchString={searchValue} />
+            <AudioList/>
         </PlayerScreen>
     );
 }

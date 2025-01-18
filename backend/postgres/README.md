@@ -1,5 +1,7 @@
 
-Kubernetes scripts
+# Kubernetes scripts
+
+## Install
 
 ```
 sudo microk8s kubectl apply -f persistence-volume.yaml
@@ -8,6 +10,17 @@ sudo microk8s kubectl apply -f secret.yaml
 sudo microk8s kubectl apply -f deployment.yaml
 sudo microk8s kubectl apply -f service.yaml
 sudo microk8s kubectl apply -f backup-cronjob.yaml
+```
+
+## Delete
+
+```
+sudo microk8s kubectl delete -f secret.yaml
+sudo microk8s kubectl delete -f service.yaml
+sudo microk8s kubectl delete -f deployment.yaml
+sudo microk8s kubectl delete -f backup-cronjob.yaml
+sudo microk8s kubectl delete -f persistence-volume-claim.yaml
+sudo microk8s kubectl delete -f persistence-volume.yaml
 ```
 
 Kubernetes dashboard

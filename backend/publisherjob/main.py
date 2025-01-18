@@ -144,7 +144,7 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
         audio=rzfb.Blob(file_path=temp_audio_file),
         topics=web_page_summary.topics if web_page_summary.topics else [],
         web_url=web_page_summary.normalized_url,  
-        duration_seconds=web_page_summary.summarized_text_audio_duration,
+        duration_seconds=web_page_summary.summarized_text_audio_duration_seconds,
         published_at=web_page_summary.published_at,
         uploaded_at=datetime.now(),
         audio_text=web_page_summary.summarized_text

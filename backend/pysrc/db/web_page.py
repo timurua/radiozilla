@@ -92,7 +92,7 @@ class WebPageSummary(TimestampModel):
     text: Mapped[str] = mapped_column(String, nullable=True, default=None)
     summarized_text: Mapped[str] = mapped_column(String, nullable=True, default=None) 
     summarized_text_audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    summarized_text_audio_duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    summarized_text_audio_duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
 

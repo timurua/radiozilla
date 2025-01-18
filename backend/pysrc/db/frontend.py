@@ -105,5 +105,5 @@ class FrontendAudioPlay(Base):
     
     user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
     audio_id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    played_at: Mapped[datetime] = mapped_column(DateTime, primary_key=True, default=func.now())
+    played_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)

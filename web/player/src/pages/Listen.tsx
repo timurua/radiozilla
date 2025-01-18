@@ -38,7 +38,7 @@ function Listen() {
         <PlayableSortingSelector />
         <AudioPlayer />
       </div>
-      <AudioList searchString={undefined} />
+      <AudioList/>
     </PlayerScreen>
   );
 }

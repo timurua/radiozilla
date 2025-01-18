@@ -102,8 +102,8 @@ class RzAudio:
     def save(self, firebase: Firebase):
         firebase._db.collection('audios').document(self.id).set({
             'createdAt': self.created_at,
-            'author':  f"/authors/{self.author_id}",
-            'channel': f"/channels/{self.channel_id}",
+            'author':  f"{self.author_id}",
+            'channel': f"{self.channel_id}",
             'name': self.name,
             'description': self.description,
             'audioUrl': self.audio.url,

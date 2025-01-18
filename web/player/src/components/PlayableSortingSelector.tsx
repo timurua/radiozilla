@@ -11,11 +11,14 @@ export function PlayableSortingSelector() {
     const setPlayableSorting = useSetRecoilState(audioRetrivalState);
 
     function setSorting(sorting: string) {
+        // @ts-ignore
+        var newSorting: PlayableSorting | null = PlayableSorting[sorting as keyof typeof PlayableSorting]
+        if(newSorting === playableRetrieval.sorting) {
+            newSorting = null;
+        }
         setPlayableSorting({
             searchString: playableRetrieval.searchString,
-            sorting: 
-            // @ts-ignore
-            PlayableSorting[sorting as keyof typeof PlayableSorting]
+            sorting: newSorting
         });
     }
 

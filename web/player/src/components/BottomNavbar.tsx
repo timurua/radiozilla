@@ -1,5 +1,5 @@
 import { Nav, Navbar } from "react-bootstrap";
-import { BsCompass, BsMusicNote, BsPerson, BsPersonCircle } from 'react-icons/bs';
+import { BsSearch, BsMusicNote, BsPerson, BsPersonCircle } from 'react-icons/bs';
 import { useAuth } from "../providers/AuthProvider";
 import { Link } from "react-router-dom";
 
@@ -16,8 +16,8 @@ export default function BottomNavbar() {
                 </Nav.Item>
                 <Nav.Item>
                     <Nav.Link as={Link} to="/explore" className="text-center text-light">
-                        <BsCompass size={20} />
-                        <div>Explore</div>
+                        <BsSearch size={20} />
+                        <div>Search</div>
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>

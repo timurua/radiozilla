@@ -1,26 +1,19 @@
 import React, { useState } from 'react';
 import { Button, Col, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { FaSearch, FaTimes } from 'react-icons/fa';
+import { FaSearch} from 'react-icons/fa';
 import { AudioList } from '../components/AudioList';
 import PlayerScreen from '../components/PlayerScreen';
 import { audioRetrivalState } from "../state/audio";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useSetRecoilState } from "recoil";
 
 
 function Listen() {
 
     const [searchValue, setSearchValue] = useState('');
-    const playableRetrieval = useRecoilValue(audioRetrivalState);
     const setPlayableSorting = useSetRecoilState(audioRetrivalState);    
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchValue(event.target.value);
-    };
-
-    const handleDeleteButtonClick = () => {
-        if (searchValue) {
-            setSearchValue('');
-        }
     };
 
     const handleSearchButtonClick = () => {
@@ -41,25 +34,13 @@ function Listen() {
                             type="search"
                             value={searchValue}
                             onChange={handleInputChange}
-                            id="example-search-input"
-                            className="border-end-0 border rounded-start-pill"
+                            className="border-end-0 border rounded-start-pill bg-dark text-light"
                             placeholder='Search'
-                        />
-                        { 
-                            searchValue ? 
-                            <Button
-                                variant="outline-secondary"
-                                className="bg-white border-0"
-                                type="button"
-                                onClick={handleDeleteButtonClick}
-                            >
-                                <FaTimes className="mr-20" />
-                            </Button> 
-                            : null
-                        }                        
+                            style={{ boxShadow: 'none' }}
+                        />                      
                         <Button
-                            variant="outline-secondary"
-                            className="bg-white border-0 rounded-end-pill ms-n5"
+                            variant="outline-light"
+                            className="rounded-end-pill ms-n5 bg-dark"
                             type="button"
                             onClick={handleSearchButtonClick}
                         >

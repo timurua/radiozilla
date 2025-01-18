@@ -79,9 +79,30 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const onLoadedMetadataSubscribers = useRef<Array<() => void>>([]);
     const onTimeUpdateSubscribers = useRef<Array<(currentTime: number) => void>>([]);
 
+    const [reportedMinute, setReportedMinute] = useState<number>(-1);
+
     const audioElement = useMemo(() => {
         return document.createElement('audio');
     }, []);
+
+    const reportPlayback = async () => {
+        if (rzAudio && isPlaying && user?.id) {
+            try{
+                await Client.frontendAudioPlayApiV1FrontendAudioPlayPost(
+                    user?.id,
+                    rzAudio.id,
+                    Math.floor(audioElement.currentTime)
+                )
+                logger.log(`Reported playback for ${rzAudio.name}`);                
+            } catch (error) {
+                logger.error(`Error reporting playback for ${rzAudio.name}: ${error}`);
+            }
+        }
+    }
+
+    useEffect(() => {
+        reportPlayback();
+    }, [rzAudio, reportedMinute, isPlaying]);
 
     const {user} = useAuth();
 
@@ -219,27 +240,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             onLoadedMetadataSubscribers.current.forEach((callback) => callback());
         };
 
-        const reportPlayback = async () => {
-            if (rzAudio && isPlaying && user?.id) {
-                try{
-                    await Client.frontendAudioPlayApiV1FrontendAudioPlayPost(
-                        user?.id,
-                        rzAudio.id,
-                        audioElement.currentTime
-                    )
-                    logger.log(`Reported playback for ${rzAudio.name}`);                
-                } catch (error) {
-                    logger.error(`Error reporting playback for ${rzAudio.name}: ${error}`);
-                }
-            }
-        }
-
         const handleTimeUpdate = () => {
             setCurrentTimeState(audioElement.currentTime);
-            if (audioElement.currentTime % 60 == 1) {
-                reportPlayback();
-            }
-
+            setReportedMinute(Math.floor(audioElement.currentTime / 60));
             onTimeUpdateSubscribers.current.forEach((callback) =>
                 callback(audioElement.currentTime)
             );

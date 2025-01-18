@@ -18,6 +18,7 @@ import * as logger from "firebase-functions/logger";
 //   response.send("Hello from Firebase!");
 // });
 
+import axios from "axios";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions/v1";
 
@@ -101,3 +102,32 @@ export const onAnonymousUserDeleted = functions.auth.user().onDelete(
 //         return Promise.resolve();
 //     }
 // );
+
+exports.apiProxyFunction = functions.https.onRequest(async (req, res) => {
+    try {
+        const targetURL = new URL(req.url, 'http://bc2fc9d76c7870cb72b5c234feed25320.asuscomm.com:8000');
+
+        console.log(`Forwarding to: ${targetURL.toString()}`);
+
+        // Example: forward request to some external API
+        const { data, headers: responseHeaders, status } = await axios({
+            url: targetURL.toString(),
+            method: req.method,
+            headers: req.headers,
+            data: req.body
+        });
+
+        // Set response headers
+        Object.keys(responseHeaders).forEach(header => {
+            res.setHeader(header, responseHeaders[header]);
+        });
+
+        res.set('Access-Control-Allow-Origin', '*');
+
+        // Return the proxied response
+        res.status(status).send(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Something went wrong");
+    }
+});

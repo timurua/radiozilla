@@ -2,13 +2,29 @@ import { Card, Col, ListGroup, Row } from 'react-bootstrap';
 import { BsPerson, BsPersonCircle } from 'react-icons/bs';
 import PlayerScreen from '../components/PlayerScreen';
 import { useAuth } from '../providers/AuthProvider';
+import Client from '../client';
+import { useEffect, useState } from 'react';
+import { FAFrontendAudioPlay } from '../api';
 
 
 function UserProfile() {
 
 
   const { user } = useAuth();
+  const [_, setHistory] = useState<FAFrontendAudioPlay[]>([]);
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) {
+        return;
+      }
+      const response = await Client.frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(user.id);
+      setHistory(response.data);
+    };
+
+    fetchHistory();
+  }, [user]);
+    
   return (
 
     <PlayerScreen>

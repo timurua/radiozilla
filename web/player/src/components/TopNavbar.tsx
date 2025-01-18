@@ -1,5 +1,5 @@
 import { Navbar } from "react-bootstrap";
-import { BsBell, BsSearch } from 'react-icons/bs';
+import { BsBell } from 'react-icons/bs';
 
 export default function TopNavbar() {
     return (
@@ -8,7 +8,6 @@ export default function TopNavbar() {
 
             <div>
                 <BsBell size={20} className="mx-2 text-light" />
-                <BsSearch size={20} className="mx-2 text-light" />
             </div>
         </Navbar>
     );

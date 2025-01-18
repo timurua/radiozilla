@@ -129,7 +129,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
 
 function AudioListImpl() {
     const rzAudios = useRecoilValue(rzAudiosState);
-    const audioSorting = useRecoilValue(audioRetrivalState);
+    const audioRetrieval = useRecoilValue(audioRetrivalState);
 
     const {
         setRzAudios: setPlayablesList } = useAudio();
@@ -138,7 +138,7 @@ function AudioListImpl() {
         setPlayablesList(rzAudios);
     }, [rzAudios, setPlayablesList]);
 
-    if(audioSorting === PlayableSorting.Date) {
+    if(audioRetrieval.sorting === PlayableSorting.Date) {
         let bucketedAudioList = bucketByDate(rzAudios)
         bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
         return (

@@ -4,7 +4,7 @@ import { useRecoilValue } from "recoil";
 import { PlayableSorting, RZAudio } from "../data/model";
 import { storageUtils } from '../firebase';
 import { useAudio } from "../providers/AudioProvider";
-import { audioSortingState, rzAudiosState } from "../state/audio";
+import { audioRetrivalState, rzAudiosState } from "../state/audio";
 import logger from '../utils/logger';
 import { useNavigate } from 'react-router-dom';
 
@@ -129,7 +129,7 @@ function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
 
 function AudioListImpl() {
     const rzAudios = useRecoilValue(rzAudiosState);
-    const audioSorting = useRecoilValue(audioSortingState);
+    const audioSorting = useRecoilValue(audioRetrivalState);
 
     const {
         setRzAudios: setPlayablesList } = useAudio();
@@ -164,7 +164,7 @@ function AudioListImpl() {
             <Suspense fallback={<div>Loading...</div>}>
                 <ListGroup variant="flush" className="w-100">
                 {
-                    Array.from(rzAudios).map(rzAudio => (
+                    rzAudios.map(rzAudio => (
                         <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
                     ))
                 }

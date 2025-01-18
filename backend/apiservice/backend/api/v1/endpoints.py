@@ -11,7 +11,7 @@ from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 import asyncio
 from pysrc.db.web_page import WebPageSeed
-from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio
+from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
 from pysrc.db.frontend import FrontendAudioPlay
 from datetime import datetime
 
@@ -392,22 +392,20 @@ async def frontend_audio_play(
             detail=str(e)
         )
     
-@router.post("/frontend-audio-play")
-async def frontend_audio_plays(
+@router.get("/frontend-audio-plays-for-user")
+async def frontend_audio_plays_for_user(
     user_id: str,
     db: AsyncSession = Depends(Database.get_db)
 ) -> list[FAFrontendAudioPlay]:
     try:
-        logging.info(f"Upserting front end audio play for user: {user_id}, audio: {audio_id}")
+        logging.info(f"Finding front end audio plays for user: {user_id}")
         frontend_audio_play_service = FrontendAudioPlayService(db)
-        frontend_audio_play = FrontendAudioPlay(
-            user_id=user_id,
-            audio_id=audio_id,
-            duration_seconds=duration_seconds,
-            played_at=datetime.now()
-        )
-
-        frontend_audio_play_service.upsert(frontend_audio_play)
+        return [FAFrontendAudioPlay(
+            user_id=frontend_audio_play.user_id,
+            audio_id=frontend_audio_play.audio_id,
+            played_at=frontend_audio_play.played_at,
+            duration_seconds=frontend_audio_play.duration_seconds
+        ) for frontend_audio_play in await frontend_audio_play_service.find_all_by_user_id(user_id)]
         
     except Exception as e:
         logging.error(f"Error upsert front end audio play: {str(e)}", exc_info=True)

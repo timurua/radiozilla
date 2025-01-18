@@ -1,7 +1,7 @@
 
 export enum PlayableSorting {
   Date = "Date",
-  Topic = "Topic",
+  Name = "Name",
 }
 
 export class RZChannel {
@@ -105,10 +105,11 @@ export class RZAudio {
     public audioText: string,
     public durationSeconds: number,
     public webUrl: string,
+    public publishedAt: Date | null,
   ) {
   }
 
-  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
+  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string, publishedAt: Date| null }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object
@@ -121,6 +122,7 @@ export class RZAudio {
       obj.audioText,
       obj.durationSeconds,
       obj.webUrl,
+      obj.publishedAt
     );
   }
 }

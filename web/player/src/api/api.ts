@@ -136,6 +136,37 @@ export interface FAFrontendAudio {
 /**
  * 
  * @export
+ * @interface FAFrontendAudioPlay
+ */
+export interface FAFrontendAudioPlay {
+    /**
+     * 
+     * @type {string}
+     * @memberof FAFrontendAudioPlay
+     */
+    'user_id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAFrontendAudioPlay
+     */
+    'audio_id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof FAFrontendAudioPlay
+     */
+    'played_at': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof FAFrontendAudioPlay
+     */
+    'duration_seconds': number;
+}
+/**
+ * 
+ * @export
  * @interface FAFrontendAudioSearchResult
  */
 export interface FAFrontendAudioSearchResult {
@@ -523,9 +554,9 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        frontendAudioForUrlApiV1FrontendAudioForUrlPost: async (url: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        frontendAudioForUrlApiV1FrontendAudioForUrlGet: async (url: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'url' is not null or undefined
-            assertParamExists('frontendAudioForUrlApiV1FrontendAudioForUrlPost', 'url', url)
+            assertParamExists('frontendAudioForUrlApiV1FrontendAudioForUrlGet', 'url', url)
             const localVarPath = `/api/v1/frontend-audio-for-url`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -534,7 +565,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -606,6 +637,80 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Frontend Audio Plays For User
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet: async (userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet', 'userId', userId)
+            const localVarPath = `/api/v1/frontend-audio-plays-for-user`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (userId !== undefined) {
+                localVarQueryParameter['user_id'] = userId;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Frontend Audio Results Similar For Text
+         * @param {string} text 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet: async (text: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'text' is not null or undefined
+            assertParamExists('frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet', 'text', text)
+            const localVarPath = `/api/v1/frontend-audio-results-similar-for-text`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (text !== undefined) {
+                localVarQueryParameter['text'] = text;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Frontend Audios Similar For Text
          * @param {string} text 
          * @param {*} [options] Override http request option.
@@ -648,9 +753,9 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost: async (text: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet: async (text: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'text' is not null or undefined
-            assertParamExists('frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost', 'text', text)
+            assertParamExists('frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet', 'text', text)
             const localVarPath = `/api/v1/frontend-audios-similar-for-text`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -659,7 +764,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -942,10 +1047,10 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async frontendAudioForUrlApiV1FrontendAudioForUrlPost(url: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAFrontendAudio>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioForUrlApiV1FrontendAudioForUrlPost(url, options);
+        async frontendAudioForUrlApiV1FrontendAudioForUrlGet(url: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAFrontendAudio>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioForUrlApiV1FrontendAudioForUrlGet(url, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioForUrlApiV1FrontendAudioForUrlPost']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioForUrlApiV1FrontendAudioForUrlGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -961,6 +1066,32 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioPlayApiV1FrontendAudioPlayPost(userId, audioId, durationSeconds, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioPlayApiV1FrontendAudioPlayPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Frontend Audio Plays For User
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudioPlay>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Frontend Audio Results Similar For Text
+         * @param {string} text 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudioSearchResult>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -983,10 +1114,10 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudio>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text, options);
+        async frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudio>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1103,8 +1234,8 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        frontendAudioForUrlApiV1FrontendAudioForUrlPost(url: string, options?: RawAxiosRequestConfig): AxiosPromise<FAFrontendAudio> {
-            return localVarFp.frontendAudioForUrlApiV1FrontendAudioForUrlPost(url, options).then((request) => request(axios, basePath));
+        frontendAudioForUrlApiV1FrontendAudioForUrlGet(url: string, options?: RawAxiosRequestConfig): AxiosPromise<FAFrontendAudio> {
+            return localVarFp.frontendAudioForUrlApiV1FrontendAudioForUrlGet(url, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1117,6 +1248,26 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         frontendAudioPlayApiV1FrontendAudioPlayPost(userId: string, audioId: string, durationSeconds: number, options?: RawAxiosRequestConfig): AxiosPromise<any> {
             return localVarFp.frontendAudioPlayApiV1FrontendAudioPlayPost(userId, audioId, durationSeconds, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Frontend Audio Plays For User
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudioPlay>> {
+            return localVarFp.frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Frontend Audio Results Similar For Text
+         * @param {string} text 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudioSearchResult>> {
+            return localVarFp.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1135,8 +1286,8 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudio>> {
-            return localVarFp.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text, options).then((request) => request(axios, basePath));
+        frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudio>> {
+            return localVarFp.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options).then((request) => request(axios, basePath));
         },
         /**
          * Basic health check endpoint
@@ -1234,8 +1385,8 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public frontendAudioForUrlApiV1FrontendAudioForUrlPost(url: string, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).frontendAudioForUrlApiV1FrontendAudioForUrlPost(url, options).then((request) => request(this.axios, this.basePath));
+    public frontendAudioForUrlApiV1FrontendAudioForUrlGet(url: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).frontendAudioForUrlApiV1FrontendAudioForUrlGet(url, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1250,6 +1401,30 @@ export class DefaultApi extends BaseAPI {
      */
     public frontendAudioPlayApiV1FrontendAudioPlayPost(userId: string, audioId: string, durationSeconds: number, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).frontendAudioPlayApiV1FrontendAudioPlayPost(userId, audioId, durationSeconds, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Frontend Audio Plays For User
+     * @param {string} userId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).frontendAudioPlaysForUserApiV1FrontendAudioPlaysForUserGet(userId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Frontend Audio Results Similar For Text
+     * @param {string} text 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1272,8 +1447,8 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text: string, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(text, options).then((request) => request(this.axios, this.basePath));
+    public frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

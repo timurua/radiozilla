@@ -3,10 +3,15 @@ import { Button, Col, FormControl, InputGroup, Row } from 'react-bootstrap';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import { AudioList } from '../components/AudioList';
 import PlayerScreen from '../components/PlayerScreen';
+import { audioRetrivalState } from "../state/audio";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+
 
 function Listen() {
 
     const [searchValue, setSearchValue] = useState('');
+    const playableRetrieval = useRecoilValue(audioRetrivalState);
+    const setPlayableSorting = useSetRecoilState(audioRetrivalState);    
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchValue(event.target.value);
@@ -20,7 +25,10 @@ function Listen() {
 
     const handleSearchButtonClick = () => {
         if (searchValue) {
-            setSearchValue('');
+            setPlayableSorting({
+                searchString: searchValue,
+                sorting: null
+            });            
         }
     };    
 
@@ -60,7 +68,9 @@ function Listen() {
                     </InputGroup>
                 </Col>
             </Row>
-            <AudioList/>
+            <div className='mt-5'>
+                <AudioList/>
+            </div>
         </PlayerScreen>
     );
 }

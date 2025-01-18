@@ -183,6 +183,11 @@ class FrontendAudioPlayService:
         existing.played_at = datetime.now()
         existing.duration_seconds = max(frontend_audio_play.duration_seconds, existing.duration_seconds)        
         await self.session.commit()
+
+    async def find_all_by_user_id(self, user_id: str) -> list[FrontendAudioPlay]:
+        stmt = select(FrontendAudioPlay).where(FrontendAudioPlay.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
     
     
 

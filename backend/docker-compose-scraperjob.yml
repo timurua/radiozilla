@@ -1,0 +1,18 @@
+# docker-compose.yml
+services:
+  pysrc:
+    build:
+      context: .
+      dockerfile: pysrc/Dockerfile
+    image: localhost:32000/radiozilla-pysrc:latest
+  
+  scraperjob:
+    build:
+      context: .
+      dockerfile: scraperjob/Dockerfile
+    image: localhost:32000/radiozilla-scraper-job:latest
+    depends_on:
+      - pysrc
+
+
+  

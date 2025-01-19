@@ -19,3 +19,4 @@ pgvector>=0.3.6
 firebase-admin
 google-cloud-firestore
 python-dateutil
+sentence_transformers

@@ -1,4 +1,4 @@
-FROM pysrc:latest
+FROM localhost:32000/radiozilla-pysrc:latest
 
 WORKDIR /app
 
@@ -8,12 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the script
 COPY scraperjob/main.py .
-COPY scraperjob/google-account.json .
-COPY scraperjob/.env .
-
-# Use non-root user for security
-RUN useradd -m appuser
-USER appuser
+COPY config/google-account.json .
+COPY config/.env.k8s .env
 
 # Command to run the script
 ENV PYTHONPATH=/:/app

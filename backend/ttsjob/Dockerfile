@@ -1,4 +1,4 @@
-FROM localhost:32000/radiozilla-pysrc:latest
+FROM localhost:32000/radiozilla-tts-jobbase:latest
 
 WORKDIR /app
 

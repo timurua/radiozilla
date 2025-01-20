@@ -4,12 +4,12 @@
 ## Install
 
 ```
-sudo microk8s kubectl apply -f persistence-volume.yaml
-sudo microk8s kubectl apply -f persistence-volume-claim.yaml
-sudo microk8s kubectl apply -f secret.yaml
-sudo microk8s kubectl apply -f deployment.yaml
-sudo microk8s kubectl apply -f service.yaml
-sudo microk8s kubectl apply -f backup-cronjob.yaml
+microk8s kubectl apply -f persistence-volume.yaml
+microk8s kubectl apply -f persistence-volume-claim.yaml
+microk8s kubectl apply -f secret.yaml
+microk8s kubectl apply -f deployment.yaml
+microk8s kubectl apply -f service.yaml
+microk8s kubectl apply -f backup-cronjob.yaml
 ```
 
 ## Delete

@@ -23,8 +23,8 @@ class OllamaClient:
             "keep_alive": 0
         }
 
-        retries = 5
-        timeout = aiohttp.ClientTimeout(total=10)
+        retries = 3
+        timeout = aiohttp.ClientTimeout(connect=60.0)
         
         for attempt in range(retries):
             async with aiohttp.ClientSession(timeout=timeout) as session:

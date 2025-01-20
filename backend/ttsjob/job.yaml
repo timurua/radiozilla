@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: python-job-  # This will append a unique suffix each time
+  generateName: ttsjob-  # This will append a unique suffix each time
   labels:
-    app: python-job
+    app: ttsjob
     type: batch-process
 spec:
   ttlSecondsAfterFinished: 600  # Keep jobs for 7 days
@@ -11,17 +11,17 @@ spec:
   template:
     metadata:
       labels:
-        app: python-job
+        app: ttsjob
         type: batch-process
     spec:
       containers:
       - name: python-container
-        image: timurua/radiozilla-scraper-job:latest  # Replace with your image registry
+        image: localhost:32000/radiozilla-ttsjob:latest  # Replace with your image registry
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "16Gi"
+            cpu: "2000m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "16Gi"
+            cpu: "2000m"
       restartPolicy: Never

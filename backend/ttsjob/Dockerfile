@@ -1,4 +1,4 @@
-FROM timurua/radiozilla-tts-job-base:latest
+FROM localhost:32000/radiozilla-pysrc:latest
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY pysrc /app/pysrc
 COPY ttsjob/main.py .
 COPY config/google-account.json .
-COPY config/.env.docker .env
+COPY config/.env.k8s .env
 
 RUN mkdir -p /app/audio
 VOLUME ["/app/audio"]

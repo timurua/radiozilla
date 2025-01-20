@@ -24,3 +24,4 @@ python-dateutil>=2.9.0
 minio>=7.2.12
 pgvector>=0.3.6
 pydantic-settings>=2.7.0
+uvicorn

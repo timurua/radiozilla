@@ -1,0 +1,10 @@
+# docker-compose.yml
+services:
+  scraperjob:
+    build:
+      context: .
+      dockerfile: ttsjob/Dockerfile
+    image: localhost:32000/radiozilla-ttsjob:latest
+
+
+  

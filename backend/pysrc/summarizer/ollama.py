@@ -2,6 +2,10 @@ import aiohttp
 import logging
 import json
 
+class OllamaClientException(Exception):
+    """Exception raised for Ollama client errors."""
+    pass
+
 class OllamaClient:
     def __init__(self, model: str = "qwen2.5:7b", base_url="http://localhost:11434"):
         self.base_url = f"{base_url}/api"
@@ -19,21 +23,27 @@ class OllamaClient:
             "keep_alive": 0
         }
 
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.post(url, json=data, headers=self.headers) as response:
-                    response.raise_for_status()
-                    text_content = await response.text()
-                    lines = text_content.split('\n')
-                    output = ""
-                    for line in lines:
-                        if line.strip():
-                            line_json = json.loads(line)
-                            output += line_json.get('response', '')
-                    return output.strip()
-            except aiohttp.ClientError as e:
-                self.logger.error(f"Error connecting to Ollama API: {e}")
-                return None
+        retries = 5
+        timeout = aiohttp.ClientTimeout(total=10)
+        
+        for attempt in range(retries):
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                try:
+                    async with session.post(url, json=data, headers=self.headers) as response:
+                        response.raise_for_status()
+                        text_content = await response.text()
+                        lines = text_content.split('\n')
+                        output = ""
+                        for line in lines:
+                            if line.strip():
+                                line_json = json.loads(line)
+                                output += line_json.get('response', '')
+                        return output.strip()
+                except aiohttp.ClientError as e:
+                    self.logger.error(f"Error connecting to Ollama API: {e}")
+
+        self.logger.error(f"Failed to generate text after {retries} attempts")
+        raise OllamaClientException("Failed to generate text after {retries} attempts")
 
     async def unload_all_models(self):
         # Step 1: Retrieve the list of loaded models

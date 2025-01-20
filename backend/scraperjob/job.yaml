@@ -11,12 +11,12 @@ spec:
   template:
     metadata:
       labels:
-        app: python-job
+        app: scraperjob
         type: batch-process
     spec:
       containers:
       - name: python-container
-        image: localhost:32000/radiozilla-scraper-job:latest  # Replace with your image registry
+        image: localhost:32000/radiozilla-scraperjob:latest  # Replace with your image registry
         resources:
           requests:
             memory: "256Mi"

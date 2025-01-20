@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: scraperjob/Dockerfile
-    image: localhost:32000/radiozilla-scraper-job:latest
+    image: localhost:32000/radiozilla-scraperjob:latest
     depends_on:
       - pysrc
 

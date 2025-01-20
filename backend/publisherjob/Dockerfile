@@ -1,4 +1,4 @@
-FROM pysrc:latest
+FROM localhost:32000/radiozilla-pysrc:latest
 
 WORKDIR /app
 
@@ -8,12 +8,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the script
 COPY publisherjob/main.py .
-COPY publisherjob/google-account.json .
-COPY publisherjob/.env .
+COPY config/google-account.json .
+COPY config/.env.k8s .env
+COPY resources /app/resources
 
-# Use non-root user for security
-RUN useradd -m appuser
-USER appuser
+RUN mkdir -p /app/audio
 
 # Command to run the script
 ENV PYTHONPATH=/:/app

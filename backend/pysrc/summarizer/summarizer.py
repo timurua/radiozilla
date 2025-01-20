@@ -6,6 +6,7 @@ from .ollama import OllamaClient
 from .prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt, DateDeductionPrompt
 from ..db.service import WebPageService, WebPageSummaryService
 from ..db.web_page import WebPage
+from ..utils.parallel import ParallelTaskManager
 from dateutil.parser import parse
 
 logger = logging.getLogger("summarizer")
@@ -23,9 +24,21 @@ class SummarizerService:
     async def summarizer_web_pages_for_prefix(self, url_prefix: str) -> WebPageSummary|None:
 
         self.logger.info("Summarizing web pages for prefix: {url_prefix}")
-        await self.web_page_service.find_web_pages_by_url_prefix(url_prefix, self.summarize_web_page)
+        normalize_urls = []
+        async def add_to_normalize_urls(web_page: WebPage) -> None:
+            normalize_urls.append(web_page.normalized_url)
+
+        await self.web_page_service.find_web_pages_by_url_prefix(url_prefix, add_to_normalize_urls)
+        manager = ParallelTaskManager[str](max_concurrent_tasks=2)
+
+        for normalized_url in normalize_urls:
+            manager.submit_function(self.summarize_web_page(normalized_url))
+
+        await manager.wait_all()
+
         
-    async def summarize_web_page(self, web_page: WebPage) -> None: 
+    async def summarize_web_page(self, normalized_url: str) -> None: 
+        web_page = self.web_page_service.find_web_page_by_url(normalized_url)
         self.logger.info(f"Summarizing web page: {web_page.url}")
         summary_confug = SummaryConfig(
             "English",

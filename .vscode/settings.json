@@ -15,5 +15,6 @@
     },
     "python.testing.pytestArgs": [
         "backend"
-    ]
+    ],
+    "python.envFile": "${workspaceFolder}/.env"
 }

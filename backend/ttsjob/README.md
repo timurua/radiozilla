@@ -24,5 +24,8 @@ microk8s kubectl port-forward --address 0.0.0.0 -n minio-operator service/minio 
 
 # Running
 ```
-sudo docker build -t timurua/radiozilla-tts-job-base:latest .
+sudo docker build -t localhost:32000/radiozilla-ttsjob-base:latest .
+sudo docker push localhost:32000/radiozilla-ttsjob-base:latest
+```
+
 

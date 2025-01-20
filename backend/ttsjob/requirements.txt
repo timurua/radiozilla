@@ -19,3 +19,4 @@ pgvector>=0.3.6
 ffmpeg-python
 minio
 soundfile
+sentence_transformers

@@ -1,4 +1,4 @@
-FROM localhost:32000/radiozilla-tts-jobbase:latest
+FROM localhost:32000/radiozilla-ttsjob-base:latest
 
 WORKDIR /app
 

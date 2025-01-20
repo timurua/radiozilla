@@ -21,7 +21,9 @@ spec:
           requests:
             memory: "16Gi"
             cpu: "2000m"
+            nvidia.com/gpu: "1"    # Request 1 GPU            
           limits:
             memory: "16Gi"
             cpu: "2000m"
+            nvidia.com/gpu: "1"    # Request 1 GPU            
       restartPolicy: Never

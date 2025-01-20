@@ -111,7 +111,7 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
         text = web_page_summary.text,
         summarized_text = web_page_summary.summarized_text,
         summarized_text_audio_url = summarized_text_audio_url,
-        summarized_text_audio_duration = duration
+        summarized_text_audio_duration_seconds = duration
     )
 
 

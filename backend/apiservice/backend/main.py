@@ -17,14 +17,14 @@ async def initialize_db(config: RzConfig) -> None:
     await db.create_tables()    
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    rz_config = RzConfig.initialize()  
-    initialize_logging(rz_config)    
+async def lifespan(app: FastAPI):    
+    initialize_logging(RzConfig.instance)    
     logging.info("Starting apiservice")
     await initialize_db(rz_config)
     yield 
     
 logger = logging.getLogger("apiservice.main")
+rz_config = RzConfig.initialize()  
 
 app = FastAPI(title="apiservice" , lifespan=lifespan)
 
@@ -41,5 +41,5 @@ app.add_middleware(
 app.include_router(endpoints.router, prefix="/api/v1")
 
 # Mount React static files
-app.mount("/", StaticFiles(directory="apiservice/ui/dist", html=True), name="static")
+app.mount("/", StaticFiles(directory="ui/dist", html=True), name="static")
  

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apiservice
+  labels:
+    app: apiservice
+spec:
+  replicas: 1  # Single pod as requested
+  selector:
+    matchLabels:
+      app: apiservice
+  template:
+    metadata:
+      labels:
+        app: apiservice
+    spec:
+      containers:
+      - name: apiservice
+        image: localhost:32000/radiozilla-apiservice:latest  # Replace with your actual image
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apiservice-service
+spec:
+  type: NodePort  # This makes the service accessible from outside the cluster
+  selector:
+    app: apiservice
+  ports:
+  - port: 8000
+    targetPort: 8000
+    nodePort: 30888  # The port that will be exposed on your host machine (must be between 30000-32767)

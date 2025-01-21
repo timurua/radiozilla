@@ -2,7 +2,7 @@ import { AudioPlayer } from '../components/AudioPlayer';
 import PlayerScreen from '../components/PlayerScreen';
 import { BootstrapBackButton } from '../components/BackButton';
 
-function Audio() { 
+function Channel() { 
 
   return (
     <PlayerScreen noShowSmallPlayer={true}>
@@ -16,4 +16,4 @@ function Audio() {
   );
 }
 
-export default Audio;
+export default Channel;

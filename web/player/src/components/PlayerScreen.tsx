@@ -26,13 +26,15 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer
             <div style={{ paddingTop: '50px', paddingBottom: '100px' }}>
                 {children}
             </div>
-            <div style={{ position: 'fixed', bottom: '0', width: '100%' }}>
-                {
-                    !noShowSmallPlayer && rzAudio ? (
-                        <SmallAudioPlayer />
-                    ) : null
-                }
-                <BottomNavbar />
+            <div className='bg-dark' style={{ position: 'fixed', left: '0', right: '0', bottom: '0' }}>
+                <div style={{width:'100%', paddingLeft: '20px', paddingRight: '20px'}}>
+                    {
+                        !noShowSmallPlayer && rzAudio ? (
+                            <SmallAudioPlayer />
+                        ) : null
+                    }
+                    <BottomNavbar />
+                </div>
             </div>
         </div>
     );

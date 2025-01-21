@@ -49,8 +49,8 @@ export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + (isPlaying ? "bg-secondary rounded" : "bg-dark")} onClick={() => onAudioClick(isPlaying, rzAudio)}>
             <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
             <div>
-                <div>{rzAudio.name}</div>
-                <small>{rzAudio.channel.name}</small>
+                <div className='small'>{rzAudio.name}</div>
+                <div className='small'>{rzAudio.channel.name}</div>
             </div>
         </ListGroup.Item>);
 }

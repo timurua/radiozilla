@@ -46,7 +46,8 @@ class FrontendChannel(TimestampModel):
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     source_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
+    name_embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
+    description_embedding_mlml6v2: Mapped[list[float]] = mapped_column(Vector(dim=384))
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendChannel.normalized_url, 'set')

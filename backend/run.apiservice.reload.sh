@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PYTHONPATH=.:$PYTHONPATH
+export PYTHONPATH=..:.:$PYTHONPATH
 export ENV_FILE=config/.env.local
 
 

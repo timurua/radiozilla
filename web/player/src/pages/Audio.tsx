@@ -5,7 +5,7 @@ import { BootstrapBackButton } from '../components/BackButton';
 function Listen() { 
 
   return (
-    <PlayerScreen>
+    <PlayerScreen noShowSmallPlayer={true}>
         <div className="mb-3">
             <BootstrapBackButton size="lg"/>
         </div>

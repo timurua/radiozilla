@@ -2,31 +2,19 @@ import React, { useRef } from 'react';
 import BottomNavbar from './BottomNavbar';
 import { SmallAudioPlayer } from './SmallAudioPlayer';
 import TopNavbar from './TopNavbar';
-
-export enum PlayerPosition {
-    TOP = 'top',
-    BOTTOM = 'bottom'
-}
+import { useAudio } from "../providers/AudioProvider";
 
 interface PlayerScreenProps extends React.HTMLProps<HTMLInputElement> {
     children?: React.ReactNode;
-    playerPosition?: PlayerPosition;
-    playerPositionOffset?: number;
+    noShowSmallPlayer?: boolean;
 }
-const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, playerPosition, playerPositionOffset }) => {
+const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer }) => {
     const topNavbarRef = useRef<HTMLDivElement>(null);
-    const minimizedStyle: React.CSSProperties = playerPosition === PlayerPosition.TOP
-        ? {
-            position: 'fixed',
-            top: playerPositionOffset,
-            width: '100%',
-            left: 0,
-            height: '50px', // Adjust the minimized height as needed
-            zIndex: 1000,
-            paddingTop: '0px',
-            paddingLeft: '10px',
-            paddingRight: '10px',
-        } : { display: 'none' };
+
+    const {
+        rzAudio
+    } = useAudio();
+
 
     return (
         <div className="min-vh-100 w-100 bg-dark text-white">
@@ -35,18 +23,17 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, playerPosition, p
                 <TopNavbar />
             </div>
 
-            {
-                playerPosition === PlayerPosition.TOP ? (
-                    <div style={minimizedStyle} className='bg-dark slide-in'>
-                        <SmallAudioPlayer />
-                    </div>
-                ) : null
-            }
-
             <div style={{ paddingTop: '50px', paddingBottom: '100px' }}>
                 {children}
             </div>
-            <BottomNavbar />
+            <div style={{ position: 'fixed', bottom: '0', width: '100%' }}>
+                {
+                    !noShowSmallPlayer && rzAudio ? (
+                        <SmallAudioPlayer />
+                    ) : null
+                }
+                <BottomNavbar />
+            </div>
         </div>
     );
 };

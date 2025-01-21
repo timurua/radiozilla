@@ -7,6 +7,7 @@ from pysrc.db.database import Database
 from pysrc.observe.log import Logging
 from contextlib import asynccontextmanager
 import logging
+import os
 
 def initialize_logging(rz_config: RzConfig):    
     Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
@@ -41,5 +42,6 @@ app.add_middleware(
 app.include_router(endpoints.router, prefix="/api/v1")
 
 # Mount React static files
-app.mount("/", StaticFiles(directory="ui/dist", html=True), name="static")
+static_director = os.getenv("STATIC_DIR", "ui/dist")
+app.mount("/", StaticFiles(directory=static_director, html=True), name="static")
  

@@ -14,7 +14,7 @@ import { auth } from '../firebase';
 import { userState, userLoadingState, cookieConsentState, isOnlineState } from '../state/auth';
 import { CookieConsent } from '../components/CookieConsent';
 import logger from '../utils/logger';
-import PlayerScreen from '../components/PlayerScreen';
+import NoPlayerScreen from '../components/NoPlayerScreen';
 import Spinner from '../components/Spinner';
 import { RZUser } from '../data/model';
 
@@ -163,13 +163,13 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
   return (
     <AuthContext.Provider value={value}>
       {!cookieConsent ? (
-        <PlayerScreen>
+        <NoPlayerScreen>
           <CookieConsent />
-        </PlayerScreen>
+        </NoPlayerScreen>
       ) : userLoading ? (
-        <PlayerScreen>
+        <NoPlayerScreen>
           <Spinner text="Loading User" />
-        </PlayerScreen>
+        </NoPlayerScreen>
       ) : (
         children
       )}

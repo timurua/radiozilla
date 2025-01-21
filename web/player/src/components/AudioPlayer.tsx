@@ -12,7 +12,7 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
   const {
     play,
     pause,
-    rzAudio: playable,
+    rzAudio,
     isPlaying,
     isPaused,
     currentTime,
@@ -33,7 +33,8 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
 
   const onTextClick = () => {
     if (isPlaying) {
-      navigate(`/audio/${playable?.id}`);
+      
+      navigate(`/audio/${rzAudio?.id}`);
     }
   };
 
@@ -58,8 +59,8 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        if (playable) {
-          const url = await storageUtils.toDownloadURL(playable.imageUrl);
+        if (rzAudio) {
+          const url = await storageUtils.toDownloadURL(rzAudio.imageUrl);
           setImageUrl(url);
         } else {
           setImageUrl(undefined);
@@ -70,17 +71,17 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
     };
 
     fetchImage();
-  }, [playable, playable?.imageUrl, setImageUrl]);
+  }, [rzAudio, rzAudio?.imageUrl, setImageUrl]);
 
   return (
     <div className='bg-dark'>
       <Container className="audio-player bg-dark">
-        {playable && (isPlaying || isPaused) ? (
+        {rzAudio && (isPlaying || isPaused) ? (
           <div className="d-flex align-items-center text-light bg-dark" onClick={onTextClick}>
             <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
-              <div>{playable.name}</div>
-              <small>{playable.author.name}</small>
+              <div>{rzAudio.name}</div>
+              <small>{rzAudio.author.name}</small>
             </div>
           </div>
         ) : null}
@@ -107,12 +108,12 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         </div>
-        {showExtendedInfo && playable && (
+        {showExtendedInfo && rzAudio && (
         <div className='text-light p-2'>
-          <BootstrapMarkdown markdownContent={playable.audioText}/>
+          <BootstrapMarkdown markdownContent={rzAudio.audioText}/>
           <div>
             <a
-              href={`${playable?.webUrl}`}
+              href={`${rzAudio?.webUrl}`}
               target="_blank"
               rel="noopener noreferrer"
               className="link-light"

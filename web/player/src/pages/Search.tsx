@@ -7,7 +7,7 @@ import { audioRetrivalState } from "../state/audio";
 import { useSetRecoilState } from "recoil";
 
 
-function Listen() {
+function Search() {
 
     const [searchValue, setSearchValue] = useState('');
     const setPlayableSorting = useSetRecoilState(audioRetrivalState);    
@@ -56,4 +56,4 @@ function Listen() {
     );
 }
 
-export default Listen;
+export default Search;

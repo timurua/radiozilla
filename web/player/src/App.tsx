@@ -6,9 +6,9 @@ import {
 } from 'recoil';
 
 // Import your components
-import Listen from './pages/Listen';
+import Feed from './pages/Feed';
 import Audio from './pages/Audio';
-import Explore from './pages/Explore';
+import Explore from './pages/Search';
 import Profile from './pages/Profile';
 import { AudioProvider } from './providers/AudioProvider';
 import { AuthProvider } from './providers/AuthProvider';
@@ -25,10 +25,10 @@ const App: React.FC = () => {
                 {/* Main Content */}
                 <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                     <Routes>
-                    <Route path="/" element={<Listen />} />
+                    <Route path="/" element={<Feed />} />
                     <Route path="/audio/:audio_id" element={<Audio />} />
-                    <Route path="/listen" element={<Listen />} />
-                    <Route path="/explore" element={<Explore />} />
+                    <Route path="/feed" element={<Feed />} />
+                    <Route path="/search" element={<Explore />} />
                     <Route path="/profile" element={<Profile />} />
                     </Routes>
                 </div>

@@ -21,7 +21,7 @@ class SummarizerService:
         self.logger.info("Summarizer service initialized")
 
 
-    async def summarizer_web_pages_for_prefix(self, url_prefix: str) -> WebPageSummary|None:
+    async def summarizer_web_pages_for_prefix(self, url_prefix: str) -> None:
 
         self.logger.info("Summarizing web pages for prefix: {url_prefix}")
         normalize_urls = []
@@ -38,7 +38,7 @@ class SummarizerService:
 
         
     async def summarize_web_page(self, normalized_url: str) -> None: 
-        web_page = self.web_page_service.find_web_page_by_url(normalized_url)
+        web_page = await self.web_page_service.find_web_page_by_url(normalized_url)
         self.logger.info(f"Summarizing web page: {web_page.url}")
         summary_confug = SummaryConfig(
             "English",

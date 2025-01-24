@@ -1,7 +1,6 @@
-import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
-from .web_page import WebPage, WebPageSummary
+from .web_page import WebPage, WebPageSummary, WebPageChannel
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
@@ -10,8 +9,33 @@ from sqlalchemy.future import select
 from typing import Callable, Awaitable
 from ..summarizer.texts import EmbeddingService
 from dataclasses import dataclass
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
 from datetime import datetime
+
+class WebPageChannelService:
+    _model = None
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("web_page_channel_service")
+
+    async def upsert_web_page_channel(self, web_page_channel: WebPageChannel) -> None:
+        async with self.session.begin():
+            self.logger.info(f"Inserting web page for url: {web_page_channel.url}")
+            await self.session.merge(web_page_channel, load=True)
+        
+
+    async def find_web_page_channel_by_url(self, normalized_url: str) -> WebPageChannel|None:
+        hash = normalized_url_hash(normalized_url)
+        stmt = select(WebPageChannel).where(WebPageChannel.normalized_url_hash == hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def find_web_pages_channel(self, url_prefix: str, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
+        stmt = select(WebPageChannel).where(WebPageChannel.normalized_url.startswith(url_prefix))        
+        with await self.session.stream(stmt) as stream:
+            async for web_page in stream.scalars():
+                await callback(web_page)
 
 class WebPageService:
     _model = None

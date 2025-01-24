@@ -2,10 +2,12 @@ import os
 from dotenv import load_dotenv
 
 class RzConfig:
+    
+    instance = None
 
     @classmethod
     def initialize(cls) -> 'RzConfig':
-        RzConfig.instance = RzConfig()
+        cls.instance = RzConfig()
         return RzConfig.instance
 
     def __init__(self):

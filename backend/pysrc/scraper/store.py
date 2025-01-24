@@ -11,14 +11,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Callable, Awaitable
 from ..db.service import WebPageService
+from datetime import datetime
 
 logger = logging.getLogger("scraper_store")
 
        
 class ServiceScraperStore(ScraperStore):    
 
-    def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]]):  
+    def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]], rerequest_after_hours: int=24):  
         self.get_db_session = get_db_session 
+        self.rerequest_after_hours = rerequest_after_hours
 
     async def store_page(self, response: ScraperWebPage) -> None:
         session = await self.get_db_session()
@@ -52,10 +54,14 @@ class ServiceScraperStore(ScraperStore):
         finally:
             await session.close()            
 
-    async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:
+    async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:        
         session = await self.get_db_session()
         try:
             web_page = await WebPageService(session).find_web_page_by_url(normalized_url)
+            if web_page is not None:
+                if web_page.requested_at and (datetime.now() - web_page.requested_at).total_seconds() > self.rerequest_after_hours * 60 * 60:
+                    return None
+                
             if web_page:
                 return ScraperWebPage(
                     status_code = web_page.status_code,

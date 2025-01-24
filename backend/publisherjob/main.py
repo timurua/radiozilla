@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import asyncclick as click
 import asyncio
 import logging
@@ -11,7 +10,6 @@ from pysrc.summarizer.ollama import OllamaClient
 from pysrc.summarizer.summarizer import SummarizerService
 from pysrc.db.web_page import WebPageSummary
 from pysrc.db.frontend import FrontendAudio
-from pysrc.process.runner import ProcessRunner
 from pysrc.config.rzconfig import RzConfig
 import ffmpeg
 from pysrc.dfs.dfs import MinioClient
@@ -74,7 +72,7 @@ async def publish_frontend_audio(
     
 
 @click.command()
-async def main():
+async def run_main():
     rz_config = RzConfig()  
     initialize_logging(rz_config)    
     logging.info("Starting publisher job")
@@ -165,7 +163,7 @@ async def initialize_db(config: RzConfig) -> None:
     await db.create_tables()
     
 def cli():    
-    return asyncio.run(main())
+    return asyncio.run(run_main())
 
 if __name__ == '__main__':
     cli()

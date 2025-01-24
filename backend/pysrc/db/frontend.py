@@ -17,7 +17,7 @@ from pysrc.db.base import Base
 class FrontendAuthor(TimestampModel):
     __tablename__ = "frontend_authors"
 
-    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)  # SHA-256 hash as primary key
     normalized_url: Mapped[str] = mapped_column(String)
 
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -26,20 +26,20 @@ class FrontendAuthor(TimestampModel):
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAuthor.normalized_url, 'set')
-def set_content_hash(target: FrontendAuthor, value, oldvalue, initiator):
+def frontend_author_set_content_hash(target: FrontendAuthor, value, oldvalue, initiator):
     target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendAuthor, 'before_insert')
 @event.listens_for(FrontendAuthor, 'before_update')
-def ensure_hash(mapper, connection, target: FrontendAuthor):
+def frontend_author_ensure_hash(mapper, connection, target: FrontendAuthor):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 
 class FrontendChannel(TimestampModel):
     __tablename__ = "frontend_channels"
 
-    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)
     normalized_url: Mapped[str] = mapped_column(String)
 
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -51,20 +51,20 @@ class FrontendChannel(TimestampModel):
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendChannel.normalized_url, 'set')
-def set_content_hash(target: FrontendChannel, value, oldvalue, initiator):
+def frontend_channel_set_content_hash(target: FrontendChannel, value, oldvalue, initiator):
     target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendChannel, 'before_insert')
 @event.listens_for(FrontendChannel, 'before_update')
-def ensure_hash(mapper, connection, target: FrontendAuthor):
+def frontend_channel_ensure_hash(mapper, connection, target: FrontendAuthor):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 
 class FrontendAudio(TimestampModel):
     __tablename__ = "frontend_audios"
     
-    normalized_url_hash: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)
     normalized_url: Mapped[str] = mapped_column(String)
     title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -84,13 +84,13 @@ class FrontendAudio(TimestampModel):
 
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAudio.normalized_url, 'set')
-def set_content_hash(target: FrontendAudio, value, oldvalue, initiator):
+def frontend_audio_set_content_hash(target: FrontendAudio, value, oldvalue, initiator):
     target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendAudio, 'before_insert')
 @event.listens_for(FrontendAudio, 'before_update')
-def ensure_hash(mapper, connection, target: FrontendAudio):
+def frontend_audio_ensure_hash(mapper, connection, target: FrontendAudio):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 

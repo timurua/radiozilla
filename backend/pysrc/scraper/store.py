@@ -21,14 +21,15 @@ def drop_time_zone(dt: datetime|None) -> datetime|None:
        
 class ServiceScraperStore(ScraperStore):    
 
-    def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]], rerequest_after_hours: int=24):  
+    def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]], on_web_page: Callable[[WebPage],None], rerequest_after_hours: int=24):  
         self.get_db_session = get_db_session 
         self.rerequest_after_hours = rerequest_after_hours
+        self._on_web_page = on_web_page
 
     async def store_page(self, response: ScraperWebPage) -> None:
         session = await self.get_db_session()
         try:
-            await WebPageService(session).upsert_web_page(WebPage(
+            web_page = WebPage(
                 status_code = response.status_code,
                 url = response.url,
                 normalized_url = response.normalized_url,
@@ -51,7 +52,9 @@ class ServiceScraperStore(ScraperStore):
                 feed_urls = response.feed_urls, 
                 robots_content = response.robots_content,
                 text_chunks = response.text_chunks
-            ))
+            )
+            self._on_web_page(web_page)
+            await WebPageService(session).upsert_web_page(web_page)
         except Exception as e:
             logger.error(f"Error upserting page from db: {e}")
             return None            
@@ -98,8 +101,8 @@ class ServiceScraperStore(ScraperStore):
             await session.close()
 
     
-def get_scraper_store_factory(get_db_session: Callable[[], Awaitable[AsyncSession]]) -> ScraperStoreFactory:    
+def get_scraper_store_factory(get_db_session: Callable[[], Awaitable[AsyncSession]], on_web_page: Callable[[WebPage],None]) -> ScraperStoreFactory:    
     class ServiceScraperStoreFactory(ScraperStoreFactory):
         def new_store(self) -> ScraperStore:
-            return ServiceScraperStore(get_db_session)
+            return ServiceScraperStore(get_db_session, on_web_page)
     return ServiceScraperStoreFactory()

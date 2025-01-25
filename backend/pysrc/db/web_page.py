@@ -40,7 +40,7 @@ class WebPageChannel(TimestampModel):
 
     normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)    
     url: Mapped[str] = mapped_column(String)
-    normalized_url: Mapped[str] = mapped_column(String)
+    normalized_url: Mapped[str] = mapped_column(String)    
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -80,6 +80,7 @@ class WebPage(TimestampModel):
     content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
     content_charset: Mapped[str] = mapped_column(String, nullable=True, default=None)
     requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))
     
     metadata_title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     metadata_description: Mapped[str] = mapped_column(String, nullable=True, default=None)
@@ -112,8 +113,10 @@ def web_page_ensure_hash(mapper, connection, target: WebPage):
 class WebPageSummary(TimestampModel):
     __tablename__ = "web_page_summaries"
     
-    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)  # SHA-256 hash as primary key
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)
     normalized_url: Mapped[str] = mapped_column(String)
+    
+    channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))
 
     title: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)

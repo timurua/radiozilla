@@ -3,7 +3,7 @@ import asyncio
 from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperUrlType
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageChannelService
-from pysrc.db.web_page import WebPageChannel, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict
+from pysrc.db.web_page import WebPageChannel, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
 from pysrc.observe.log import Logging
 from pysrc.scraper.store import get_scraper_store_factory
 from pysrc.config.rzconfig import RzConfig
@@ -32,19 +32,22 @@ async def scrape_channel(channel: WebPageChannel)->None:
             type=convert_seed_type(seed.type),  # Convert enum to string value
             max_depth=2
         ) for seed in web_page_seed_from_dict(channel.scraper_seeds)]
+    
+    def on_web_page(web_page: WebPage):
+        web_page.channel_normalized_url_hash = channel.normalized_url_hash
 
     scraper = Scraper(
         ScraperConfig(
             seed_urls=seed_urls,
             path_filters=channel.scraper_path_filters if channel.scraper_path_filters else [],
-            max_parallel_requests=3,
+            max_parallel_requests=5,
             use_headless_browser=False,
             request_timeout_seconds=30,
             crawl_delay_seconds=1,
             follow_sitemap_links=channel.scraper_follow_sitemap_links,
             follow_feed_links=channel.scraper_follow_feed_links,
             follow_web_page_links=channel.scraper_follow_web_page_links,            
-            scraper_store_factory=get_scraper_store_factory(Database.get_db_session),
+            scraper_store_factory=get_scraper_store_factory(Database.get_db_session, on_web_page=on_web_page),
         ),
     )
     await scraper.run()    
@@ -52,17 +55,49 @@ async def scrape_channel(channel: WebPageChannel)->None:
 async def scrape_channels()->None:
     async with await Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
-        task_manager = ParallelTaskManager[None](max_concurrent_tasks=3)
+        task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
         
         async def stack_scrape_channel(web_page_channel: WebPageChannel):
             task_manager.submit_task(scrape_channel(web_page_channel))            
-        await web_page_channel_service.find_all_web_pages_channels(stack_scrape_channel)
+        await web_page_channel_service.find_all_web_page_channels(stack_scrape_channel)
                 
         await task_manager.wait_all()
     
 async def create_channels()->None:
     async with await Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
+        # await web_page_channel_service.upsert_web_page_channel(
+        #     WebPageChannel(
+        #         url="https://aws.amazon.com/",
+        #         name="Amazon AWS AI Blogs",
+        #         description="News from Amazon AWS AI Blogs",
+        #         enabled=True,            
+        #         image_url="https://aws.amazon.com/favicon.ico",
+        #         scraper_seeds= web_page_seed_to_dict([
+        #             WebPageSeed(url="https://aws.amazon.com/", type=WebPageSeedType.HTML),
+        #         ]),
+        #         scraper_path_filters=["/blogs/machine-learning/"],
+        #         scraper_follow_web_page_links=True,
+        #         scraper_follow_feed_links=True,
+        #         scraper_follow_sitemap_links=True   
+        #     )
+        # )            
+        # await web_page_channel_service.upsert_web_page_channel(
+        #     WebPageChannel(
+        #         url="https://blogs.nvidia.com/",
+        #         name="NVIDIA",
+        #         description="News from NVIDIA",
+        #         image_url="https://nvidia.com/favicon.ico",
+        #         enabled=True,
+        #         scraper_seeds=web_page_seed_to_dict([
+        #             WebPageSeed(url="https://blogs.nvidia.com/", type=WebPageSeedType.HTML),
+        #         ]),
+        #         scraper_path_filters = ["/blog/"],
+        #         scraper_follow_web_page_links=True,
+        #         scraper_follow_feed_links=True,
+        #         scraper_follow_sitemap_links=True   
+        #     )
+        # )
         await web_page_channel_service.upsert_web_page_channel(
             WebPageChannel(
                 url="https://anthropic.com/",
@@ -118,7 +153,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://ai.meta.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
                 ]),
-                scraper_path_filters = ["/research/"],
+                scraper_path_filters = ["/research/publications/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -139,22 +174,6 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )        
-        await web_page_channel_service.upsert_web_page_channel(
-            WebPageChannel(
-                url="https://aws.amazon.com/",
-                name="Amazon AWS AI Blogs",
-                description="News from Amazon AWS AI Blogs",
-                enabled=True,            
-                image_url="https://aws.amazon.com/favicon.ico",
-                scraper_seeds= web_page_seed_to_dict([
-                    WebPageSeed(url="https://aws.amazon.com/", type=WebPageSeedType.HTML),
-                ]),
-                scraper_path_filters=["/blogs/machine-learning/"],
-                scraper_follow_web_page_links=True,
-                scraper_follow_feed_links=True,
-                scraper_follow_sitemap_links=True   
-            )
-        )            
         await web_page_channel_service.upsert_web_page_channel(
             WebPageChannel(
                 url="https://cohere.com/",
@@ -187,22 +206,6 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )    
-        await web_page_channel_service.upsert_web_page_channel(
-            WebPageChannel(
-                url="https://blogs.nvidia.com/",
-                name="NVIDIA",
-                description="News from NVIDIA",
-                image_url="https://nvidia.com/favicon.ico",
-                enabled=True,
-                scraper_seeds=web_page_seed_to_dict([
-                    WebPageSeed(url="https://blogs.nvidia.com/", type=WebPageSeedType.HTML),
-                ]),
-                scraper_path_filters = ["/blog/"],
-                scraper_follow_web_page_links=True,
-                scraper_follow_feed_links=True,
-                scraper_follow_sitemap_links=True   
-            )
-        )
         await web_page_channel_service.upsert_web_page_channel(
             WebPageChannel(
                 url="https://scale.com/",

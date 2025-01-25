@@ -31,7 +31,7 @@ class WebPageChannelService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_all_web_pages_channels(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
+    async def find_all_web_page_channels(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
         stmt = select(WebPageChannel)
         with await self.session.stream(stmt) as stream:
             async for channel in stream.scalars():
@@ -56,8 +56,8 @@ class WebPageService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_web_pages_by_url_prefix(self, url_prefix: str, callback: Callable[[WebPage], Awaitable[None]]) -> None:
-        stmt = select(WebPage).where(WebPage.normalized_url.startswith(url_prefix))        
+    async def find_web_pages(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
+        stmt = select(WebPage)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)

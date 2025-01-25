@@ -25,6 +25,8 @@ class RzConfig:
         self.google_account_file = os.getenv('GOOGLE_ACCOUNT_FILE', 'unknown')
         self.audio_dir = os.getenv('AUDIO_DIR', 'unknown')
         self.image_resource_dir = os.getenv('IMAGE_RESOURCE_DIR', 'unknown')
+        
+        self.ollama_model = os.getenv('OLLAMA_MODEL', 'unknown')
 
         
         self.minio_endpoint = os.getenv('MINIO_ENDPOINT', 'unknown')

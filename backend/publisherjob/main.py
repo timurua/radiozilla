@@ -1,31 +1,28 @@
 import asyncclick as click
 import asyncio
 import logging
-from dotenv import load_dotenv
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import FrontendAudioService, WebPageSummaryService
-from pysrc.summarizer.ollama import OllamaClient
-from pysrc.summarizer.summarizer import SummarizerService
-from pysrc.db.web_page import WebPageSummary
+from pysrc.db.service import FrontendAudioService, WebPageSummaryService, WebPageChannelService
+from pysrc.db.web_page import WebPageSummary, WebPageChannel
 from pysrc.db.frontend import FrontendAudio
 from pysrc.config.rzconfig import RzConfig
-import ffmpeg
+import ffmpeg # type: ignore
 from pysrc.dfs.dfs import MinioClient
 import pysrc.fb.rzfb as rzfb
-from pyminiscraper.url import normalized_url_hash,  normalize_url
+from pyminiscraper.url import normalized_url_hash
 from urllib.parse import urlparse
 from datetime import datetime
 from pysrc.summarizer.texts import EmbeddingService
 
 class PublisherContext:
-    def __init__(self, rz_author: rzfb.RzAuthor, rz_channel: rzfb.RzChannel):
+    def __init__(self, rz_author: rzfb.RzAuthor, rz_channels: dict[str, rzfb.RzChannel]):
         self.rz_author = rz_author
-        self.rz_channel = rz_channel
+        self.rz_channels = rz_channels
 
 
-def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> PublisherContext:
+async def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase, web_page_channel_service: WebPageChannelService)-> PublisherContext:
     rz_author = rzfb.RzAuthor(
         id= normalized_url_hash('https://www.radiozilla.com/'),
         name='RadioZilla',
@@ -33,15 +30,22 @@ def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase)-> Pu
         image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/file-person.svg")
     )
     rz_author.upload_and_save(firebase)
-    rz_channel = rzfb.RzChannel(
-        id= normalized_url_hash('https://www.anthropic.com/'),
-        name='Antropic',
-        description='Latest updates from Antropic.',
-        source_urls=[normalize_url('https://www.anthropic.com/')],
-        image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/rss.svg")
-    )
-    rz_channel.upload_and_save(firebase)
-    return PublisherContext(rz_author, rz_channel)
+    
+    channels: dict[str, rzfb.RzChannel] = {}
+    async def process_channel(channel: WebPageChannel):
+        rz_channel = rzfb.RzChannel(
+            id= channel.normalized_url_hash,
+            name=channel.name,
+            description=channel.description,
+            source_urls=[channel.normalized_url],
+            image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/rss.svg"),
+            image_url=channel.image_url
+        )        
+        rz_channel.upload_and_save(firebase)
+        channels[channel.normalized_url_hash] = rz_channel
+            
+    await web_page_channel_service.find_all_web_page_channels(process_channel)    
+    return PublisherContext(rz_author, channels)
 
 async def publish_frontend_audio( 
                                  frontend_audio_service: FrontendAudioService, 
@@ -79,10 +83,10 @@ async def run_main():
     await initialize_db(rz_config)
     rz_firebase = rzfb.Firebase(rz_config.google_account_file)
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
+    web_page_channel_service = WebPageChannelService(await Database.get_db_session())
     frontend_audio_service = FrontendAudioService(await Database.get_db_session())
 
-
-    publisher_context = await asyncio.get_event_loop().run_in_executor(None, publish_firebase_metadata, rz_config, rz_firebase)    
+    publisher_context = await publish_firebase_metadata(rz_config, rz_firebase, web_page_channel_service)        
     normalized_urls = []
     async def collect_urls(web_page_summary: WebPageSummary):
         normalized_urls.append(web_page_summary.normalized_url)

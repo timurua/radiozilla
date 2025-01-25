@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 
 class EmbeddingService:
-    _model:SentenceTransformer = None
+    _model:SentenceTransformer|None = None
 
     @staticmethod
     def calculate_embeddings(text)->list[float]:        
@@ -10,7 +10,7 @@ class EmbeddingService:
         return embeddings.tolist()
     
     @staticmethod
-    def initialize_model_if_needed()->SentenceTransformer:
+    def initialize_model_if_needed()-> SentenceTransformer:
         if not EmbeddingService._model:
             EmbeddingService._model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
         model = EmbeddingService._model

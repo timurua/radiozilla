@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 import os
+from typing import Any
 
 
 class File:
@@ -16,7 +17,7 @@ class File:
         except IOError as e:
             print(f"Error writing to file: {e}")
         
-    def write_json(self, obj: any)-> any:
+    def write_json(self, obj: Any)-> None:
         def default_serializer(o):
             if isinstance(o, (datetime,)):
                 return o.isoformat()

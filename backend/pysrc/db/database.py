@@ -3,8 +3,17 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import text 
 from .base import Base
 from .frontend import create_vector_indexes as create_frontend_vector_indexes
-from .web_page import create_vector_indexes as create_web_page_vector_indexes
 import logging
+
+class Session:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def __aenter__(self):
+        return self.session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.session.close()
 
 class Database:
     _engine = None
@@ -18,8 +27,6 @@ class Database:
 
     @classmethod
     async def get_db(cls):
-        if not cls._engine:
-            cls.initialize()
         async with cls._AsyncSessionLocal() as session:
             try:
                 yield session
@@ -27,11 +34,21 @@ class Database:
                 await session.close()
 
     @classmethod
-    async def get_db_session(cls):
-        if not cls._engine:
-            cls.initialize()
+    async def get_db_session(cls) -> AsyncSession:
         async with cls._AsyncSessionLocal() as session:
             return session
+        
+    @classmethod
+    async def get_session(cls) -> Session:
+        return Session(
+            await cls.get_db_session()
+        )
+        
+        
+    @classmethod
+    async def get_with_db_session(cls):
+        async with cls._AsyncSessionLocal() as session:
+            return session    
 
     @classmethod
     async def create_tables(cls):
@@ -45,4 +62,4 @@ class Database:
         
         async with cls._engine.begin() as conn:        
             await create_frontend_vector_indexes(conn)
-            await create_web_page_vector_indexes(conn)
+            logging.info("Database tables created")

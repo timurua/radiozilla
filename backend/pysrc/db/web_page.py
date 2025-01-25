@@ -1,43 +1,53 @@
-from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean, Any, Tuple
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
-from sqlalchemy.future import select
 from typing import List, Dict
 from datetime import datetime
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash, normalize_url
-from pyminiscraper.hash import generate_url_safe_id
-from pgvector.sqlalchemy import Vector
-from sqlalchemy.ext.asyncio import AsyncConnection
-from .database_utils import create_vector_index
 from enum import Enum
-from sqlalchemy.orm import DeclarativeBase
+from dataclasses import dataclass, asdict
 
-class WebPageSeedType(Enum):
-    WEB_PAGE = "WEB_PAGE"
+class WebPageSeedType(str, Enum):
+    HTML = "HTML"
     SITEMAP = "SITEMAP"
     FEED = "FEED"
-
-class WebPageSeed(DeclarativeBase):
-    url: Mapped[str]
-    type: Mapped[WebPageSeedType]
     
+@dataclass
+class WebPageSeed:
+    url: str
+    type: WebPageSeedType
+    
+    def to_dict(self):
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)
+    
+def web_page_seed_from_dict(data: list[dict[str, str]]) -> list[WebPageSeed]:
+    return [WebPageSeed.from_dict(d) for d in data]
+
+def web_page_seed_to_dict(data: list[WebPageSeed]) -> list[dict[str, str]]:
+    return [d.to_dict() for d in data]
+    
+    
+    
+
 class WebPageChannel(TimestampModel):
     __tablename__ = "web_page_channels"
 
     normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)    
+    url: Mapped[str] = mapped_column(String)
     normalized_url: Mapped[str] = mapped_column(String)
-    channel_normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)  # SHA-256 hash as primary key
-    channel_normalized_url: Mapped[str] = mapped_column(String)    
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     
-    scraper_seeds: Mapped[List[WebPageSeed]] = mapped_column(JSONB, nullable=True, default=None)
-    scraper_path_filters: Mapped[List[str]] = mapped_column(String, nullable=True, default=None)
+    scraper_seeds: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, nullable=True, default=None)
+    scraper_path_filters: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     scraper_follow_web_page_links: Mapped[bool] = mapped_column(Boolean, default=False)
     scraper_follow_feed_links: Mapped[bool] = mapped_column(Boolean, default=True)
     scraper_follow_sitemap_links: Mapped[bool] = mapped_column(Boolean, default=True)

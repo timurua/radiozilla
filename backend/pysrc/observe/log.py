@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import logging
-import google.cloud.logging
+import google.cloud.logging # type: ignore
 from google.oauth2 import service_account
 import sys
 

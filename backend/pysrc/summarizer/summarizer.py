@@ -32,13 +32,16 @@ class SummarizerService:
         manager = ParallelTaskManager[str](max_concurrent_tasks=2)
 
         for normalized_url in normalize_urls:
-            manager.submit_function(self.summarize_web_page(normalized_url))
+            manager.submit_task(self.summarize_web_page(normalized_url))
 
         await manager.wait_all()
 
         
     async def summarize_web_page(self, normalized_url: str) -> None: 
         web_page = await self.web_page_service.find_web_page_by_url(normalized_url)
+        if web_page is None:
+            self.logger.error(f"Failed to find web page for normalized url: {normalized_url}")
+            return
         self.logger.info(f"Summarizing web page: {web_page.url}")
         summary_confug = SummaryConfig(
             "English",

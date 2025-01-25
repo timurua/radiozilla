@@ -1,11 +1,6 @@
 from typing import Optional
-from google.cloud import firestore
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import storage
-import base64
-import uuid
-import hashlib
+from google.cloud import firestore # type: ignore
+from firebase_admin import credentials, storage, initialize_app # type: ignore
 from pathlib import Path
 import mimetypes
 from datetime import datetime
@@ -13,7 +8,7 @@ from datetime import datetime
 class Firebase:
     def __init__(self, google_account_file: str) -> None:
         self._cred = credentials.Certificate(google_account_file)
-        firebase_admin.initialize_app(self._cred, {
+        initialize_app(self._cred, {
             'storageBucket': "radiozilla-92c5f.firebasestorage.app",
         })
         self._db = firestore.Client.from_service_account_json(google_account_file)
@@ -37,7 +32,7 @@ class Blob:
         self.file_path = file_path
         
     def upload(self, firebase: Firebase, remote_directory: str, remote_file_name: str):
-        if self.url is None:
+        if self.url is None and self.file_path is not None:
             self.url = firebase.upload_file(remote_directory, remote_file_name, self.file_path)
         return self.url
         
@@ -106,8 +101,8 @@ class RzAudio:
             'channel': f"{self.channel_id}",
             'name': self.name,
             'description': self.description,
-            'audioUrl': self.audio.url,
-            'imageUrl': self.image_url if self.image_url is not None else self.image.url,
+            'audioUrl': self.audio.url if self.audio is not None else None,
+            'imageUrl': self.image_url if self.image is None else self.image.url,
             'topics': self.topics,
             'durationSeconds': self.duration_seconds,
             'webUrl': self.web_url,

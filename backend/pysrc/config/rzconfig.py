@@ -3,13 +3,18 @@ from dotenv import load_dotenv
 
 class RzConfig:
     
-    instance = None
+    _instance = None
 
     @classmethod
-    def initialize(cls) -> 'RzConfig':
-        cls.instance = RzConfig()
-        return RzConfig.instance
-
+    def initialize(cls):        
+        cls._instance = RzConfig()
+        
+    @classmethod    
+    def instance(cls):
+        if cls._instance is None:
+            cls.initialize()
+        return cls._instance
+        
     def __init__(self):
         env_path = os.getenv('ENV_FILE', '.env')
         load_dotenv(env_path)

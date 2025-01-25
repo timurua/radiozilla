@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text as sql_text, select, insert
+from sqlalchemy import text as sql_text, select, func
 from .web_page import WebPage, WebPageSummary, WebPageChannel
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
@@ -31,11 +31,11 @@ class WebPageChannelService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_web_pages_channel(self, url_prefix: str, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
-        stmt = select(WebPageChannel).where(WebPageChannel.normalized_url.startswith(url_prefix))        
+    async def find_all_web_pages_channels(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
+        stmt = select(WebPageChannel)
         with await self.session.stream(stmt) as stream:
-            async for web_page in stream.scalars():
-                await callback(web_page)
+            async for channel in stream.scalars():
+                await callback(channel)
 
 class WebPageService:
     _model = None
@@ -154,7 +154,7 @@ class FrontendAudioService:
         description_similars = await self.select_with_similarity(FrontendAudio.description_embedding_mlml6v2, limit, text_embeddings)
         audio_text_similars = await self.select_with_similarity(FrontendAudio.audio_text_embedding_mlml6v2, limit, text_embeddings)
         combined = title_similars + description_similars + audio_text_similars
-        best_by_hash = {}
+        best_by_hash: dict[str, FrontendAudioSearchResult] = {}
         for item in combined:
             if item.normalized_url_hash not in best_by_hash or item.similarity_score < best_by_hash[item.normalized_url_hash].similarity_score:
                 best_by_hash[item.normalized_url_hash] = item
@@ -164,7 +164,7 @@ class FrontendAudioService:
 
     async def select_with_similarity(self, column: Mapped[list[float]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
         similarity_expr = (
-            column.cosine_distance(text_embeddings)
+            func.cosine_distance(column, text_embeddings)
         ).label("similarity_score")
         
         stmt = select(
@@ -211,7 +211,7 @@ class FrontendAudioPlayService:
     async def find_all_by_user_id(self, user_id: str) -> list[FrontendAudioPlay]:
         stmt = select(FrontendAudioPlay).where(FrontendAudioPlay.user_id == user_id)
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())
     
     
 

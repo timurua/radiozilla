@@ -1,14 +1,13 @@
-from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean
+from sqlalchemy import Integer, DateTime, event
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
-from sqlalchemy.future import select
-from typing import List, Dict
+from typing import List
 from datetime import datetime
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash
-from pgvector.sqlalchemy import Vector
+from pgvector.sqlalchemy import Vector # type: ignore
 from .database_utils import create_vector_index
 from sqlalchemy.ext.asyncio import AsyncConnection
 from pysrc.db.base import Base
@@ -99,7 +98,8 @@ async def create_vector_indexes(conn: AsyncConnection):
     await create_vector_index(conn, "frontend_audios", "title_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_audios", "description_embedding_mlml6v2", 1000)
     await create_vector_index(conn, "frontend_audios", "audio_text_embedding_mlml6v2", 1000)
-    await create_vector_index(conn, "frontend_channels", "embedding_mlml6v2", 1000)
+    await create_vector_index(conn, "frontend_channels", "name_embedding_mlml6v2", 1000)
+    await create_vector_index(conn, "frontend_channels", "description_embedding_mlml6v2", 1000)
 
 class FrontendAudioPlay(Base):
     __tablename__ = "frontend_audio_plays"

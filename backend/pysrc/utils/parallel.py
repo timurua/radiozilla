@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, List, Any, Coroutine, TypeVar, Generic, Deque
+from typing import Callable, List, Any, Coroutine, TypeVar, Generic, Deque, Awaitable
 from collections import deque
 
 T = TypeVar('T')  # Define a generic type variable
@@ -9,7 +9,7 @@ class ParallelTaskManager(Generic[T]):
         self.semaphore: asyncio.Semaphore = asyncio.Semaphore(max_concurrent_tasks)
         self.tasks: Deque[asyncio.Task[T]] = deque()
 
-    def submit_task(self, awaitable: Coroutine[Any, Any, T]) -> None:
+    def submit_task(self, awaitable: Awaitable[Any]) -> None:
         """
         Submit an already created awaitable task to be executed with semaphore control
         """

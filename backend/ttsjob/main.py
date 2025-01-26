@@ -5,22 +5,20 @@ import logging
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import WebPageService, WebPageSummaryService
-from pysrc.summarizer.ollama import OllamaClient
-from pysrc.summarizer.summarizer import SummarizerService
+from pysrc.db.service import WebPageSummaryService
 from pysrc.db.web_page import WebPageSummary
-from pysrc.process.runner import ProcessRunner
-import ffmpeg
+import ffmpeg # type: ignore
 from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig
-import soundfile as sf
+import soundfile as sf  # type: ignore
+from pysrc.utils.parallel import ParallelTaskManager
+from pysrc.process.runner import ProcessRunner
 
 @click.command()
 async def main():
-    rz_config = RzConfig()
-    initialize_logging(rz_config)    
+    initialize_logging(RzConfig.instance())    
     logging.info("Starting TTS job")
-    await initialize_db(rz_config)
+    await initialize_db(RzConfig.instance())
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     upsert_web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     normalized_urls = []
@@ -28,15 +26,24 @@ async def main():
         normalized_urls.append(web_page_summary.normalized_url)
     await web_page_summary_service.find_web_page_summaries_without_audio(collect_urls)
     logging.info(f"Found {len(normalized_urls)} summaries without audio")
-    for normalized_url in normalized_urls:
+    parallel = ParallelTaskManager(max_concurrent_tasks=2)
+    
+    async def process_web_page_summary(normalized_url: str):
         web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
             updated_web_page_summary = await run_tts_job(web_page_summary)
             await upsert_web_page_summary_service.update_web_page_summary(updated_web_page_summary)
+            
+            
+    for normalized_url in normalized_urls:
+        parallel.submit_task(process_web_page_summary(normalized_url))
+        
+    await parallel.wait_all()
+        
 
       
-def convert_wav_to_m4a(input_wav_path, output_m4a_path):
+def convert_wav_to_m4a(input_wav_path, output_m4a_path) -> bool:
     try:
         (
             ffmpeg
@@ -46,10 +53,58 @@ def convert_wav_to_m4a(input_wav_path, output_m4a_path):
             .run()
         )
         logging.info(f"Conversion successful: {output_m4a_path}")
-    except ffmpeg.Error as e:
-        logging.error(f"An error occurred during conversion: {e.stderr.decode()}")
-    except FileNotFoundError:
-        logging.error("FFmpeg is not installed or not found in system PATH.")                
+        return True
+    except Exception as e:
+        logging.error(f"An error occurred during conversion: {str(e)}", exc_info=True)
+        
+    return False
+        
+# async def run_tts_job(tts: TTS, web_page_summary: WebPageSummary) -> WebPageSummary:    
+#     summarized_text = web_page_summary.summarized_text   
+    
+#     audio_file_dir = ".generated/audio"
+#     audio_file_wav = f"{audio_file_dir}/{web_page_summary.normalized_url_hash}.wav"    
+#     audio_filename_m4a  = f"{web_page_summary.normalized_url_hash}.m4a"
+#     audio_file_m4a = f"{audio_file_dir}/{audio_filename_m4a}"    
+    
+#     os.makedirs(audio_file_dir, exist_ok=True)    
+    
+#     tts.tts_to_file(
+#         text=summarized_text,
+#         file_path=audio_file_wav,
+#         speaker_wav="resources/audio/LJ025-0076.wav",
+#         language="en"
+#     )   
+
+#     duration = 0
+#     try:
+#         f = sf.SoundFile(audio_file_wav)
+#         duration = int(f.frames / f.samplerate)
+#     except Exception as e:
+#         logging.error(f"Error occurred while deducing the duration: {e}")
+    
+#     loop = asyncio.get_event_loop()
+#     success = await loop.run_in_executor(None, convert_wav_to_m4a, audio_file_wav, audio_file_m4a)
+#     if not success:
+#         raise RuntimeError(f"Failed to convert audio file {audio_file_wav} to {audio_file_m4a}")
+
+
+#     minio_client = MinioClient(RzConfig.instance().minio_endpoint, RzConfig.instance().minio_access_key, RzConfig.instance().minio_secret_key)
+#     await minio_client.upload_file(RzConfig.instance().minio_bucket, audio_file_m4a, audio_filename_m4a)    
+#     summarized_text_audio_url = minio_client.get_presigned_url(RzConfig.instance().minio_bucket, audio_filename_m4a)
+#     logging.info(f"Uploaded audio file to MinIO: {summarized_text_audio_url}")
+#     return WebPageSummary(
+#         normalized_url_hash = web_page_summary.normalized_url_hash,
+#         normalized_url = web_page_summary.normalized_url,
+#         title = web_page_summary.title,
+#         description = web_page_summary.description,
+#         image_url = web_page_summary.image_url,
+#         published_at = web_page_summary.published_at,
+#         text = web_page_summary.text,
+#         summarized_text = web_page_summary.summarized_text,
+#         summarized_text_audio_url = summarized_text_audio_url,
+#         summarized_text_audio_duration_seconds = duration
+#     )        
                             
 
 async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:    
@@ -67,9 +122,9 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
         "/usr/local/bin/python", 
         "/opt/fish-speech/tools/run_cli.py",
         "--reference-audio-file", 
-        "/opt/fish-speech/reference/reference_audio_01.wav", 
+        "/app/audio_refs/LJ025-0076.wav", 
         "--reference-text-file", 
-        "/opt/fish-speech/reference/reference_text_01.txt", 
+        "/app/audio_refs/LJ025-0076.txt", 
         "--text-file", 
         f"{text_file}", 
         "--audio-file", 
@@ -92,14 +147,9 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, convert_wav_to_m4a, audio_file_wav, audio_file_m4a)
 
-    minio_endpoint = os.getenv('MINIO_ENDPOINT', 'unknown')
-    minio_access_key = os.getenv('MINIO_ACCESS_KEY', 'unknown')
-    minio_secret_key = os.getenv('MINIO_SECRET_KEY', 'unknown')
-    minio_bucket = os.getenv('MINIO_BUCKET', 'unknown')
-
-    minio_client = MinioClient(minio_endpoint, minio_access_key, minio_secret_key)
-    await minio_client.upload_file(minio_bucket, audio_file_m4a, audio_filename_m4a)    
-    summarized_text_audio_url = minio_client.get_presigned_url(minio_bucket, audio_filename_m4a)
+    minio_client = MinioClient(RzConfig.instance().minio_endpoint, RzConfig.instance().minio_access_key, RzConfig.instance().minio_secret_key)
+    await minio_client.upload_file(RzConfig.instance().minio_bucket, audio_file_m4a, audio_filename_m4a)
+    summarized_text_audio_url = minio_client.get_presigned_url(RzConfig.instance().minio_bucket, audio_filename_m4a)
     logging.info(f"Uploaded audio file to MinIO: {summarized_text_audio_url}")
     return WebPageSummary(
         normalized_url_hash = web_page_summary.normalized_url_hash,

@@ -11,6 +11,8 @@ COPY ttsjob/main.py .
 COPY config/google-account.json .
 COPY config/.env.k8s .env
 
+COPY resources/audio_refs /app/audio_refs
+
 RUN mkdir -p /app/audio
 VOLUME ["/app/audio"]
 

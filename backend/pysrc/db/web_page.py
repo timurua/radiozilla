@@ -66,6 +66,12 @@ def web_page_channel_ensure_hash(mapper, connection, target: WebPageChannel):
         target.normalized_url = normalize_url(target.url)
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
         
+class TtsVoice(TimestampModel):
+    __tablename__ = "tts_voice"
+    
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    wav_file: Mapped[str] = mapped_column(String)
+    txt_file: Mapped[str] = mapped_column(String)    
 
 
 class WebPage(TimestampModel):
@@ -94,6 +100,7 @@ class WebPage(TimestampModel):
     feed_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     robots_content: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     text_chunks: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    
     
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.url, 'set')

@@ -19,7 +19,11 @@ microk8s kubectl port-forward --address 0.0.0.0 -n minio-operator service/minio 
 # Clone fish=speech
 
 ```
+```
 
+# Installation
+```
+sudo apt install docker-buildx
 ```
 
 # Running

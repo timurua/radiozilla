@@ -106,8 +106,7 @@ async def run_main():
 
             async def publish():
                 await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-                await publish_frontend_audio(frontend_audio_service=frontend_audio_service, 
-                                            web_page_summary=web_page_summary, 
+                await publish_frontend_audio(web_page_summary=web_page_summary, 
                                             publisher_context=publisher_context)
                 
             task_manager.submit_task(publish())

@@ -26,7 +26,7 @@ async def main():
         normalized_urls.append(web_page_summary.normalized_url)
     await web_page_summary_service.find_web_page_summaries_without_audio(collect_urls)
     logging.info(f"Found {len(normalized_urls)} summaries without audio")
-    parallel = ParallelTaskManager(max_concurrent_tasks=2)
+    parallel = ParallelTaskManager(max_concurrent_tasks=8)
     
     async def process_web_page_summary(normalized_url: str):
         web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)

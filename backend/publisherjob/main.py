@@ -15,6 +15,7 @@ from pyminiscraper.url import normalized_url_hash
 from urllib.parse import urlparse
 from datetime import datetime
 from pysrc.summarizer.texts import EmbeddingService
+from pysrc.utils.parallel import ParallelTaskManager
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channels: dict[str, rzfb.RzChannel]):
@@ -47,32 +48,34 @@ async def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase
     await web_page_channel_service.find_all_web_page_channels(process_channel)    
     return PublisherContext(rz_author, channels)
 
-async def publish_frontend_audio( 
-                                 frontend_audio_service: FrontendAudioService, 
+async def publish_frontend_audio(                                
                                  web_page_summary: WebPageSummary, 
                                  publisher_context: PublisherContext) -> None:
+    
+    async with await Database.get_session() as session:
+        frontend_audio_service = FrontendAudioService(session)
 
-    title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title)
-    description_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.description)
-    audio_text_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.summarized_text)
+        title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title or "")
+        description_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.description or "")
+        audio_text_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.summarized_text or "")
 
-    frontend_audio = FrontendAudio(
-        normalized_url=web_page_summary.normalized_url,
-        title=web_page_summary.title,        
-        audio_text=web_page_summary.summarized_text,
-        description=web_page_summary.description,
-        image_url=web_page_summary.image_url,
-        topics=web_page_summary.topics if web_page_summary.topics else [],
-        author_id=publisher_context.rz_author.id,
-        channel_id=publisher_context.rz_channel.id,
-        published_at=web_page_summary.published_at,
-        uploaded_at=web_page_summary.uploaded_at,
-        audio_url=web_page_summary.summarized_text_audio_url,
-        title_embedding_mlml6v2=title_embedding_mlml6v2,
-        description_embedding_mlml6v2=description_embedding_mlml6v2,
-        audio_text_embedding_mlml6v2=audio_text_embedding_mlml6v2
-    )
-    await frontend_audio_service.upsert(frontend_audio)
+        frontend_audio = FrontendAudio(
+            normalized_url=web_page_summary.normalized_url,
+            title=web_page_summary.title,        
+            audio_text=web_page_summary.summarized_text,
+            description=web_page_summary.description,
+            image_url=web_page_summary.image_url,
+            topics=web_page_summary.topics if web_page_summary.topics else [],
+            author_id=publisher_context.rz_author.id,
+            channel_id=web_page_summary.channel_normalized_url_hash,
+            published_at=web_page_summary.published_at,
+            uploaded_at=web_page_summary.uploaded_at,
+            audio_url=web_page_summary.summarized_text_audio_url,
+            title_embedding_mlml6v2=title_embedding_mlml6v2,
+            description_embedding_mlml6v2=description_embedding_mlml6v2,
+            audio_text_embedding_mlml6v2=audio_text_embedding_mlml6v2
+        )
+        await frontend_audio_service.upsert(frontend_audio)
     
 
 @click.command()
@@ -91,15 +94,27 @@ async def run_main():
     async def collect_urls(web_page_summary: WebPageSummary):
         normalized_urls.append(web_page_summary.normalized_url)
     await web_page_summary_service.find_all_web_page_summaries(collect_urls)
+    task_manager = ParallelTaskManager(4)
     logging.info(f"Found {len(normalized_urls)} summaries without audio")
     for normalized_url in normalized_urls:
         web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
+        if web_page_summary.title is None:
+            logging.info(f"Skipping (no title) processing summary for URL: {normalized_url}")
+            continue
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
-            await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-            await publish_frontend_audio(frontend_audio_service=frontend_audio_service, 
-                                         web_page_summary=web_page_summary, 
-                                         publisher_context=publisher_context)
+
+            async def publish():
+                await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
+                await publish_frontend_audio(frontend_audio_service=frontend_audio_service, 
+                                            web_page_summary=web_page_summary, 
+                                            publisher_context=publisher_context)
+                
+            task_manager.submit_task(publish())
+
+    await task_manager.wait_all()
+                
+
 
       
 def convert_wav_to_m4a(input_wav_path, output_m4a_path):
@@ -141,7 +156,7 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
         name=web_page_summary.title,
         description=web_page_summary.description,
         author_id=publisher_context.rz_author.id,
-        channel_id=publisher_context.rz_channel.id,
+        channel_id=web_page_summary.channel_normalized_url_hash,
         image_url=web_page_summary.image_url,
         audio=rzfb.Blob(file_path=temp_audio_file),
         topics=web_page_summary.topics if web_page_summary.topics else [],

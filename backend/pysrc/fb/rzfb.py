@@ -57,10 +57,11 @@ class RzAuthor:
         self.save(firebase)
         
 class RzChannel:
-    def __init__(self, id: str, name: str, description: str, image: Blob, source_urls: list[str] = []) -> None:
+    def __init__(self, id: str, name: str, description: str, image_url: str, image: Blob | None = None, source_urls: list[str] = []) -> None:
         self.id = id
         self.name = name
         self.description = description
+        self.image_url = image_url
         self.image = image
         self.source_urls = source_urls
         
@@ -68,7 +69,7 @@ class RzChannel:
         firebase._db.collection('channels').document(self.id).set({
             'name': self.name,
             'description': self.description,
-            'imageUrl': self.image.url,
+            'imageUrl': self.image.url if self.image is not None else self.image_url,
             'sourceUrls': self.source_urls,
         })
         

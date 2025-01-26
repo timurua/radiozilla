@@ -4,7 +4,10 @@ class EmbeddingService:
     _model:SentenceTransformer|None = None
 
     @staticmethod
-    def calculate_embeddings(text)->list[float]:        
+    def calculate_embeddings(text: str|None)->list[float]|None:        
+        if text is None:
+            return None
+
         model = EmbeddingService.initialize_model_if_needed()
         embeddings = model.encode(text)
         return embeddings.tolist()

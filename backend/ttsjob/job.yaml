@@ -19,11 +19,11 @@ spec:
         image: localhost:32000/radiozilla-ttsjob:latest  # Replace with your image registry
         resources:
           requests:
-            memory: "16Gi"
-            cpu: "2000m"
+            memory: "64Gi"
+            cpu: "4000m"
             nvidia.com/gpu: "1"    # Request 1 GPU            
           limits:
-            memory: "16Gi"
-            cpu: "2000m"
+            memory: "64Gi"
+            cpu: "4000m"
             nvidia.com/gpu: "1"    # Request 1 GPU            
       restartPolicy: Never

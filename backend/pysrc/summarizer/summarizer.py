@@ -24,11 +24,9 @@ class SummarizerService:
 
         self.logger.info("Summarizing web pages for prefix: {url_prefix}")
         normalized_urls = []
-        async def collect_urls(web_page_summary: WebPageSummary):
-            normalized_urls.append(web_page_summary.normalized_url)
     
         async with await Database.get_session() as session:        
-            await WebPageJobService(session).find_with_state(WebPageJobState.SCRAPED_NEED_SUMMARIZING, collect_urls)
+            normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SCRAPED_NEED_SUMMARIZING)
                 
         manager = ParallelTaskManager[str](max_concurrent_tasks=4)        
 
@@ -81,7 +79,7 @@ class SummarizerService:
             
             async with await Database.get_session() as session2:
                 web_page_summary_service = WebPageSummaryService(session2)
-                await web_page_summary_service.upsert_web_page_summary(WebPageSummary(
+                await web_page_summary_service.upsert(WebPageSummary(
                     normalized_url = web_page.normalized_url,
                     channel_normalized_url_hash = web_page.channel_normalized_url_hash,
                     title = web_page.metadata_title,

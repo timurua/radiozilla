@@ -9,11 +9,11 @@ from pysrc.scraper.store import get_scraper_store_factory
 from pysrc.config.rzconfig import RzConfig
 from pysrc.utils.parallel import ParallelTaskManager
 import json
+from pysrc.config.jobs import Jobs
 
 @click.command()
 async def main():
-    initialize_logging(RzConfig.instance())
-    await initialize_db(RzConfig.instance())
+    await Jobs.initialize()
     await create_channels()
     await scrape_channels()
     
@@ -59,7 +59,7 @@ async def scrape_channels()->None:
         
         async def stack_scrape_channel(web_page_channel: WebPageChannel):
             task_manager.submit_task(scrape_channel(web_page_channel))            
-        await web_page_channel_service.find_all_web_page_channels(stack_scrape_channel)
+        await web_page_channel_service.find_all(stack_scrape_channel)
                 
         await task_manager.wait_all()
     
@@ -98,7 +98,7 @@ async def create_channels()->None:
         #         scraper_follow_sitemap_links=True   
         #     )
         # )
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://anthropic.com/",
                 name="Anthropic",
@@ -112,7 +112,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://deepmind.google/",
                 name="DeepMind",
@@ -128,7 +128,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://openai.com/",
                 name="OpenAI",
@@ -144,7 +144,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )    
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://ai.meta.com/",
                 name="Meta AI",
@@ -159,7 +159,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )        
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blogs.microsoft.com/",
                 name="Microsoft AI Blogs",
@@ -174,7 +174,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )        
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://cohere.com/",
                 name="Cohere",
@@ -190,7 +190,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )    
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blog.crewai.com/",
                 name="CrewAI",
@@ -206,7 +206,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )    
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://scale.com/",
                 name="Scale AI",
@@ -222,7 +222,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )   
-        await web_page_channel_service.upsert_web_page_channel(
+        await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://stability.ai/",
                 name="Stability AI",
@@ -238,15 +238,7 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )            
-             
-        
-
-def initialize_logging(rz_config: RzConfig):    
-    Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
-
-async def initialize_db(config: RzConfig) -> None:
-    Database.initialize(config.db_url)
-    await Database.create_tables()
+    
     
 def cli():
     return asyncio.run(main())

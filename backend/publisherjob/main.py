@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from datetime import datetime
 from pysrc.summarizer.texts import EmbeddingService
 from pysrc.utils.parallel import ParallelTaskManager
+from pysrc.config.jobs import Jobs
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channels: dict[str, rzfb.RzChannel]):
@@ -23,12 +24,12 @@ class PublisherContext:
         self.rz_channels = rz_channels
 
 
-async def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase, web_page_channel_service: WebPageChannelService)-> PublisherContext:
+async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
     rz_author = rzfb.RzAuthor(
         id= normalized_url_hash('https://www.radiozilla.com/'),
         name='RadioZilla',
         description='Radiozilla is a podcasting platform that allows you to listen to your favorite AI podcasts.',        
-        image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/file-person.svg")
+        image=rzfb.Blob(file_path=f"{RzConfig.instance().image_resource_dir}/file-person.svg")
     )
     rz_author.upload_and_save(firebase)
     
@@ -39,13 +40,14 @@ async def publish_firebase_metadata(rz_config: RzConfig, firebase: rzfb.Firebase
             name=channel.name,
             description=channel.description,
             source_urls=[channel.normalized_url],
-            image=rzfb.Blob(file_path=f"{rz_config.image_resource_dir}/rss.svg"),
+            image=rzfb.Blob(file_path=f"{RzConfig.instance().image_resource_dir}/rss.svg"),
             image_url=channel.image_url
         )        
         rz_channel.upload_and_save(firebase)
         channels[channel.normalized_url_hash] = rz_channel
             
-    await web_page_channel_service.find_all_web_page_channels(process_channel)    
+    async with await Database.get_session() as session:
+        await WebPageChannelService(session).find_all(process_channel)
     return PublisherContext(rz_author, channels)
 
 async def publish_frontend_audio(                                
@@ -75,54 +77,61 @@ async def publish_frontend_audio(
             description_embedding_mlml6v2=description_embedding_mlml6v2,
             audio_text_embedding_mlml6v2=audio_text_embedding_mlml6v2
         )
-        await frontend_audio_service.upsert(frontend_audio)
+        await frontend_audio_service.upsert(frontend_audio)        
+        
+        WebPageJobService(session).upsert(WebPageJob(
+            normalized_url=web_page_summary.normalized_url,
+            state=WebPageJobState.PUBLISHED
+        ))
+        
+async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_context: PublisherContext) -> None:
+    web_page_summary = None
+    async with await Database.get_session() as session:
+        web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
+        
+    if web_page_summary is None or web_page_summary.title is None:
+        logging.info(f"Skipping (no title) processing summary for URL: {normalized_url}")
+        return
+    
+    logging.info(f"Publishing URL: {normalized_url}")
+    await publish_web_summary(rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
+    await publish_frontend_audio(web_page_summary=web_page_summary, 
+                                publisher_context=publisher_context)        
+    
+async def unpublish(normalized_url: str, rz_firebase: rzfb.Firebase) -> None:
+    hash = normalized_url_hash(normalized_url)        
+    rzfb.RzAudio.delete(rz_firebase, hash)    
+    async with await Database.get_session() as session:
+        await WebPageJobService(session).upsert(WebPageJob(
+            normalized_url=normalized_url,
+            state=WebPageJobState.UNPUBLISHED
+        ))
+    logging.info(f"Unpublishing URL: {normalized_url}")
     
 
 @click.command()
-async def run_main():
-    rz_config = RzConfig()  
-    initialize_logging(rz_config)    
-    logging.info("Starting publisher job")
-    await initialize_db(rz_config)
-    rz_firebase = rzfb.Firebase(rz_config.google_account_file)
+async def main():
+    await Jobs.initialize()
+    rz_firebase = rzfb.Firebase(RzConfig.instance().google_account_file)    
     
-    normalized_urls = []
-    async def collect_urls(web_page_summary: WebPageSummary):
-            normalized_urls.append(web_page_summary.normalized_url)
-    
-    async with await Database.get_session() as session:        
-        await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING, collect_urls)
+    normalized_urls_need_publishing = []
+    async with await Database.get_session() as session:
+        normalized_urls_need_publishing = await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING)
         
-    web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
-    web_page_channel_service = WebPageChannelService(await Database.get_db_session())
-    frontend_audio_service = FrontendAudioService(await Database.get_db_session())
-    publisher_context = await publish_firebase_metadata(rz_config, rz_firebase, web_page_channel_service)        
-    normalized_urls = []
-    async def collect_urls(web_page_summary: WebPageSummary):
-        normalized_urls.append(web_page_summary.normalized_url)
-    await web_page_summary_service.find_all_web_page_summaries(collect_urls)
+    normalized_urls_need_unpublishing = []
+    async with await Database.get_session() as session:
+        normalized_urls_need_unpublishing = await WebPageJobService(session).find_with_state(WebPageJobState.NEED_UNPUBLISHING)
+    
+    publisher_context = await publish_firebase_channels(rz_firebase)
+    
     task_manager = ParallelTaskManager(4)
-    logging.info(f"Found {len(normalized_urls)} summaries without audio")
-    for normalized_url in normalized_urls:
-        web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
-        if web_page_summary.title is None:
-            logging.info(f"Skipping (no title) processing summary for URL: {normalized_url}")
-            continue
-        logging.info(f"Processing summary for URL: {normalized_url}")
-        if web_page_summary:
-
-            async def publish():
-                await publish_web_summary(rz_config=rz_config, rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-                await publish_frontend_audio(web_page_summary=web_page_summary, 
-                                            publisher_context=publisher_context)
-                
-            task_manager.submit_task(publish())
+    for normalized_url in normalized_urls_need_publishing:
+        task_manager.submit_task(publish(normalized_url, rz_firebase, publisher_context))
+    for normalized_url in normalized_urls_need_unpublishing:
+        task_manager.submit_task(unpublish(normalized_url, rz_firebase))        
 
     await task_manager.wait_all()
                 
-
-
-      
 def convert_wav_to_m4a(input_wav_path, output_m4a_path):
     try:
         (
@@ -139,7 +148,7 @@ def convert_wav_to_m4a(input_wav_path, output_m4a_path):
         logging.error("FFmpeg is not installed or not found in system PATH.")                
                             
 
-async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, publisher_context: PublisherContext, web_page_summary: WebPageSummary) -> None:    
+async def publish_web_summary(rz_firebase: rzfb.Firebase, publisher_context: PublisherContext, web_page_summary: WebPageSummary) -> None:    
     url = web_page_summary.summarized_text_audio_url
     if url is None:
         return
@@ -148,14 +157,14 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
     path = parsed_url.path
     _, filename = os.path.split(path)
 
-    temp_audio_file = f"{rz_config.audio_dir}/temp_{filename}"
+    temp_audio_file = f"{RzConfig.instance().audio_dir}/temp_{filename}"
     try:
         os.remove(temp_audio_file)
     except FileNotFoundError:
         pass
     
-    minio_client = MinioClient(rz_config.minio_endpoint, rz_config.minio_access_key, rz_config.minio_secret_key)
-    await minio_client.download_file(rz_config.minio_bucket, filename, temp_audio_file)    
+    minio_client = MinioClient(RzConfig.instance().minio_endpoint, RzConfig.instance().minio_access_key, RzConfig.instance().minio_secret_key)
+    await minio_client.download_file(RzConfig.instance().minio_bucket, filename, temp_audio_file)
 
     rz_audio = rzfb.RzAudio(
         id= normalized_url_hash(web_page_summary.normalized_url),
@@ -179,8 +188,8 @@ async def publish_web_summary(rz_config: RzConfig, rz_firebase: rzfb.Firebase, p
         pass
 
 
-def initialize_logging(rz_config: RzConfig):    
-    Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
+def initialize_logging():    
+    Logging.initialize(RzConfig.instance().google_account_file, RzConfig.instance().service_name, RzConfig.instance().env_name)
 
 async def initialize_db(config: RzConfig) -> None:
     db = Database()
@@ -188,7 +197,7 @@ async def initialize_db(config: RzConfig) -> None:
     await db.create_tables()
     
 def cli():    
-    return asyncio.run(run_main())
+    return asyncio.run(main())
 
 if __name__ == '__main__':
     cli()

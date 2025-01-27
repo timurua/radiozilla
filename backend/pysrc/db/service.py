@@ -18,19 +18,19 @@ class WebPageChannelService:
         self.session = session
         self.logger = logging.getLogger("web_page_channel_service")
 
-    async def upsert_web_page_channel(self, web_page_channel: WebPageChannel) -> None:
+    async def upsert(self, web_page_channel: WebPageChannel) -> None:
         async with self.session.begin():
             self.logger.info(f"Inserting web page for url: {web_page_channel.url}")
             await self.session.merge(web_page_channel, load=True)
         
 
-    async def find_web_page_channel_by_url(self, normalized_url: str) -> WebPageChannel|None:
+    async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
         hash = normalized_url_hash(normalized_url)
         stmt = select(WebPageChannel).where(WebPageChannel.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_all_web_page_channels(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
+    async def find_all(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
         stmt = select(WebPageChannel)
         with await self.session.stream(stmt) as stream:
             async for channel in stream.scalars():
@@ -54,7 +54,7 @@ class WebPageService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
+    async def find_all(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
         stmt = select(WebPage)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
@@ -78,11 +78,13 @@ class WebPageJobService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_with_state(self, state: WebPageJobState, callback: Callable[[WebPageJob], Awaitable[None]]) -> None:
+    async def find_with_state(self, state: WebPageJobState) -> list[str]:
+        normalized_urls = []
         stmt = select(WebPageJob).where(WebPageJob.state == state)
         with await self.session.stream(stmt) as stream:
-            async for web_page in stream.scalars():
-                await callback(web_page)
+            async for job in stream.scalars():
+                normalized_urls.append(job.normalized_url)
+        return normalized_urls
     
 class WebPageSummaryService:
     _model = None
@@ -91,13 +93,13 @@ class WebPageSummaryService:
         self.session = session
         self.logger = logging.getLogger("web_page_summary_service")
 
-    async def upsert_web_page_summary(self, web_page_summary: WebPageSummary) -> None:
+    async def upsert(self, web_page_summary: WebPageSummary) -> None:
         async with self.session.begin() as tx:
             self.logger.info(f"Inserting web page summary for url: {web_page_summary.normalized_url}")            
             await self.session.merge(web_page_summary)
             await tx.commit()
 
-    async def update_web_page_summary(self, web_page_summary: WebPageSummary) -> None:
+    async def update(self, web_page_summary: WebPageSummary) -> None:
         self.logger.info(f"Updating web page summary for url: {web_page_summary.normalized_url}")
         existing = await self.session.get(WebPageSummary, web_page_summary.normalized_url_hash)
         if existing is None:
@@ -117,17 +119,17 @@ class WebPageSummaryService:
         existing.summarized_text_audio_duration_seconds = web_page_summary.summarized_text_audio_duration_seconds
         await self.session.commit()        
 
-    async def find_web_page_summary_by_url(self, normalized_url: str) -> WebPageSummary|None:
+    async def find_by_url(self, normalized_url: str) -> WebPageSummary|None:
         hash = normalized_url_hash(normalized_url)
         return await self.session.get(WebPageSummary, hash)
     
-    async def find_web_page_summaries_without_audio(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
+    async def find_without_audio(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
         stmt = select(WebPageSummary).where(WebPageSummary.summarized_text_audio_url == None)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)
 
-    async def find_all_web_page_summaries(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
+    async def find_all(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
         stmt = select(WebPageSummary)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():

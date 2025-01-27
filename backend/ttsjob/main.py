@@ -13,27 +13,28 @@ from pysrc.config.rzconfig import RzConfig
 import soundfile as sf  # type: ignore
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.process.runner import ProcessRunner
+from pysrc.config.jobs import Jobs
 
 @click.command()
 async def main():
-    initialize_logging(RzConfig.instance())    
-    logging.info("Starting TTS job")
-    await initialize_db(RzConfig.instance())
-    web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
-    upsert_web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
+    await Jobs.initialize()
+    
     normalized_urls = []
-    async def collect_urls(web_page_summary: WebPageSummary):
-        normalized_urls.append(web_page_summary.normalized_url)
-    await web_page_summary_service.find_web_page_summaries_without_audio(collect_urls)
-    logging.info(f"Found {len(normalized_urls)} summaries without audio")
-    parallel = ParallelTaskManager(max_concurrent_tasks=8)
+    async with await Database.get_session() as session:
+        normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SUMMARIZED_NEED_TTSING)
+
+    parallel = ParallelTaskManager(max_concurrent_tasks=2)
     
     async def process_web_page_summary(normalized_url: str):
-        web_page_summary = await web_page_summary_service.find_web_page_summary_by_url(normalized_url)
+        web_page_summary = None
+        async with await Database.get_session() as session:
+            web_page_summary = await web_page_summary_service.find_by_url(normalized_url)
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
             updated_web_page_summary = await run_tts_job(web_page_summary)
-            await upsert_web_page_summary_service.update_web_page_summary(updated_web_page_summary)
+            async with await Database.get_session() as session:
+                await WebPageSummaryService(session).update(updated_web_page_summary)
+                
             
             
     for normalized_url in normalized_urls:
@@ -163,14 +164,6 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
         summarized_text_audio_url = summarized_text_audio_url,
         summarized_text_audio_duration_seconds = duration
     )
-
-
-def initialize_logging(rz_config: RzConfig):
-    Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
-
-async def initialize_db(rz_config: RzConfig):
-    Database.initialize(rz_config.db_url)
-    await Database.create_tables()
     
 def cli():
     return asyncio.run(main())

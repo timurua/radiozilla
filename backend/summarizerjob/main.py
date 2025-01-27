@@ -10,24 +10,14 @@ from pysrc.db.service import WebPageService, WebPageSummaryService
 from pysrc.summarizer.ollama import OllamaClient
 from pysrc.summarizer.summarizer import SummarizerService
 from pysrc.config.rzconfig import RzConfig
-from pysrc.utils.parallel import ParallelTaskManager
+from pysrc.config.jobs import Jobs
 
 @click.command()
 async def main():
-    rz_config = RzConfig()
-    initialize_logging(rz_config)    
-    logging.info("Starting summarizer job")
-    await initialize_db(rz_config)
-    ollama_client = OllamaClient(model=rz_config.ollama_model)
+    await Jobs.initialize()
+    ollama_client = OllamaClient(model=RzConfig.instance().ollama_model)
     summarizer_service = SummarizerService(ollama_client)
     await summarizer_service.summarize_web_pages()
-
-def initialize_logging(rz_config: RzConfig):
-    Logging.initialize(rz_config.google_account_file, rz_config.service_name, rz_config.env_name)
-
-async def initialize_db(rz_config: RzConfig):
-    Database.initialize(rz_config.db_url)
-    await Database.create_tables()
     
 def cli():
     return asyncio.run(main())

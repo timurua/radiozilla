@@ -116,6 +116,10 @@ class RzAudio:
         self.audio.upload(firebase, "audio_media", self.id)
         if self.image:
             self.image.upload(firebase, "audio_images", self.id)
-        self.save(firebase)        
+        self.save(firebase)
+        
+    @classmethod
+    def delete(cls, firebase: Firebase, id: str) -> None:
+        firebase._db.collection('audios').document(id).delete()
         
 

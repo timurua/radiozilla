@@ -29,6 +29,7 @@ class ServiceScraperStore(ScraperStore):
         async with await Database.get_session() as session:
             
             existing_web_page = await WebPageService(session).find_by_url(response.normalized_url)
+            existing_web_page_job = await WebPageJobService(session).find_by_url(response.normalized_url)
             new_web_page = WebPage(
                 status_code = response.status_code,
                 url = response.url,
@@ -55,12 +56,16 @@ class ServiceScraperStore(ScraperStore):
             )
             self._on_web_page(new_web_page)
             
-            if existing_web_page is None or existing_web_page.content != new_web_page.content:            
+            if existing_web_page is None or existing_web_page.content != new_web_page.content:
                 await WebPageService(session).upsert(new_web_page)                            
-                await WebPageJobService(session).upsert(WebPageJob(
-                    normalized_url = response.normalized_url,
-                    state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
-                ))
+                if existing_web_page_job is None \
+                    or (
+                        existing_web_page_job.state != WebPageJobState.NEED_UNPUBLISHING \
+                        and existing_web_page_job.state != WebPageJobState.UNPUBLISHED ):
+                    await WebPageJobService(session).upsert(WebPageJob(
+                        normalized_url = response.normalized_url,
+                        state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
+                    ))
 
 
 

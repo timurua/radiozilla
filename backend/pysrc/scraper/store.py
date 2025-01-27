@@ -27,8 +27,9 @@ class ServiceScraperStore(ScraperStore):
 
     async def store_page(self, response: ScraperWebPage) -> None:
         async with await Database.get_session() as session:
-
-            web_page = WebPage(
+            
+            existing_web_page = await WebPageService(session).find_by_url(response.normalized_url)
+            new_web_page = WebPage(
                 status_code = response.status_code,
                 url = response.url,
                 normalized_url = response.normalized_url,
@@ -52,13 +53,14 @@ class ServiceScraperStore(ScraperStore):
                 robots_content = response.robots_content,
                 text_chunks = response.text_chunks
             )
-            self._on_web_page(web_page)
-            await WebPageService(session).upsert(web_page)            
+            self._on_web_page(new_web_page)
             
-            await WebPageJobService(session).upsert(WebPageJob(
-                normalized_url = response.normalized_url,
-                state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
-            ))
+            if existing_web_page is None or existing_web_page.content != new_web_page.content:            
+                await WebPageService(session).upsert(new_web_page)                            
+                await WebPageJobService(session).upsert(WebPageJob(
+                    normalized_url = response.normalized_url,
+                    state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
+                ))
 
 
 

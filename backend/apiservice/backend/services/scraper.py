@@ -21,8 +21,7 @@ class ScraperService:
 
         await self.stop(callback)
 
-        scraper_store_factory = get_scraper_store_factory(Database.get_db_session)
-        
+        scraper_store_factory = get_scraper_store_factory(Database.get_db_session)        
         
         ScraperService._scraper = Scraper(
             ScraperConfig(

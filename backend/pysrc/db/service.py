@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
-from .web_page import WebPage, WebPageSummary, WebPageChannel
+from .web_page import WebPage, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
@@ -13,7 +13,6 @@ from sqlalchemy.orm import Mapped
 from datetime import datetime
 
 class WebPageChannelService:
-    _model = None
     
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -38,26 +37,49 @@ class WebPageChannelService:
                 await callback(channel)
 
 class WebPageService:
-    _model = None
     
     def __init__(self, session: AsyncSession):
         self.session = session
         self.logger = logging.getLogger("web_page_service")
 
-    async def upsert_web_page(self, web_page: WebPage) -> None:
+    async def upsert(self, web_page: WebPage) -> None:
         async with self.session.begin():
-            self.logger.info(f"Inserting web page for url: {web_page.url}")
+            self.logger.info(f"Upserting web page for url: {web_page.url}")
             await self.session.merge(web_page, load=True)
         
 
-    async def find_web_page_by_url(self, normalized_url: str) -> WebPage|None:
+    async def find_by_url(self, normalized_url: str) -> WebPage|None:
         hash = normalized_url_hash(normalized_url)
         stmt = select(WebPage).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_web_pages(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
+    async def find(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
         stmt = select(WebPage)
+        with await self.session.stream(stmt) as stream:
+            async for web_page in stream.scalars():
+                await callback(web_page)
+                
+class WebPageJobService:
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("web_page_job_service")
+
+    async def upsert(self, entity: WebPageJob) -> None:        
+        async with self.session.begin():
+            self.logger.info(f"Inserting for url: {entity.normalized_url}")
+            await self.session.merge(entity, load=True)
+        
+
+    async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
+        hash = normalized_url_hash(normalized_url)
+        stmt = select(WebPageJob).where(WebPageJob.normalized_url_hash == hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def find_with_state(self, state: WebPageJobState, callback: Callable[[WebPageJob], Awaitable[None]]) -> None:
+        stmt = select(WebPageJob).where(WebPageJob.state == state)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)

@@ -5,8 +5,8 @@ import logging
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import WebPageSummaryService
-from pysrc.db.web_page import WebPageSummary
+from pysrc.db.service import WebPageSummaryService, WebPageJobService
+from pysrc.db.web_page import WebPageSummary, WebPageJobState
 import ffmpeg # type: ignore
 from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig

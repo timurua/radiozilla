@@ -4,8 +4,8 @@ import logging
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import FrontendAudioService, WebPageSummaryService, WebPageChannelService
-from pysrc.db.web_page import WebPageSummary, WebPageChannel
+from pysrc.db.service import FrontendAudioService, WebPageSummaryService, WebPageChannelService, WebPageJobService
+from pysrc.db.web_page import WebPageSummary, WebPageChannel, WebPageJobState, WebPageJob
 from pysrc.db.frontend import FrontendAudio
 from pysrc.config.rzconfig import RzConfig
 import ffmpeg # type: ignore
@@ -85,10 +85,17 @@ async def run_main():
     logging.info("Starting publisher job")
     await initialize_db(rz_config)
     rz_firebase = rzfb.Firebase(rz_config.google_account_file)
+    
+    normalized_urls = []
+    async def collect_urls(web_page_summary: WebPageSummary):
+            normalized_urls.append(web_page_summary.normalized_url)
+    
+    async with await Database.get_session() as session:        
+        await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING, collect_urls)
+        
     web_page_summary_service = WebPageSummaryService(await Database.get_db_session())
     web_page_channel_service = WebPageChannelService(await Database.get_db_session())
     frontend_audio_service = FrontendAudioService(await Database.get_db_session())
-
     publisher_context = await publish_firebase_metadata(rz_config, rz_firebase, web_page_channel_service)        
     normalized_urls = []
     async def collect_urls(web_page_summary: WebPageSummary):

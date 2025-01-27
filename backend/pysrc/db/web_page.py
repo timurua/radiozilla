@@ -115,6 +115,36 @@ def web_page_ensure_hash(mapper, connection, target: WebPage):
     if target.url:
         target.normalized_url = normalize_url(target.url)
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+        
+class WebPageJobState(Enum):
+    NEED_SCRAPING = 0
+    SCRAPED_NEED_SUMMARIZING = 1
+    SUMMARIZED_NEED_TTSING = 2
+    TTSED_NEED_PUBLISHING = 3        
+    PUBLISHED = 4
+    NEED_UNPUBLISHING = 5
+    UNPUBLISHED = 6
+        
+class WebPageJob(TimestampModel):
+    __tablename__ = "web_page_jobs"
+    
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)
+    normalized_url: Mapped[str] = mapped_column(String)    
+    state: Mapped[WebPageJobState] = mapped_column(nullable=False)
+    context: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default={})   
+    
+    
+# Automatically set hash when content is modified
+@event.listens_for(WebPageJob.normalized_url, 'set')
+def web_page_job_set_content_hash(target: WebPageJob, value, oldvalue, initiator):
+    target.normalized_url_hash = normalized_url_hash(value)
+
+# Set hash before insert/update
+@event.listens_for(WebPageJob, 'before_insert')
+@event.listens_for(WebPageJob, 'before_update')
+def web_page_job_ensure_hash(mapper, connection, target: WebPageJob):
+    if target.normalized_url:
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)        
 
 
 class WebPageSummary(TimestampModel):

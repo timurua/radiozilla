@@ -1,6 +1,5 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, insert
-from ..db.web_page import WebPage
+from ..db.web_page import WebPage, WebPageJob, WebPageJobState
 from pyminiscraper.store import ScraperStore, ScraperStoreFactory
 from pyminiscraper.model import ScraperWebPage
 import logging
@@ -8,8 +7,9 @@ from typing import Optional
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import Callable, Awaitable
-from ..db.service import WebPageService
+from typing import Callable
+from ..db.service import WebPageService, WebPageJobService
+from ..db.database import Database
 from datetime import datetime
 
 logger = logging.getLogger("scraper_store")
@@ -21,14 +21,13 @@ def drop_time_zone(dt: datetime|None) -> datetime|None:
        
 class ServiceScraperStore(ScraperStore):    
 
-    def __init__(self, get_db_session: Callable[[], Awaitable[AsyncSession]], on_web_page: Callable[[WebPage],None], rerequest_after_hours: int=24):  
-        self.get_db_session = get_db_session 
+    def __init__(self, on_web_page: Callable[[WebPage],None], rerequest_after_hours: int=24*30):  
         self.rerequest_after_hours = rerequest_after_hours
         self._on_web_page = on_web_page
 
     async def store_page(self, response: ScraperWebPage) -> None:
-        session = await self.get_db_session()
-        try:
+        async with await Database.get_session() as session:
+
             web_page = WebPage(
                 status_code = response.status_code,
                 url = response.url,
@@ -54,17 +53,18 @@ class ServiceScraperStore(ScraperStore):
                 text_chunks = response.text_chunks
             )
             self._on_web_page(web_page)
-            await WebPageService(session).upsert_web_page(web_page)
-        except Exception as e:
-            logger.error(f"Error upserting page from db: {e}")
-            return None            
-        finally:
-            await session.close()            
+            await WebPageService(session).upsert(web_page)            
+            
+            await WebPageJobService(session).upsert(WebPageJob(
+                normalized_url = response.normalized_url,
+                state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
+            ))
+
+
 
     async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:        
-        session = await self.get_db_session()
-        try:
-            web_page = await WebPageService(session).find_web_page_by_url(normalized_url)
+        async with await Database.get_session() as session:
+            web_page = await WebPageService(session).find_by_url(normalized_url)            
             if web_page is not None:
                 if web_page.requested_at and (datetime.now() - web_page.requested_at).total_seconds() > self.rerequest_after_hours * 60 * 60:
                     return None
@@ -94,15 +94,10 @@ class ServiceScraperStore(ScraperStore):
                     text_chunks = web_page.text_chunks
                 )
             return None
-        except Exception as e:
-            logger.error(f"Error loading page from db: {e}")
-            return None
-        finally:
-            await session.close()
 
     
-def get_scraper_store_factory(get_db_session: Callable[[], Awaitable[AsyncSession]], on_web_page: Callable[[WebPage],None]) -> ScraperStoreFactory:    
+def get_scraper_store_factory(on_web_page: Callable[[WebPage],None]) -> ScraperStoreFactory:    
     class ServiceScraperStoreFactory(ScraperStoreFactory):
         def new_store(self) -> ScraperStore:
-            return ServiceScraperStore(get_db_session, on_web_page)
+            return ServiceScraperStore(on_web_page)
     return ServiceScraperStoreFactory()

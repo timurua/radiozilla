@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
-from ..db.web_page import WebPageSummary
+from ..db.web_page import WebPageSummary, WebPageJobState, WebPageJob
 from ..db.database import Database
 from pyminiscraper.url import normalized_url_hash, normalize_url
 from .ollama import OllamaClient
 from .prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt, DateDeductionPrompt
-from ..db.service import WebPageService, WebPageSummaryService
+from ..db.service import WebPageService, WebPageSummaryService, WebPageJobService
 from ..db.web_page import WebPage
 from ..utils.parallel import ParallelTaskManager
 from dateutil.parser import parse
@@ -24,15 +24,13 @@ class SummarizerService:
 
         self.logger.info("Summarizing web pages for prefix: {url_prefix}")
         normalized_urls = []
+        async def collect_urls(web_page_summary: WebPageSummary):
+            normalized_urls.append(web_page_summary.normalized_url)
+    
+        async with await Database.get_session() as session:        
+            await WebPageJobService(session).find_with_state(WebPageJobState.SCRAPED_NEED_SUMMARIZING, collect_urls)
                 
-        manager = ParallelTaskManager[str](max_concurrent_tasks=4)
-        async def add_to_normalize_urls(web_page: WebPage) -> None:            
-            normalized_urls.append(web_page.normalized_url)
-
-        async with await Database.get_session() as session:
-            web_page_service = WebPageService(session)
-            await web_page_service.find_web_pages(add_to_normalize_urls)        
-        
+        manager = ParallelTaskManager[str](max_concurrent_tasks=4)        
 
         for normalized_url in normalized_urls:
             manager.submit_task(self.summarize_web_page(normalized_url))
@@ -44,9 +42,12 @@ class SummarizerService:
         async with await Database.get_session() as session:
             web_page_summary_service = WebPageSummaryService(session)
             web_page_service = WebPageService(session)
-            web_page = await web_page_service.find_web_page_by_url(normalized_url)
+            web_page = await web_page_service.find_by_url(normalized_url)
             if web_page is None:
                 self.logger.error(f"Failed to find web page for normalized url: {normalized_url}")
+                return
+            if web_page.metadata_title is None:
+                self.logger.error(f"Web page has no title: {normalized_url}")
                 return
             self.logger.info(f"Summarizing web page: {web_page.url}")
             summary_confug = SummaryConfig(
@@ -90,4 +91,9 @@ class SummarizerService:
                     text = web_page.visible_text,
                     summarized_text = summary,
                     summarized_text_audio_url = None,
-                ))       
+                ))    
+                await WebPageJobService(session2).upsert(WebPageJob(
+                    normalized_url = web_page.normalized_url,
+                    state = WebPageJobState.SUMMARIZED_NEED_TTSING,                
+                ))   
+            

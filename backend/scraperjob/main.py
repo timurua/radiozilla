@@ -47,7 +47,7 @@ async def scrape_channel(channel: WebPageChannel)->None:
             follow_sitemap_links=channel.scraper_follow_sitemap_links,
             follow_feed_links=channel.scraper_follow_feed_links,
             follow_web_page_links=channel.scraper_follow_web_page_links,            
-            scraper_store_factory=get_scraper_store_factory(Database.get_db_session, on_web_page=on_web_page),
+            scraper_store_factory=get_scraper_store_factory(on_web_page=on_web_page),
         ),
     )
     await scraper.run()    

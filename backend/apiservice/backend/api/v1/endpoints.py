@@ -56,7 +56,7 @@ async def read_web_pages(
 ) -> FAWebPage | None:
     try:
         logging.info(f"Finding web page for url: {url}")
-        web_page = await web_page_service.find_web_page_by_url(url)
+        web_page = await web_page_service.find_by_url(url)
         return FAWebPage(
             normalized_url_hash=web_page.normalized_url_hash,
             normalized_url=web_page.normalized_url,

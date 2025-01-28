@@ -86,7 +86,7 @@ function SmallAudioPlayerImpl() {
                   </div>
                 </div>
                 <div>
-                    <small>{rzAudio.author.name}</small>
+                    <small>{rzAudio.channel.name}</small>
                 </div>
             </div>
           </div>

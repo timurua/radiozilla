@@ -20,7 +20,7 @@ import { TfIdfProvider } from './tfidf/tf-idf-provider';
 const App: React.FC = () => {
   return (
     <RecoilRoot>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotificationProvider>
           <AuthProvider>
             <AudioProvider>

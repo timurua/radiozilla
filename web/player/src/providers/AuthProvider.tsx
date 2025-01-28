@@ -48,7 +48,6 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      logger.debug('Auth state changed', user);
       setUserLoading(false);
       if(user === null) {
         setUser(null);

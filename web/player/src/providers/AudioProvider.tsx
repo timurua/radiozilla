@@ -14,6 +14,7 @@ import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
 import Client from '../client';
 import { useAuth } from '../providers/AuthProvider';
+import { saveListenedAudioIdsByUser } from '../data/firebase';
 
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
@@ -86,17 +87,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     }, []);
 
     const reportPlayback = async () => {
-        if (rzAudio && isPlaying && user?.id) {
-            try{
-                await Client.frontendAudioPlayApiV1FrontendAudioPlayPost(
-                    user?.id,
-                    rzAudio.id,
-                    Math.floor(audioElement.currentTime)
-                )
-                logger.log(`Reported playback for ${rzAudio.name}`);                
-            } catch (error) {
-                logger.error(`Error reporting playback for ${rzAudio.name}: ${error}`);
-            }
+        const userId = user?.id;
+        if (rzAudio && isPlaying && userId) {
+            await saveListenedAudioIdsByUser(userId, rzAudio.id);
         }
     }
 

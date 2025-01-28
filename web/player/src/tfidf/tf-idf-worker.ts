@@ -1,14 +1,17 @@
 import { DocumentIndex, IdfIndex, TfIdfSearchResult, TfIdfWorkerMessage, TfIdfDocument } from './types';
+import { LevenshteinSearchIndex } from './tf-idf-levenstein';
 
 class TfIdfWorker {
     private documents: Map<string, string>;
     private documentIndex: DocumentIndex;
     private idfIndex: IdfIndex;
+    private levensteinSearchIndex: LevenshteinSearchIndex;
 
     constructor() {
         this.documents = new Map();
-        this.documentIndex = {};
+        this.documentIndex = {};        
         this.idfIndex = {};
+        this.levensteinSearchIndex = new LevenshteinSearchIndex([]);
     }
 
     private tokenize(text: string): string[] {
@@ -61,10 +64,22 @@ class TfIdfWorker {
         }
 
         this.calculateIdf();
+        this.levensteinSearchIndex = new LevenshteinSearchIndex(Object.keys(this.idfIndex));
     }
 
     search(query: string, topK: number = 5): TfIdfSearchResult[] {
-        const queryTerms = this.tokenize(query);
+        const queryTermsBeforeLevenstein = this.tokenize(query);
+        const queryTerms: string[] = []        
+        for (const term of queryTermsBeforeLevenstein) {
+            if (this.idfIndex[term]) {
+                queryTerms.push(term);
+            } else {
+                const suggestions = this.levensteinSearchIndex.search(term, 1);
+                if (suggestions.length > 0) {
+                    queryTerms.push(suggestions[0].word);
+                }
+            }
+        }
         const queryVector = this.calculateTermFrequency(queryTerms);
         const scores: { [docId: string]: number } = {};
 

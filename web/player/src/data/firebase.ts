@@ -1,4 +1,4 @@
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { RZAudio, RZAuthor, RZChannel, } from "../data/model";
 import { db } from '../firebase';
 import logger from '../utils/logger';
@@ -77,13 +77,6 @@ export const getAudio = async (id: string): Promise<RZAudio> => {
     }
 }
 
-export const getAudioList = async (ids: string[]): Promise<RZAudio[]> => {
-    const audios = await Promise.all(ids.map(async (id) => {
-        return getAudio(id);
-    }));
-    return audios;
-}
-
 export const getAudioListForChannel = async (channelId: string): Promise<RZAudio[]> => {
     
     const audioRef = collection(db, 'audios');
@@ -107,12 +100,25 @@ export const getSearchDocuments = async (): Promise<TfIdfDocument[]> => {
 
 export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
     const audios = await Promise.all(ids.map(async (id) => {
-        const docRef = doc(db, `/audios/${id}`);
-        const data = (await getDoc(docRef)).data();
-        if (!data) {
-          return null;
-        }
-        return await audioFromData(data, id);        
-    }));
+        return getAudio(id);
+    }));    
     return audios.filter((audio): audio is RZAudio => audio !== null);
 }
+
+export const saveListenedAudioIdsByUser = async (userId: string, audioId: string): Promise<TfIdfDocument[]> => {
+    const userDocRef = doc(db, `/users/${userId}`);
+    const userDocData = (await getDoc(userDocRef)).data() || {};
+    const listenedAudioIds = new Set(userDocData.listenedAudioIds || []);
+    listenedAudioIds.add(audioId);
+    await updateDoc(userDocRef, {
+        listenedAudioIds: Array.from(listenedAudioIds)
+    });
+    return [];
+}
+
+export const getListenedAudioIdsByUser = async (userId: string): Promise<string[]> => {
+    const userDocRef = doc(db, `/users/${userId}`);
+    const userDocData = (await getDoc(userDocRef)).data() || {};
+    return userDocData.listenedAudioIds || [];    
+}
+

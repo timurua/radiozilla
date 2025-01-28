@@ -58,7 +58,6 @@ function Channel() {
 
         <Card className='bg-dark text-white mt-3 border-secondary'>
           <Card.Body>
-            <Card.Title>History</Card.Title>
             <ListGroup variant="flush" className='bg-dark text-white'>
               {rzAudios.length === 0 ? (
                 <ListGroup.Item className='bg-dark text-white'>No Audios</ListGroup.Item>

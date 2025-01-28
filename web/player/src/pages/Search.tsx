@@ -60,7 +60,7 @@ function Search() {
                     <Card.Body>
                         <ListGroup variant="flush" className='bg-dark text-white'>
                             {rzAudios.length === 0 ? (
-                                <ListGroup.Item className='bg-dark text-white'>No Audios</ListGroup.Item>
+                                <ListGroup.Item className='bg-dark text-white'>Type search phrase</ListGroup.Item>
                             ) : rzAudios.map((rzAudio) => (
                                 <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
                             ))}

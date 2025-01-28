@@ -1,7 +1,8 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { RZAudio, RZAuthor, RZChannel, } from "../data/model";
 import { db } from '../firebase';
 import logger from '../utils/logger';
+import { TfIdfDocument } from '../tfidf/types';
 
 export const getAuthor = async (id: string): Promise<RZAuthor> => {
     const docRef = doc(db, `/authors/${id}`);
@@ -74,4 +75,44 @@ export const getAudio = async (id: string): Promise<RZAudio> => {
         logger.log(`No audio found with ID: ${id}`);
         throw new Error(`No audio found with ID: ${id}`);
     }
+}
+
+export const getAudioList = async (ids: string[]): Promise<RZAudio[]> => {
+    const audios = await Promise.all(ids.map(async (id) => {
+        return getAudio(id);
+    }));
+    return audios;
+}
+
+export const getAudioListForChannel = async (channelId: string): Promise<RZAudio[]> => {
+    
+    const audioRef = collection(db, 'audios');
+    const queryAudios = query(audioRef, where('channel', '==', channelId));
+    const querySnapshot = await getDocs(queryAudios);
+    
+    const audios = await Promise.all(querySnapshot.docs.map(doc => 
+        audioFromData(doc.data(), doc.id)
+    ));
+    return audios;
+}
+
+export const getSearchDocuments = async (): Promise<TfIdfDocument[]> => {
+    const audioRef = collection(db, 'audios');
+    const querySnapshot = await getDocs(query(audioRef));
+    return querySnapshot.docs.map(doc => ({
+        docId: doc.id,
+        text: doc.data().name
+    }));
+}
+
+export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
+    const audios = await Promise.all(ids.map(async (id) => {
+        const docRef = doc(db, `/audios/${id}`);
+        const data = (await getDoc(docRef)).data();
+        if (!data) {
+          return null;
+        }
+        return await audioFromData(data, id);        
+    }));
+    return audios.filter((audio): audio is RZAudio => audio !== null);
 }

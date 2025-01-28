@@ -22,6 +22,12 @@ export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
+    function openChannel(audio: RZAudio, e: React.MouseEvent) {
+        navigate(`/channel/${audio.channel.id}`);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        e.stopPropagation();
+    }
+
     function onAudioClick(isPlaying: boolean, rzAudio: RZAudio) {
         if (isPlaying) {
             openAudio(rzAudio);
@@ -50,7 +56,7 @@ export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
             <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
             <div>
                 <div className='small'>{rzAudio.name}</div>
-                <div className='small'>{rzAudio.channel.name}</div>
+                <div className='small' onClick={(e) => openChannel(rzAudio, e)}>{rzAudio.channel.name}</div>
             </div>
         </ListGroup.Item>);
 }

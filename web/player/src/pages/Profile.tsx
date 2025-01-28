@@ -36,7 +36,7 @@ function UserProfile() {
         return acc;
       }, {} as Record<string, typeof results.data[0]>);
       const deduped = Object.values(audioIdMap);
-
+      
       const audios = await Promise.all(deduped.map(async (result) => {
         const docRef = doc(db, `/audios/${result.audio_id}`);
         const data = (await getDoc(docRef)).data();

@@ -7,8 +7,9 @@ import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
 import { useNavigate } from 'react-router-dom';
 import BootstrapMarkdown from './Markdown';
+import { RZAudio } from '../data/model';
 
-function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: boolean }) {
+function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   const {
     play,
     pause,
@@ -22,6 +23,7 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
 
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const rzAudioToDisplay = displayRzAudio || rzAudio;
 
   const togglePlayPause = () => {
     if (isPlaying) {
@@ -34,7 +36,7 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
   const onTextClick = () => {
     if (isPlaying) {
       
-      navigate(`/audio/${rzAudio?.id}`);
+      navigate(`/audio/${rzAudioToDisplay?.id}`);
     }
   };
 
@@ -59,8 +61,8 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        if (rzAudio) {
-          const url = await storageUtils.toDownloadURL(rzAudio.imageUrl);
+        if (rzAudioToDisplay) {
+          const url = await storageUtils.toDownloadURL(rzAudioToDisplay.imageUrl);
           setImageUrl(url);
         } else {
           setImageUrl(undefined);
@@ -71,17 +73,17 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
     };
 
     fetchImage();
-  }, [rzAudio, rzAudio?.imageUrl, setImageUrl]);
+  }, [rzAudioToDisplay, rzAudioToDisplay?.imageUrl, setImageUrl]);
 
   return (
     <div className='bg-dark'>
       <Container className="audio-player bg-dark">
-        {rzAudio && (isPlaying || isPaused) ? (
+        {rzAudioToDisplay && (isPlaying || isPaused) ? (
           <div className="d-flex align-items-center text-light bg-dark" onClick={onTextClick}>
             <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
-              <div>{rzAudio.name}</div>
-              <small>{rzAudio.author.name}</small>
+              <div>{rzAudioToDisplay.name}</div>
+              <small>{rzAudioToDisplay.channel.name}</small>
             </div>
           </div>
         ) : null}
@@ -108,12 +110,12 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         </div>
-        {showExtendedInfo && rzAudio && (
+        {showExtendedInfo && rzAudioToDisplay && (
         <div className='text-light p-2'>
-          <BootstrapMarkdown markdownContent={rzAudio.audioText}/>
+          <BootstrapMarkdown markdownContent={rzAudioToDisplay.audioText}/>
           <div>
             <a
-              href={`${rzAudio?.webUrl}`}
+              href={`${rzAudioToDisplay?.webUrl}`}
               target="_blank"
               rel="noopener noreferrer"
               className="link-light"
@@ -128,10 +130,10 @@ function AudioPlayerImpl({ showExtendedInfo = false }: { showExtendedInfo?: bool
   );
 };
 
-export function AudioPlayer({ showExtendedInfo = false }: { showExtendedInfo?: boolean }) {
+export function AudioPlayer({ showExtendedInfo = false, displayAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <AudioPlayerImpl showExtendedInfo={showExtendedInfo} />
+      <AudioPlayerImpl showExtendedInfo={showExtendedInfo} displayAudio={displayAudio}/>
     </Suspense>
   )
 }

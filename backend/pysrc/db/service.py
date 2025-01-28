@@ -43,19 +43,18 @@ class WebPageService:
         self.logger = logging.getLogger("web_page_service")
 
     async def upsert(self, web_page: WebPage) -> None:
-        async with self.session.begin():
-            self.logger.info(f"Upserting web page for url: {web_page.url}")
+        async with self.session.begin_nested() as tx:
             await self.session.merge(web_page, load=True)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPage|None:
         hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPage).where(WebPage.normalized_url_hash == hash)
+        stmt = select(WebPage).execution_options(readonly=True).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
     async def find_all(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
-        stmt = select(WebPage)
+        stmt = select(WebPage).execution_options(readonly=True)
         with await self.session.stream(stmt) as stream:
             async for web_page in stream.scalars():
                 await callback(web_page)
@@ -67,20 +66,19 @@ class WebPageJobService:
         self.logger = logging.getLogger("web_page_job_service")
 
     async def upsert(self, entity: WebPageJob) -> None:        
-        async with self.session.begin():
-            self.logger.info(f"Inserting for url: {entity.normalized_url}")
+        async with self.session.begin_nested():
             await self.session.merge(entity, load=True)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
         hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPageJob).where(WebPageJob.normalized_url_hash == hash)
+        stmt = select(WebPageJob).execution_options(readonly=True).where(WebPageJob.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
     async def find_with_state(self, state: WebPageJobState) -> list[str]:
         normalized_urls = []
-        stmt = select(WebPageJob).where(WebPageJob.state == state)
+        stmt = select(WebPageJob).execution_options(readonly=True).where(WebPageJob.state == state)
         with await self.session.stream(stmt) as stream:
             async for job in stream.scalars():
                 normalized_urls.append(job.normalized_url)

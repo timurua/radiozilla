@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { Button, Col, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { FaSearch} from 'react-icons/fa';
-import { AudioList } from '../components/AudioList';
+import React, { useEffect, useState } from 'react';
+import { Button, Card, Col, FormControl, InputGroup, ListGroup, Row } from 'react-bootstrap';
+import { FaSearch } from 'react-icons/fa';
 import PlayerScreen from '../components/PlayerScreen';
-import { audioRetrivalState } from "../state/audio";
-import { useSetRecoilState } from "recoil";
+import { getAudioListByIds } from '../data/firebase';
+import { RZAudio } from '../data/model';
+import { useTfIdf } from '../tfidf/tf-idf-provider';
+import { AudioListItem } from '../components/AudioListItem';
 
 
 function Search() {
 
     const [searchValue, setSearchValue] = useState('');
-    const setPlayableSorting = useSetRecoilState(audioRetrivalState);    
+    const [rzAudios, setRZAudios] = useState<RZAudio[]>([]);
+    const { search } = useTfIdf();
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchValue(event.target.value);
@@ -18,12 +20,17 @@ function Search() {
 
     const handleSearchButtonClick = () => {
         if (searchValue) {
-            setPlayableSorting({
-                searchString: searchValue,
-                sorting: null
-            });            
         }
-    };    
+    };
+
+    useEffect(() => {
+        const searchIndex = async () => {
+            const documents = await search(searchValue, 50);
+            const audios = await getAudioListByIds(documents.map(doc => doc.docId));
+            setRZAudios(audios);
+        }
+        searchIndex();
+    }, [searchValue]);
 
     return (
         <PlayerScreen>
@@ -37,7 +44,7 @@ function Search() {
                             className="border-end-0 border rounded-start-pill bg-dark text-light"
                             placeholder='Search'
                             style={{ boxShadow: 'none' }}
-                        />                      
+                        />
                         <Button
                             variant="outline-light"
                             className="rounded-end-pill ms-n5 bg-dark"
@@ -50,7 +57,19 @@ function Search() {
                 </Col>
             </Row>
             <div className='mt-5'>
-                <AudioList/>
+                <Card className='bg-dark text-white mt-3 border-secondary'>
+                    <Card.Body>
+                        <Card.Title>History</Card.Title>
+                        <ListGroup variant="flush" className='bg-dark text-white'>
+                            {rzAudios.length === 0 ? (
+                                <ListGroup.Item className='bg-dark text-white'>No Audios</ListGroup.Item>
+                            ) : rzAudios.map((rzAudio) => (
+                                <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
+                            ))}
+                        </ListGroup>
+
+                    </Card.Body>
+                </Card>
             </div>
         </PlayerScreen>
     );

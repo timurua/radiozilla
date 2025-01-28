@@ -8,11 +8,14 @@ import {
 // Import your components
 import Feed from './pages/Feed';
 import Audio from './pages/Audio';
-import Explore from './pages/Search';
+import Search from './pages/Search';
+import Channel from './pages/Channel';
 import Profile from './pages/Profile';
 import { AudioProvider } from './providers/AudioProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { NotificationProvider } from './providers/NotificationProvider';
+import { TfIdfProvider } from './tfidf/tf-idf-provider';
+
 
 const App: React.FC = () => {
   return (
@@ -21,18 +24,21 @@ const App: React.FC = () => {
         <NotificationProvider>
           <AuthProvider>
             <AudioProvider>
+              <TfIdfProvider>
               <div>
                 {/* Main Content */}
                 <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                     <Routes>
                     <Route path="/" element={<Feed />} />
-                    <Route path="/audio/:audio_id" element={<Audio />} />
+                    <Route path="/audio/:audioId" element={<Audio />} />
+                    <Route path="/channel/:channelId" element={<Channel />} />
                     <Route path="/feed" element={<Feed />} />
-                    <Route path="/search" element={<Explore />} />
+                    <Route path="/search" element={<Search />} />
                     <Route path="/profile" element={<Profile />} />
                     </Routes>
                 </div>
               </div>
+              </TfIdfProvider>
             </AudioProvider>
           </AuthProvider>
         </NotificationProvider>

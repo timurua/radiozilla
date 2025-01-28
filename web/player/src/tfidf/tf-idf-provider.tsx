@@ -19,7 +19,9 @@ interface TfIdfProviderProps {
 export const TfIdfProvider: React.FC<TfIdfProviderProps> = ({ 
     children
 }) => {
-    const tfIdf = useMemo(() => new TfIdf(1000), []);   
+    const tfIdf = useMemo(() => {
+        return new TfIdf(1000);
+    }, []);   
     const {user} = useAuth();
 
     useEffect(() => {

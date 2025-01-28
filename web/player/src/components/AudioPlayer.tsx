@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 
-import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
+import { Badge, Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useAudio } from '../providers/AudioProvider';
 import { storageUtils } from '../firebase';
@@ -8,6 +8,7 @@ import logger from '../utils/logger';
 import { useNavigate } from 'react-router-dom';
 import BootstrapMarkdown from './Markdown';
 import { RZAudio } from '../data/model';
+import { useAuth } from '../providers/AuthProvider';
 
 function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   const {
@@ -15,7 +16,6 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
     pause,
     rzAudio,
     isPlaying,
-    isPaused,
     currentTime,
     duration,
     setCurrentTime
@@ -24,7 +24,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const rzAudioToDisplay = displayRzAudio || rzAudio;
-
+  
   const togglePlayPause = () => {
     if (isPlaying) {
       pause();
@@ -78,12 +78,13 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
   return (
     <div className='bg-dark'>
       <Container className="audio-player bg-dark">
-        {rzAudioToDisplay && (isPlaying || isPaused) ? (
+        {rzAudioToDisplay ? (
           <div className="d-flex align-items-center text-light bg-dark" onClick={onTextClick}>
             <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
               <div>{rzAudioToDisplay.name}</div>
-              <small>{rzAudioToDisplay.channel.name}</small>
+              <small>{rzAudioToDisplay.channel.name} 
+                <Badge bg="secondary" className="pl-2 user-select-none">subscribe</Badge></small>
             </div>
           </div>
         ) : null}

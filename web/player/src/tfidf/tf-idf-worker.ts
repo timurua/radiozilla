@@ -74,7 +74,7 @@ class TfIdfWorker {
             if (this.idfIndex[term]) {
                 queryTerms.push(term);
             } else {
-                const suggestions = this.levensteinSearchIndex.search(term, 1);
+                const suggestions = this.levensteinSearchIndex.search(term, Math.floor(term.length / 2));
                 if (suggestions.length > 0) {
                     queryTerms.push(suggestions[0].word);
                 }

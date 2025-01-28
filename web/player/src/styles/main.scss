@@ -13,6 +13,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body {
+  overscroll-behavior: none;
+  overscroll-behavior-x: none;
+  touch-action: pan-y pinch-zoom;
+  overflow-x: hidden;
+  position: fixed;
+  width: 100%;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

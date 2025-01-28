@@ -12,7 +12,6 @@ import {
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
-import Client from '../client';
 import { useAuth } from '../providers/AuthProvider';
 import { saveListenedAudioIdsByUser } from '../data/firebase';
 

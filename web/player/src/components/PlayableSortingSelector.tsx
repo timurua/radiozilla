@@ -1,7 +1,7 @@
 import { Button, ButtonGroup } from "react-bootstrap";
-import { PlayableSorting } from "../data/model"
-import { audioRetrivalState } from "../state/audio";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import { PlayableSorting } from "../data/model";
+import { audioRetrivalState } from "../state/audio";
 
 
 export function PlayableSortingSelector() {
@@ -17,7 +17,6 @@ export function PlayableSortingSelector() {
             newSorting = null;
         }
         setPlayableSorting({
-            searchString: playableRetrieval.searchString,
             sorting: newSorting
         });
     }

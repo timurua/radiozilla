@@ -1,20 +1,11 @@
-import { doc, getDoc } from 'firebase/firestore';
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Card, Col, ListGroup, Row } from 'react-bootstrap';
 import { BsPerson, BsPersonCircle } from 'react-icons/bs';
-import Client from '../client';
-import PlayerScreen from '../components/PlayerScreen';
-import { getListenedAudioIdsByUser, getAudioListByIds,  } from '../data/firebase';
-import { RZAudio } from "../data/model";
-import { db } from '../firebase';
-import { useAuth } from '../providers/AuthProvider';
 import { AudioListItem } from '../components/AudioListItem';
-
-interface AudioPlay {
-  rzAudio: RZAudio;
-  played_at: Date;
-}
-
+import PlayerScreen from '../components/PlayerScreen';
+import { getAudioListByIds, getListenedAudioIdsByUser, } from '../data/firebase';
+import { RZAudio } from "../data/model";
+import { useAuth } from '../providers/AuthProvider';
 
 function UserProfile() {
 

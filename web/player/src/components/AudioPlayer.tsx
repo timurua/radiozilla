@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 
 import { Badge, Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
-import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
+import { BsFastForwardFill, BsHandThumbsDownFill, BsHandThumbsUpFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
@@ -45,11 +45,31 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
     }
   };
 
+  const handleLike = () => {
+    if (currentTime) {
+      setCurrentTime(Math.max(0, currentTime - 10));
+    }
+  };  
+
+  const handleDislike = () => {
+    if (currentTime) {
+      setCurrentTime(Math.max(0, currentTime - 10));
+    }
+  };    
+
   const handleForward = () => {
     if (currentTime) {
       setCurrentTime(Math.min(duration, currentTime + 10));
     }
   };
+
+  function openChannel(audio: RZAudio | null, e: React.MouseEvent) {
+    if (audio) {    
+      navigate(`/channel/${audio.channel.id}`);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      e.stopPropagation();
+    }
+  }
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -82,13 +102,17 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
             <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
               <div>{rzAudioToDisplay.name}</div>
-              <small>{rzAudioToDisplay.channel.name} 
-                <Badge bg="secondary" className="pl-2 user-select-none">subscribe</Badge></small>
-            </div>
+              <small className="user-select-none" onClick={(e) => openChannel(rzAudioToDisplay, e)}>{rzAudioToDisplay.channel.name}</small>              
+                <Badge bg="secondary" className="ms-2 user-select-none">subscribe</Badge>
+          </div>
           </div>
         ) : null}
+        
         <div className="d-flex justify-content-center m-3">
           <ButtonGroup>
+            <Button size="sm" variant="dark" onClick={handleLike} className="flex-fill">
+              <BsHandThumbsUpFill size={20} />              
+            </Button>
             <Button variant="dark" onClick={handleRewind}>
               <BsRewindFill size={30} />
             </Button>
@@ -97,6 +121,9 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
             </Button>
             <Button variant="dark" onClick={handleForward}>
               <BsFastForwardFill size={30} />
+            </Button>
+            <Button size="sm" variant="dark" onClick={handleDislike} className="flex-fill">
+              <BsHandThumbsDownFill size={20} />              
             </Button>
           </ButtonGroup>
         </div>

@@ -1,5 +1,5 @@
 import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { RZAudio, RZAuthor, RZChannel, } from "../data/model";
+import { RZAudio, RZAuthor, RZChannel, RZUserData, } from "../data/model";
 import { db } from '../firebase';
 import logger from '../utils/logger';
 import { TfIdfDocument } from '../tfidf/types';
@@ -22,6 +22,38 @@ export const getAuthor = async (id: string): Promise<RZAuthor> => {
     }
 }
 
+export const getUserData = async (id: string): Promise<RZUserData> => {
+    const docRef = doc(db, `/users/${id}`);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        const playedAudioIds = data.playedAudioIds || [];
+        const likedAudioIds = data.likedAudioIds || [];
+        const searchHistory = data.searchHistory || [];
+        const subscribedChannelIds = data.subscribedChannelIds || [];
+        return new RZUserData(id, subscribedChannelIds, likedAudioIds, playedAudioIds, searchHistory);
+    } else {
+        logger.log(`No user found with ID: ${id}`);
+        throw new Error(`No user found with ID: ${id}`);
+    }
+}
+
+export const saveUserData = async (userData: RZUserData) => {
+    const userDocRef = doc(db, `/users/${userData.id}`);    
+    const playedAudioIds = new Set(userData.playedAudioIds || []);
+    const likedAudioIds = new Set(userData.likedAudioIds || []);
+    const searchHistory = userData.searchHistory || [];
+    const subscribedChannelIds = new Set(userData.subscribedChannelIds || []);
+
+    await updateDoc(userDocRef, {
+        playedAudioIds: Array.from(playedAudioIds),
+        likedAudioIds: Array.from(likedAudioIds),
+        searchHistory,
+        subscribedChannelIds
+    });
+}
+
 export const getChannel = async (id: string): Promise<RZChannel> => {
     const docRef = doc(db, `/channels/${id}`);
     const docSnap = await getDoc(docRef);
@@ -38,6 +70,13 @@ export const getChannel = async (id: string): Promise<RZChannel> => {
         logger.log(`No channel found with ID: ${id}`);
         throw new Error(`No document found with ID: ${id}`);
     }
+}
+
+export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
+    const channels = await Promise.all(ids.map(async (id) => {
+        return getChannel(id);
+    }));
+    return channels;
 }
 
 
@@ -104,21 +143,3 @@ export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
     }));    
     return audios.filter((audio): audio is RZAudio => audio !== null);
 }
-
-export const saveListenedAudioIdsByUser = async (userId: string, audioId: string): Promise<TfIdfDocument[]> => {
-    const userDocRef = doc(db, `/users/${userId}`);
-    const userDocData = (await getDoc(userDocRef)).data() || {};
-    const listenedAudioIds = new Set(userDocData.listenedAudioIds || []);
-    listenedAudioIds.add(audioId);
-    await updateDoc(userDocRef, {
-        listenedAudioIds: Array.from(listenedAudioIds)
-    });
-    return [];
-}
-
-export const getListenedAudioIdsByUser = async (userId: string): Promise<string[]> => {
-    const userDocRef = doc(db, `/users/${userId}`);
-    const userDocData = (await getDoc(userDocRef)).data() || {};
-    return userDocData.listenedAudioIds || [];    
-}
-

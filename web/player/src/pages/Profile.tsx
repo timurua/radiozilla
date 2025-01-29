@@ -3,25 +3,30 @@ import { Card, Col, ListGroup, Row } from 'react-bootstrap';
 import { BsPerson, BsPersonCircle } from 'react-icons/bs';
 import { AudioListItem } from '../components/AudioListItem';
 import PlayerScreen from '../components/PlayerScreen';
-import { getAudioListByIds, getListenedAudioIdsByUser, } from '../data/firebase';
-import { RZAudio } from "../data/model";
+import { getAudioListByIds, getChannels, getUserData, } from '../data/firebase';
+import { RZAudio, RZChannel } from "../data/model";
 import { useAuth } from '../providers/AuthProvider';
+import ChannelListItem from '../components/ChannelListItem';
 
 function UserProfile() {
 
   const { user } = useAuth();
-  const [audioPlayHistory, setAudioPlayHistory] = useState<RZAudio[]>([]);
+  const [playedAudios, setPlayedAudios] = useState<RZAudio[]>([]);
+  const [subscribedChannels, setSubscribedChannels] = useState<RZChannel[]>([]);
 
-  useEffect(() => {
+  useEffect(() => {    
     const fetchHistory = async () => {
       const userId = user?.id;
       if (!userId) {
         return;
       }
 
-      const listenedAudioIds = await getListenedAudioIdsByUser(userId)
-      const audioList = await getAudioListByIds(listenedAudioIds)
-      setAudioPlayHistory(audioList);            
+      const userData = await getUserData(userId);
+      const userSubscribedChannels = await getChannels(userData.subscribedChannelIds);
+      setSubscribedChannels(userSubscribedChannels);
+
+      const userPlayedAudios = await getAudioListByIds(userData.playedAudioIds);
+      setPlayedAudios(userPlayedAudios);
     };
 
     fetchHistory();
@@ -58,12 +63,10 @@ function UserProfile() {
           <Card.Body>
             <Card.Title>Subscribed Channels</Card.Title>
             <ListGroup variant="flush" className='bg-dark text-white'>
-              {user?.channels.length === 0 ? (
-
-                <ListGroup.Item className='bg-dark text-white'>No Subscribed Channels</ListGroup.Item>
-
-              ) : user?.channels.map((channel) => (
-                <ListGroup.Item className='bg-dark text-white'>{channel.name}</ListGroup.Item>
+              {subscribedChannels.length === 0 ? (
+                <ListGroup.Item className='bg-dark text-white'>Subscribed to channels to get the latest updates</ListGroup.Item>
+              ) : subscribedChannels.map((channel) => (
+                <ChannelListItem key={channel.id} channel={channel} />                
               ))}
             </ListGroup>
 
@@ -74,9 +77,9 @@ function UserProfile() {
           <Card.Body>
             <Card.Title>History</Card.Title>
             <ListGroup variant="flush" className='bg-dark text-white'>
-              {audioPlayHistory.length === 0 ? (
+              {playedAudios.length === 0 ? (
                 <ListGroup.Item className='bg-dark text-white'>No Subscribed Channels</ListGroup.Item>
-              ) : audioPlayHistory.map((rzAudio) => (
+              ) : playedAudios.map((rzAudio) => (
                 <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
               ))}
             </ListGroup>

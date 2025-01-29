@@ -1,5 +1,5 @@
 import {useEffect, useState } from 'react';
-import { Image, ListGroup } from "react-bootstrap";
+import { Badge, Image, ListGroup } from "react-bootstrap";
 import { RZAudio } from "../data/model";
 import { storageUtils } from '../firebase';
 import { useAudio } from "../providers/AudioProvider";
@@ -56,7 +56,7 @@ export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
             <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
             <div>
                 <div className='small'>{rzAudio.name}</div>
-                <div className='small' onClick={(e) => openChannel(rzAudio, e)}>{rzAudio.channel.name}</div>
+                <div className='small' onClick={(e) => openChannel(rzAudio, e)}><Badge bg="secondary" className="pl-2 user-select-none">{rzAudio.channel.name}</Badge></div>
             </div>
         </ListGroup.Item>);
 }

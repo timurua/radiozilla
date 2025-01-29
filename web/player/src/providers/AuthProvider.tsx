@@ -52,16 +52,13 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
       if(user === null) {
         setUser(null);
         return;
-      }
+      }      
       setUser(new RZUser(
         user?.uid ?? '',
         user?.email ?? '',
         user?.displayName ?? '',
         user?.photoURL ?? '',
         user?.isAnonymous ?? false,
-        [],
-        [],
-        [],
       ));
     });
 

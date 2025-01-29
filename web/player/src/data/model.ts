@@ -30,26 +30,20 @@ export class RZUser {
     public name: string,
     public imageUrl: string,
     public email: string,
-    public isAnonymous: boolean,
-    public channels: RZChannel[],
-    public likedAudioIds: string[],
-    public listenedAudioIds: string[],
+    public isAnonymous: boolean,    
   ) {
   }
+}
 
-  static fromObject(obj: { name: string; description: string; imageUrl: string, isAnonymous: boolean, channels: RZChannel[], likedAudioIds: string[], listenedAudioIds: string[]}, id: string): RZUser {
-    return new RZUser(
-      id,
-      obj.name,
-      obj.description,
-      obj.imageUrl,
-      obj.isAnonymous,
-      obj.channels,
-      obj.likedAudioIds,
-      obj.listenedAudioIds,  
-    );
+export class RZUserData {
+  constructor(
+    public id: string,    
+    public subscribedChannelIds: string[],    
+    public likedAudioIds: string[],
+    public playedAudioIds: string[],
+    public searchHistory: string[],
+  ) {
   }
-
 }
 
 export class RZAuthor {

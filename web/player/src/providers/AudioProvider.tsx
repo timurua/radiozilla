@@ -13,7 +13,7 @@ import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
 import { useAuth } from '../providers/AuthProvider';
-import { saveListenedAudioIdsByUser } from '../data/firebase';
+import { getUserData, saveUserData } from '../data/firebase';
 
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
@@ -88,7 +88,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const reportPlayback = async () => {
         const userId = user?.id;
         if (rzAudio && isPlaying && userId) {
-            await saveListenedAudioIdsByUser(userId, rzAudio.id);
+            const userData = await getUserData(userId);
+            userData.playedAudioIds.push(rzAudio.id);
+            await saveUserData(userData);            
         }
     }
 

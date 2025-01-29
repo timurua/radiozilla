@@ -1,8 +1,8 @@
-import { logger } from 'firebase-functions';
 import React, { useEffect, useState } from 'react';
 import { Card, Image, ListGroup } from 'react-bootstrap';
 import { RZChannel } from '../data/model';
 import { storageUtils } from '../firebase';
+import logger from '../utils/logger';
 
 interface ChannelListItemProps {
     channel: RZChannel;

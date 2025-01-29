@@ -2,13 +2,12 @@ import { Suspense, useEffect, useState } from 'react';
 
 import { Badge, Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
-import { useAudio } from '../providers/AudioProvider';
-import { storageUtils } from '../firebase';
-import logger from '../utils/logger';
 import { useNavigate } from 'react-router-dom';
-import BootstrapMarkdown from './Markdown';
 import { RZAudio } from '../data/model';
-import { useAuth } from '../providers/AuthProvider';
+import { storageUtils } from '../firebase';
+import { useAudio } from '../providers/AudioProvider';
+import logger from '../utils/logger';
+import BootstrapMarkdown from './Markdown';
 
 function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   const {

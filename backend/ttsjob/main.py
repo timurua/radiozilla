@@ -2,11 +2,9 @@
 import asyncclick as click
 import asyncio
 import logging
-import os
 from pysrc.db.database import Database
-from pysrc.observe.log import Logging
-from pysrc.db.service import WebPageSummaryService, WebPageJobService
-from pysrc.db.web_page import WebPageSummary, WebPageJobState
+from pysrc.db.service import WebPageSummaryService, WebPageJobService, WebPageChannelService
+from pysrc.db.web_page import WebPageSummary, WebPageJobState, WebPageChannel
 import ffmpeg # type: ignore
 from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig
@@ -20,20 +18,22 @@ async def main():
     await Jobs.initialize()
     
     normalized_urls = []
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SUMMARIZED_NEED_TTSING)
 
-    parallel = ParallelTaskManager(max_concurrent_tasks=2)
+    parallel = ParallelTaskManager(max_concurrent_tasks=3)
     
     async def process_web_page_summary(normalized_url: str):
         web_page_summary = None
-        async with await Database.get_session() as session:
-            web_page_summary = await web_page_summary_service.find_by_url(normalized_url)
+
+        async with Database.get_session() as session:
+            web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
+            web_page_channel = await WebPageChannelService(session).find_by_hash(web_page_summary.channel_normalized_url_hash)
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary:
-            updated_web_page_summary = await run_tts_job(web_page_summary)
-            async with await Database.get_session() as session:
-                await WebPageSummaryService(session).update(updated_web_page_summary)
+            updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)
+            async with Database.get_session() as session:
+                await WebPageSummaryService(session).upsert(updated_web_page_summary)
                 
             
             
@@ -108,10 +108,12 @@ def convert_wav_to_m4a(input_wav_path, output_m4a_path) -> bool:
 #     )        
                             
 
-async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:    
+async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel) -> WebPageSummary:    
     summarized_text = web_page_summary.summarized_text
     text_file = f"/app/audio/{web_page_summary.normalized_url_hash}.txt"
     with open(text_file, "w", encoding="utf-8") as f:
+        f.write(channel.name + "\n")
+        f.write(web_page_summary.published_at.strftime("%B %d %Y") if web_page_summary.published_at is not None else "" + "\n") 
         f.write(summarized_text)
 
     audio_file_wav = f"/app/audio/{web_page_summary.normalized_url_hash}.wav"
@@ -141,7 +143,7 @@ async def run_tts_job(web_page_summary: WebPageSummary) -> WebPageSummary:
     duration = 0
     try:
         f = sf.SoundFile(audio_file_wav)
-        duration = int(f.frames / f.samplerate)
+        duration = int(f.frames / f.samplerate) # type: ignore[attr-defined] 
     except Exception as e:
         logging.error(f"Error occurred while deducing the duration: {e}")
     

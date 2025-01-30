@@ -24,6 +24,9 @@ class WebPageChannelService:
 
     async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
         hash = normalized_url_hash(normalized_url)
+        return await self.find_by_hash(hash)
+    
+    async def find_by_hash(self, hash: str) -> WebPageChannel|None:
         stmt = select(WebPageChannel).where(WebPageChannel.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

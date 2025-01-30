@@ -13,7 +13,8 @@ import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
 import { useAuth } from '../providers/AuthProvider';
-import { getUserData, saveUserData } from '../data/firebase';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { userDataState } from '../state/userData';
 
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
@@ -71,6 +72,8 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [rzAudioList, setRzAudioList] = useState<RZAudio[]>([]);
+    const userData = useRecoilValue(userDataState);
+    const setUserData = useSetRecoilState(userDataState);
 
     // Subscription arrays and methods
     const onPlaySubscribers = useRef<Array<() => void>>([]);
@@ -88,9 +91,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const reportPlayback = async () => {
         const userId = user?.id;
         if (rzAudio && isPlaying && userId) {
-            const userData = await getUserData(userId);
-            userData.playedAudioIds.push(rzAudio.id);
-            await saveUserData(userData);            
+            const newUserData = userData.clone();            
+            newUserData.playedAudioIds.push(rzAudio.id);
+            setUserData(newUserData);            
         }
     }
 

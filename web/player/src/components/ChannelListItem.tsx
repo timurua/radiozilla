@@ -1,23 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Image, ListGroup } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Image, ListGroup } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { RZChannel } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
 
-interface ChannelListItemProps {
-    channel: RZChannel;
-    onClick?: (channel: RZChannel) => void;
-    selected?: boolean;
-}
+export function ChannelListItem({ channel }: { channel: RZChannel }) {
+    const navigate = useNavigate();
+    const handleClick = () => {        
+        navigate(`/channel/${channel.id}`);
+        window.scrollTo({ top: 0, behavior: 'instant' });
 
-export const ChannelListItem: React.FC<ChannelListItemProps> = ({
-    channel,
-    onClick = null,
-}) => {
-    const handleClick = () => {
-        onClick?.(channel);
     };
-
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
     useEffect(() => {
@@ -35,13 +29,11 @@ export const ChannelListItem: React.FC<ChannelListItemProps> = ({
 
     return (
         <ListGroup.Item onClick={handleClick} key={channel.id} className={"no-select d-flex align-items-center text-light bg-dark"}>
-            <Card className='bg-dark text-white border-secondary no-select d-flex flex-row align-items-center'>
-                {imageUrl && <Image src={imageUrl} rounded className="m-3 text-light" width={50} height={50} />}
-                <Card.Body>
-                    <Card.Title>{channel.name}</Card.Title>
-                    <Card.Text>{channel.description}</Card.Text>
-                </Card.Body>
-            </Card>
+            <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50} />
+            <div>
+                <div className='small'>{channel.name}</div>
+                <div className='small'>{channel.description}</div>
+            </div>
         </ListGroup.Item>
     );
 };

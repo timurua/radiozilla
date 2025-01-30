@@ -12,7 +12,7 @@ export const audioRetrivalState = atom<AudioRetreival>({
     key: 'CurrentAudioSorting',
     default: {        
         sorting: PlayableSorting.Date,
-    }
+    },
 });
 
 export const rzAudiosState = selector({

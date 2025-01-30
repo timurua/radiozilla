@@ -8,6 +8,7 @@ import { getAudioListForChannel, getChannel } from '../data/firebase';
 import { RZAudio, RZChannel } from "../data/model";
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
+import { ChannelSubscribeButton } from '../components/ChannelSubscribeButton';
 
 
 function Channel() {
@@ -49,7 +50,7 @@ function Channel() {
             <Card className='bg-dark text-white border-secondary no-select d-flex flex-row align-items-center'>
               {imageUrl && <Image src={imageUrl} rounded className="m-3 text-light" width={50} height={50} />}
               <Card.Body>
-                <Card.Title>{rzChannel.name}</Card.Title>
+                <Card.Title>{rzChannel.name} <ChannelSubscribeButton channel={rzChannel}></ChannelSubscribeButton></Card.Title>
                 <Card.Text>{rzChannel.description}</Card.Text>
               </Card.Body>
             </Card>

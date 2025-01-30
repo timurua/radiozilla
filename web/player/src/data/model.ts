@@ -37,13 +37,45 @@ export class RZUser {
 
 export class RZUserData {
   constructor(
-    public id: string,    
+    public id: string|null,    
+    public displayName: string|null,
+    public email: string|null,
+    public imageURL: string|null,
+    public createdAt: Date|null,
     public subscribedChannelIds: string[],    
     public likedAudioIds: string[],
     public playedAudioIds: string[],
     public searchHistory: string[],
-  ) {
+  ) {    
   }
+
+  static empty(): RZUserData {
+    return new RZUserData(
+      null,
+      null,
+      null,
+      null,
+      null,
+      [],
+      [],
+      [],
+      [],
+    );
+  }
+
+  clone(): RZUserData {
+    return new RZUserData(
+      this.id,
+      this.displayName,
+      this.email,
+      this.imageURL,
+      this.createdAt,
+      this.subscribedChannelIds.slice(),
+      this.likedAudioIds.slice(),
+      this.playedAudioIds.slice(),
+      this.searchHistory.slice(),
+    );
+  }    
 }
 
 export class RZAuthor {

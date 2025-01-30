@@ -16,7 +16,9 @@ import { CookieConsent } from '../components/CookieConsent';
 import logger from '../utils/logger';
 import NoPlayerScreen from '../components/NoPlayerScreen';
 import Spinner from '../components/Spinner';
-import { RZUser } from '../data/model';
+import { RZUser, RZUserData } from '../data/model';
+import { userDataState } from '../state/userData';
+import { getUserData } from '../data/firebase';
 
 export interface AuthContextType {
   user: RZUser | null;
@@ -45,14 +47,16 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
   const userLoading = useRecoilValue(userLoadingState);
   const cookieConsent = useRecoilValue(cookieConsentState);
   const isOnline = useRecoilValue(isOnlineState);
+  const setUserDataState = useSetRecoilState(userDataState);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
       setUserLoading(false);
-      if(user === null) {
+      if (user === null) {
         setUser(null);
+        setUserDataState(RZUserData.empty());
         return;
-      }      
+      }
       setUser(new RZUser(
         user?.uid ?? '',
         user?.email ?? '',
@@ -60,13 +64,19 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
         user?.photoURL ?? '',
         user?.isAnonymous ?? false,
       ));
+      const updateData = async () => {
+        setUserDataState(
+          await getUserData(user.uid)
+        );
+      };
+      updateData();
     });
 
     return () => unsubscribe();
   }, [setUser, setUserLoading]);
 
   const checkCookieConsent = (): void => {
-    logger.debug(`Checking cookie consent, value: ${cookieConsent}`); 
+    logger.debug(`Checking cookie consent, value: ${cookieConsent}`);
     if (!cookieConsent) {
       throw new Error('Please accept necessary cookies to continue');
     }
@@ -131,15 +141,15 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
     if (userLoading) {
       return;
     }
-    if(!isOnline) {
+    if (!isOnline) {
       return;
     }
     if (user === null) {
       logger.debug('No user found, signing in anonymously');
-      signInAnon();      
+      signInAnon();
       return;
     }
-    
+
   }, [userLoading, user, cookieConsent, isOnline, signInAnon]);
 
 

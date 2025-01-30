@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 
-import { Badge, Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
+import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsHandThumbsDownFill, BsHandThumbsUpFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import { RZAudio } from '../data/model';
@@ -8,6 +8,7 @@ import { storageUtils } from '../firebase';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
 import BootstrapMarkdown from './Markdown';
+import { ChannelSubscribeButton } from './ChannelSubscribeButton';
 
 function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   const {
@@ -103,7 +104,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
             <div>
               <div>{rzAudioToDisplay.name}</div>
               <small className="user-select-none" onClick={(e) => openChannel(rzAudioToDisplay, e)}>{rzAudioToDisplay.channel.name}</small>              
-                <Badge bg="secondary" className="ms-2 user-select-none">subscribe</Badge>
+                <ChannelSubscribeButton channel={rzAudioToDisplay.channel} />                
           </div>
           </div>
         ) : null}

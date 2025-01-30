@@ -1,8 +1,8 @@
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { RZAudio, RZAuthor, RZChannel, RZUserData, } from "../data/model";
 import { db } from '../firebase';
-import logger from '../utils/logger';
 import { TfIdfDocument } from '../tfidf/types';
+import logger from '../utils/logger';
 
 export const getAuthor = async (id: string): Promise<RZAuthor> => {
     const docRef = doc(db, `/authors/${id}`);
@@ -28,11 +28,15 @@ export const getUserData = async (id: string): Promise<RZUserData> => {
 
     if (docSnap.exists()) {
         const data = docSnap.data();
+        const displayName = data.displayName || null;
+        const email = data.email || null;
+        const imageURL = data.imageURL || null;
+        const createdAt = data.createdAt ? data.createdAt.toDate() : null;
         const playedAudioIds = data.playedAudioIds || [];
         const likedAudioIds = data.likedAudioIds || [];
         const searchHistory = data.searchHistory || [];
         const subscribedChannelIds = data.subscribedChannelIds || [];
-        return new RZUserData(id, subscribedChannelIds, likedAudioIds, playedAudioIds, searchHistory);
+        return new RZUserData(id, displayName, email, imageURL, createdAt, subscribedChannelIds, likedAudioIds, playedAudioIds, searchHistory);
     } else {
         logger.log(`No user found with ID: ${id}`);
         throw new Error(`No user found with ID: ${id}`);
@@ -46,11 +50,16 @@ export const saveUserData = async (userData: RZUserData) => {
     const searchHistory = userData.searchHistory || [];
     const subscribedChannelIds = new Set(userData.subscribedChannelIds || []);
 
-    await updateDoc(userDocRef, {
+    await setDoc(userDocRef, {
+        id: userData.id,
+        displayName: userData.displayName,
+        email: userData.email,
+        imageURL: userData.imageURL,
+        createdAt: userData.createdAt,
         playedAudioIds: Array.from(playedAudioIds),
         likedAudioIds: Array.from(likedAudioIds),
         searchHistory,
-        subscribedChannelIds
+        subscribedChannelIds: Array.from(subscribedChannelIds)
     });
 }
 

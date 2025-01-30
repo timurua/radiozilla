@@ -36,9 +36,10 @@ export const onCreate = functions.auth.user().onCreate(
             email: user?.email || null,
             imageURL: user?.photoURL || null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            subscribedChannelIds: [],
+            subscribedChannelIds: [],    
             likedAudioIds: [],
-            listenedAudioIds: [],
+            playedAudioIds: [],
+            searchHistory: [],            
         };
 
         // Create a document in the "users" collection with the UID

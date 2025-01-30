@@ -1,27 +1,28 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Card, Col, ListGroup, Row } from 'react-bootstrap';
 import { BsPerson, BsPersonCircle } from 'react-icons/bs';
+import { useRecoilValue } from 'recoil';
 import { AudioListItem } from '../components/AudioListItem';
+import ChannelListItem from '../components/ChannelListItem';
 import PlayerScreen from '../components/PlayerScreen';
-import { getAudioListByIds, getChannels, getUserData, } from '../data/firebase';
+import { getAudioListByIds, getChannels } from '../data/firebase';
 import { RZAudio, RZChannel } from "../data/model";
 import { useAuth } from '../providers/AuthProvider';
-import ChannelListItem from '../components/ChannelListItem';
+import { userDataState } from '../state/userData';
 
 function UserProfile() {
 
   const { user } = useAuth();
   const [playedAudios, setPlayedAudios] = useState<RZAudio[]>([]);
   const [subscribedChannels, setSubscribedChannels] = useState<RZChannel[]>([]);
+  const userData = useRecoilValue(userDataState);
 
   useEffect(() => {    
     const fetchHistory = async () => {
       const userId = user?.id;
       if (!userId) {
         return;
-      }
-
-      const userData = await getUserData(userId);
+      }      
       const userSubscribedChannels = await getChannels(userData.subscribedChannelIds);
       setSubscribedChannels(userSubscribedChannels);
 
@@ -30,7 +31,7 @@ function UserProfile() {
     };
 
     fetchHistory();
-  }, [user]);
+  }, [user, userData]);
 
   return (
 
@@ -64,7 +65,7 @@ function UserProfile() {
             <Card.Title>Subscribed Channels</Card.Title>
             <ListGroup variant="flush" className='bg-dark text-white'>
               {subscribedChannels.length === 0 ? (
-                <ListGroup.Item className='bg-dark text-white'>Subscribed to channels to get the latest updates</ListGroup.Item>
+                <ListGroup.Item className='bg-dark text-white'>Subscribe to channels to get the latest updates</ListGroup.Item>
               ) : subscribedChannels.map((channel) => (
                 <ChannelListItem key={channel.id} channel={channel} />                
               ))}
@@ -78,7 +79,7 @@ function UserProfile() {
             <Card.Title>History</Card.Title>
             <ListGroup variant="flush" className='bg-dark text-white'>
               {playedAudios.length === 0 ? (
-                <ListGroup.Item className='bg-dark text-white'>No Subscribed Channels</ListGroup.Item>
+                <ListGroup.Item className='bg-dark text-white'>No audios in history</ListGroup.Item>
               ) : playedAudios.map((rzAudio) => (
                 <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
               ))}

@@ -34,7 +34,7 @@ class SummaryPrompt:
         prompt = (
                 f"Provide a {self.config.tone.value} summary in {self.config.language} "
                 f"that focuses on {', '.join([focus.value for focus in self.config.focuses])}. "
-                f"The summary should be {self.config.length.value} in length. The summary text should not contain any markdown markup or urls.\n\n"
+                f"The summary should be {self.config.length.value} in length.\n\n"
                 f"{self.text}")
         return prompt
     

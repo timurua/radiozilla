@@ -9,6 +9,7 @@ from ..db.service import WebPageService, WebPageSummaryService, WebPageJobServic
 from ..db.web_page import WebPage
 from ..utils.parallel import ParallelTaskManager
 from dateutil.parser import parse
+from .markdown import MarkdownStripper
 
 logger = logging.getLogger("summarizer")
 
@@ -22,10 +23,10 @@ class SummarizerService:
 
     async def summarize_web_pages(self) -> None:
 
-        self.logger.info("Summarizing web pages for prefix: {url_prefix}")
+        self.logger.info("Summarizing web pages")
         normalized_urls = []
     
-        async with await Database.get_session() as session:        
+        async with Database.get_session() as session:        
             normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SCRAPED_NEED_SUMMARIZING)
                 
         manager = ParallelTaskManager[str](max_concurrent_tasks=4)        
@@ -37,7 +38,7 @@ class SummarizerService:
 
         
     async def summarize_web_page(self, normalized_url: str) -> None: 
-        async with await Database.get_session() as session:
+        async with Database.get_session() as session:
             web_page_summary_service = WebPageSummaryService(session)
             web_page_service = WebPageService(session)
             web_page = await web_page_service.find_by_url(normalized_url)
@@ -61,7 +62,9 @@ class SummarizerService:
             )
 
             prompt = summary_prompt.get_prompt()
-            summary = await self.ollama_client.generate(prompt)
+
+            summary_with_markdown = await self.ollama_client.generate(prompt)
+            summary = MarkdownStripper().strip_all(summary_with_markdown)
 
             published_at = web_page.metadata_published_at
             if published_at is None:
@@ -77,7 +80,7 @@ class SummarizerService:
 
             self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
             
-            async with await Database.get_session() as session2:
+            async with Database.get_session() as session2:
                 web_page_summary_service = WebPageSummaryService(session2)
                 await web_page_summary_service.upsert(WebPageSummary(
                     normalized_url = web_page.normalized_url,

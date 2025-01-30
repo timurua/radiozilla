@@ -53,18 +53,17 @@ async def scrape_channel(channel: WebPageChannel)->None:
     await scraper.run()    
     
 async def scrape_channels()->None:
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
         task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
-        
-        async def stack_scrape_channel(web_page_channel: WebPageChannel):
-            task_manager.submit_task(scrape_channel(web_page_channel))            
-        await web_page_channel_service.find_all(stack_scrape_channel)
+                 
+        for channel in await web_page_channel_service.find_all():
+            task_manager.submit_task(scrape_channel(channel))            
                 
         await task_manager.wait_all()
     
 async def create_channels()->None:
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
         # await web_page_channel_service.upsert_web_page_channel(
         #     WebPageChannel(
@@ -144,21 +143,21 @@ async def create_channels()->None:
                 scraper_follow_sitemap_links=True   
             )
         )    
-        await web_page_channel_service.upsert(
-            WebPageChannel(
-                url="https://ai.meta.com/",
-                name="News about Meta AI",
-                description="News from Meta AI",
-                enabled=True,            
-                scraper_seeds=web_page_seed_to_dict([
-                    WebPageSeed(url="https://ai.meta.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
-                ]),
-                scraper_path_filters = ["/research/publications/"],
-                scraper_follow_web_page_links=True,
-                scraper_follow_feed_links=True,
-                scraper_follow_sitemap_links=True   
-            )
-        )        
+        # await web_page_channel_service.upsert(
+        #     WebPageChannel(
+        #         url="https://ai.meta.com/",
+        #         name="News about Meta AI",
+        #         description="News from Meta AI",
+        #         enabled=True,            
+        #         scraper_seeds=web_page_seed_to_dict([
+        #             WebPageSeed(url="https://ai.meta.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
+        #         ]),
+        #         scraper_path_filters = ["/research/publications/"],
+        #         scraper_follow_web_page_links=True,
+        #         scraper_follow_feed_links=True,
+        #         scraper_follow_sitemap_links=True   
+        #     )
+        # )        
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blogs.microsoft.com/",

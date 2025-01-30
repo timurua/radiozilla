@@ -19,9 +19,7 @@ class WebPageChannelService:
         self.logger = logging.getLogger("web_page_channel_service")
 
     async def upsert(self, web_page_channel: WebPageChannel) -> None:
-        async with self.session.begin():
-            self.logger.info(f"Inserting web page for url: {web_page_channel.url}")
-            await self.session.merge(web_page_channel, load=True)
+        await self.session.merge(web_page_channel, load=True)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
@@ -30,11 +28,11 @@ class WebPageChannelService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def find_all(self, callback: Callable[[WebPageChannel], Awaitable[None]]) -> None:
+    async def find_all(self) -> list[WebPageChannel]:
         stmt = select(WebPageChannel)
-        with await self.session.stream(stmt) as stream:
-            async for channel in stream.scalars():
-                await callback(channel)
+        result = await self.session.scalars(stmt)
+        channels = result.all()
+        return list(channels)
 
 class WebPageService:
     
@@ -43,8 +41,7 @@ class WebPageService:
         self.logger = logging.getLogger("web_page_service")
 
     async def upsert(self, web_page: WebPage) -> None:
-        async with self.session.begin_nested() as tx:
-            await self.session.merge(web_page, load=True)
+        await self.session.merge(web_page, load=True)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPage|None:
@@ -52,22 +49,15 @@ class WebPageService:
         stmt = select(WebPage).execution_options(readonly=True).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
-    
-    async def find_all(self, callback: Callable[[WebPage], Awaitable[None]]) -> None:
-        stmt = select(WebPage).execution_options(readonly=True)
-        with await self.session.stream(stmt) as stream:
-            async for web_page in stream.scalars():
-                await callback(web_page)
-                
+              
 class WebPageJobService:
     
     def __init__(self, session: AsyncSession):
         self.session = session
         self.logger = logging.getLogger("web_page_job_service")
 
-    async def upsert(self, entity: WebPageJob) -> None:        
-        async with self.session.begin_nested():
-            await self.session.merge(entity, load=True)
+    async def upsert(self, entity: WebPageJob) -> None:  
+        await self.session.merge(entity, load=True)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
@@ -77,12 +67,10 @@ class WebPageJobService:
         return result.scalar_one_or_none()
     
     async def find_with_state(self, state: WebPageJobState) -> list[str]:
-        normalized_urls = []
-        stmt = select(WebPageJob).execution_options(readonly=True).where(WebPageJob.state == state)
-        with await self.session.stream(stmt) as stream:
-            async for job in stream.scalars():
-                normalized_urls.append(job.normalized_url)
-        return normalized_urls
+        stmt = select(WebPageJob.normalized_url).where(WebPageJob.state == state)    
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+    
     
 class WebPageSummaryService:
     _model = None
@@ -92,46 +80,12 @@ class WebPageSummaryService:
         self.logger = logging.getLogger("web_page_summary_service")
 
     async def upsert(self, web_page_summary: WebPageSummary) -> None:
-        async with self.session.begin() as tx:
-            self.logger.info(f"Inserting web page summary for url: {web_page_summary.normalized_url}")            
-            await self.session.merge(web_page_summary)
-            await tx.commit()
-
-    async def update(self, web_page_summary: WebPageSummary) -> None:
-        self.logger.info(f"Updating web page summary for url: {web_page_summary.normalized_url}")
-        existing = await self.session.get(WebPageSummary, web_page_summary.normalized_url_hash)
-        if existing is None:
-            raise ValueError(f"Web page summary not found for url: {web_page_summary.normalized_url}")
-        
-        
-        existing.normalized_url = web_page_summary.normalized_url
-        existing.title = web_page_summary.title
-        existing.description = web_page_summary.description
-        existing.image_url = web_page_summary.image_url
-        existing.published_at = web_page_summary.published_at
-        existing.text = web_page_summary.text
-        existing.summarized_text = web_page_summary.summarized_text
-        existing.summarized_text_audio_url = web_page_summary.summarized_text_audio_url
-        existing.topics = web_page_summary.topics
-        existing.updated_at = web_page_summary.updated_at
-        existing.summarized_text_audio_duration_seconds = web_page_summary.summarized_text_audio_duration_seconds
-        await self.session.commit()        
-
+        await self.session.merge(web_page_summary)
+                
     async def find_by_url(self, normalized_url: str) -> WebPageSummary|None:
         hash = normalized_url_hash(normalized_url)
         return await self.session.get(WebPageSummary, hash)
     
-    async def find_without_audio(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
-        stmt = select(WebPageSummary).where(WebPageSummary.summarized_text_audio_url == None)
-        with await self.session.stream(stmt) as stream:
-            async for web_page in stream.scalars():
-                await callback(web_page)
-
-    async def find_all(self, callback: Callable[[WebPageSummary], Awaitable[None]]) -> None:
-        stmt = select(WebPageSummary)
-        with await self.session.stream(stmt) as stream:
-            async for web_page in stream.scalars():
-                await callback(web_page)                
 
 @dataclass
 class FrontendAudioSearchResult:

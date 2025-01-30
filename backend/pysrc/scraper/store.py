@@ -11,6 +11,7 @@ from typing import Callable
 from ..db.service import WebPageService, WebPageJobService
 from ..db.database import Database
 from datetime import datetime
+from ..db.web_page import is_state_good_for_publishing
 
 logger = logging.getLogger("scraper_store")
 
@@ -26,7 +27,7 @@ class ServiceScraperStore(ScraperStore):
         self._on_web_page = on_web_page
 
     async def store_page(self, response: ScraperWebPage) -> None:
-        async with await Database.get_session() as session:
+        async with Database.get_session() as session:
             
             existing_web_page = await WebPageService(session).find_by_url(response.normalized_url)
             existing_web_page_job = await WebPageJobService(session).find_by_url(response.normalized_url)
@@ -58,10 +59,7 @@ class ServiceScraperStore(ScraperStore):
             
             if existing_web_page is None or existing_web_page.content != new_web_page.content:
                 await WebPageService(session).upsert(new_web_page)                            
-                if existing_web_page_job is None \
-                    or (
-                        existing_web_page_job.state != WebPageJobState.NEED_UNPUBLISHING \
-                        and existing_web_page_job.state != WebPageJobState.UNPUBLISHED ):
+                if existing_web_page_job is None or is_state_good_for_publishing(existing_web_page_job):
                     await WebPageJobService(session).upsert(WebPageJob(
                         normalized_url = response.normalized_url,
                         state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
@@ -70,37 +68,38 @@ class ServiceScraperStore(ScraperStore):
 
 
     async def load_page(self, normalized_url: str) -> Optional[ScraperWebPage]:        
-        async with await Database.get_session() as session:
+        async with Database.get_session() as session:
             web_page = await WebPageService(session).find_by_url(normalized_url)            
             if web_page is not None:
                 if web_page.requested_at and (datetime.now() - web_page.requested_at).total_seconds() > self.rerequest_after_hours * 60 * 60:
                     return None
                 
-            if web_page:
-                return ScraperWebPage(
-                    status_code = web_page.status_code,
-                    url = web_page.url,
-                    normalized_url = web_page.normalized_url,
-                    headers = web_page.headers,
-                    content = web_page.content,
-                    content_type = web_page.content_type,
-                    content_charset = web_page.content_charset,
-                    requested_at= web_page.requested_at,
+            if web_page is None:
+                return None
+            
+            return ScraperWebPage(
+                status_code = web_page.status_code,
+                url = web_page.url,
+                normalized_url = web_page.normalized_url,
+                headers = web_page.headers,
+                content = web_page.content,
+                content_type = web_page.content_type,
+                content_charset = web_page.content_charset,
+                requested_at= web_page.requested_at,
 
-                    metadata_title = web_page.metadata_title,
-                    metadata_description = web_page.metadata_description,
-                    metadata_image_url = web_page.metadata_image_url,
-                    metadata_published_at = web_page.metadata_published_at,
+                metadata_title = web_page.metadata_title,
+                metadata_description = web_page.metadata_description,
+                metadata_image_url = web_page.metadata_image_url,
+                metadata_published_at = web_page.metadata_published_at,
 
-                    canonical_url = web_page.canonical_url,
-                    outgoing_urls = web_page.outgoing_urls,
-                    visible_text = web_page.visible_text,
-                    sitemap_urls = web_page.sitemap_urls,
-                    feed_urls = web_page.feed_urls,
-                    robots_content = web_page.robots_content,
-                    text_chunks = web_page.text_chunks
-                )
-            return None
+                canonical_url = web_page.canonical_url,
+                outgoing_urls = web_page.outgoing_urls,
+                visible_text = web_page.visible_text,
+                sitemap_urls = web_page.sitemap_urls,
+                feed_urls = web_page.feed_urls,
+                robots_content = web_page.robots_content,
+                text_chunks = web_page.text_chunks
+            )
 
     
 def get_scraper_store_factory(on_web_page: Callable[[WebPage],None]) -> ScraperStoreFactory:    

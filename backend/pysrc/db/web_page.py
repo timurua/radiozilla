@@ -124,6 +124,10 @@ class WebPageJobState(Enum):
     PUBLISHED = 4
     NEED_UNPUBLISHING = 5
     UNPUBLISHED = 6
+
+
+def is_state_good_for_publishing(state: "WebPageJobState") -> bool:
+    return state != WebPageJobState.NEED_UNPUBLISHING and state != WebPageJobState.UNPUBLISHED
         
 class WebPageJob(TimestampModel):
     __tablename__ = "web_page_jobs"

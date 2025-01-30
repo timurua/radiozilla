@@ -17,12 +17,14 @@ from datetime import datetime
 from pysrc.summarizer.texts import EmbeddingService
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.config.jobs import Jobs
+import concurrent
 
 class PublisherContext:
     def __init__(self, rz_author: rzfb.RzAuthor, rz_channels: dict[str, rzfb.RzChannel]):
         self.rz_author = rz_author
         self.rz_channels = rz_channels
 
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
 
 async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
     rz_author = rzfb.RzAuthor(
@@ -31,11 +33,12 @@ async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
         description='Radiozilla is a podcasting platform that allows you to listen to your favorite AI podcasts.',        
         image=rzfb.Blob(file_path=f"{RzConfig.instance().image_resource_dir}/file-person.svg")
     )
-    rz_author.upload_and_save(firebase)
-    
+    rz_author.upload_and_save(firebase)    
     channels: dict[str, rzfb.RzChannel] = {}
-    async def process_channel(channel: WebPageChannel):
-        rz_channel = rzfb.RzChannel(
+            
+    async with Database.get_session() as session:
+        for channel in await WebPageChannelService(session).find_all():
+            rz_channel = rzfb.RzChannel(
             id= channel.normalized_url_hash,
             name=channel.name,
             description=channel.description,
@@ -45,16 +48,13 @@ async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
         )        
         rz_channel.upload_and_save(firebase)
         channels[channel.normalized_url_hash] = rz_channel
-            
-    async with await Database.get_session() as session:
-        await WebPageChannelService(session).find_all(process_channel)
     return PublisherContext(rz_author, channels)
 
 async def publish_frontend_audio(                                
                                  web_page_summary: WebPageSummary, 
                                  publisher_context: PublisherContext) -> None:
     
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         frontend_audio_service = FrontendAudioService(session)
 
         title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title or "")
@@ -79,14 +79,14 @@ async def publish_frontend_audio(
         )
         await frontend_audio_service.upsert(frontend_audio)        
         
-        WebPageJobService(session).upsert(WebPageJob(
+        await WebPageJobService(session).upsert(WebPageJob(
             normalized_url=web_page_summary.normalized_url,
             state=WebPageJobState.PUBLISHED
         ))
         
 async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_context: PublisherContext) -> None:
     web_page_summary = None
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
         
     if web_page_summary is None or web_page_summary.title is None:
@@ -101,7 +101,7 @@ async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_con
 async def unpublish(normalized_url: str, rz_firebase: rzfb.Firebase) -> None:
     hash = normalized_url_hash(normalized_url)        
     rzfb.RzAudio.delete(rz_firebase, hash)    
-    async with await Database.get_session() as session:
+    async with Database.get_session() as session:
         await WebPageJobService(session).upsert(WebPageJob(
             normalized_url=normalized_url,
             state=WebPageJobState.UNPUBLISHED
@@ -115,16 +115,14 @@ async def main():
     rz_firebase = rzfb.Firebase(RzConfig.instance().google_account_file)    
     
     normalized_urls_need_publishing = []
-    async with await Database.get_session() as session:
-        normalized_urls_need_publishing = await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING)
-        
     normalized_urls_need_unpublishing = []
-    async with await Database.get_session() as session:
-        normalized_urls_need_unpublishing = await WebPageJobService(session).find_with_state(WebPageJobState.NEED_UNPUBLISHING)
+    async with Database.get_session() as session:
+        normalized_urls_need_publishing = await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING)
+        normalized_urls_need_unpublishing = await WebPageJobService(session).find_with_state(WebPageJobState.NEED_UNPUBLISHING)      
     
     publisher_context = await publish_firebase_channels(rz_firebase)
     
-    task_manager = ParallelTaskManager(4)
+    task_manager = ParallelTaskManager(8)
     for normalized_url in normalized_urls_need_publishing:
         task_manager.submit_task(publish(normalized_url, rz_firebase, publisher_context))
     for normalized_url in normalized_urls_need_unpublishing:
@@ -181,7 +179,9 @@ async def publish_web_summary(rz_firebase: rzfb.Firebase, publisher_context: Pub
         uploaded_at=datetime.now(),
         audio_text=web_page_summary.summarized_text
     )    
-    rz_audio.upload_and_save(rz_firebase)
+        
+    await asyncio.get_event_loop().run_in_executor(executor, rz_audio.upload_and_save, rz_firebase)
+    
     try:
         os.remove(temp_audio_file)
     except FileNotFoundError:

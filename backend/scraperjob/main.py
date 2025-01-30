@@ -202,6 +202,7 @@ async def create_channels()->None:
                     WebPageSeed(url="https://blog.crewai.com/", type=WebPageSeedType.HTML),
                 ]),
                 include_path_patterns = ["/*/"],
+                exclude_path_patterns = ["/author/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   

@@ -63,8 +63,7 @@ class SummarizerService:
 
             prompt = summary_prompt.get_prompt()
 
-            summary_with_markdown = await self.ollama_client.generate(prompt)
-            summary = MarkdownStripper().strip_all(summary_with_markdown)
+            summary = await self.ollama_client.generate(prompt)
 
             published_at = web_page.metadata_published_at
             if published_at is None:

@@ -39,7 +39,8 @@ async def scrape_channel(channel: WebPageChannel)->None:
     scraper = Scraper(
         ScraperConfig(
             seed_urls=seed_urls,
-            path_filters=channel.scraper_path_filters if channel.scraper_path_filters else [],
+            include_path_patterns=channel.include_path_patterns if channel.include_path_patterns else [],
+            exclude_path_patterns=channel.exclude_path_patterns if channel.exclude_path_patterns else [],
             max_parallel_requests=5,
             use_headless_browser=False,
             request_timeout_seconds=30,
@@ -75,7 +76,7 @@ async def create_channels()->None:
         #         scraper_seeds= web_page_seed_to_dict([
         #             WebPageSeed(url="https://aws.amazon.com/", type=WebPageSeedType.HTML),
         #         ]),
-        #         scraper_path_filters=["/blogs/machine-learning/"],
+        #         include_path_patterns=["/blogs/machine-learning/"],
         #         scraper_follow_web_page_links=True,
         #         scraper_follow_feed_links=True,
         #         scraper_follow_sitemap_links=True   
@@ -91,7 +92,7 @@ async def create_channels()->None:
         #         scraper_seeds=web_page_seed_to_dict([
         #             WebPageSeed(url="https://blogs.nvidia.com/", type=WebPageSeedType.HTML),
         #         ]),
-        #         scraper_path_filters = ["/blog/"],
+        #         include_path_patterns = ["/blog/"],
         #         scraper_follow_web_page_links=True,
         #         scraper_follow_feed_links=True,
         #         scraper_follow_sitemap_links=True   
@@ -105,7 +106,7 @@ async def create_channels()->None:
                 image_url="https://anthropic.com/favicon.ico",
                 enabled=True,
                 scraper_seeds= web_page_seed_to_dict([WebPageSeed("https://anthropic.com/", WebPageSeedType.HTML)]),
-                scraper_path_filters = ["/research/", "/news/"],
+                include_path_patterns = ["/research/", "/news/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -121,7 +122,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://deepmind.google/sitemap.xml", type=WebPageSeedType.SITEMAP),
                 ]),
-                scraper_path_filters = ["/research/"],
+                include_path_patterns = ["/research/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -137,7 +138,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://openai.com/sitemap.xml/research/", type=WebPageSeedType.SITEMAP),
                 ]),
-                scraper_path_filters = ["/index/"],
+                include_path_patterns = ["/index/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -152,7 +153,7 @@ async def create_channels()->None:
         #         scraper_seeds=web_page_seed_to_dict([
         #             WebPageSeed(url="https://ai.meta.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
         #         ]),
-        #         scraper_path_filters = ["/research/publications/"],
+        #         include_path_patterns = ["/research/publications/"],
         #         scraper_follow_web_page_links=True,
         #         scraper_follow_feed_links=True,
         #         scraper_follow_sitemap_links=True   
@@ -167,7 +168,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://blogs.microsoft.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
                 ]),
-                scraper_path_filters = ["/blog/2022/", "/blog/2023/", "/blog/2024/", "/blog/2025/"],
+                include_path_patterns = ["/blog/2022/", "/blog/2023/", "/blog/2024/", "/blog/2025/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -183,7 +184,8 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://cohere.com/", type=WebPageSeedType.HTML),
                 ]),
-                scraper_path_filters = ["/research/papers/", "/blog/"],
+                include_path_patterns = ["/research/papers/", "/blog/"],
+                exclude_path_patterns = ["/blog/authors/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -199,7 +201,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://blog.crewai.com/", type=WebPageSeedType.HTML),
                 ]),
-                scraper_path_filters = ["/*/"],
+                include_path_patterns = ["/*/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -215,7 +217,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://scale.com/", type=WebPageSeedType.HTML),
                 ]),
-                scraper_path_filters = ["/research/", "/blog/"],
+                include_path_patterns = ["/research/", "/blog/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   
@@ -231,7 +233,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://stability.ai/", type=WebPageSeedType.HTML),
                 ]),
-                scraper_path_filters = ["/news/"],
+                include_path_patterns = ["/news/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   

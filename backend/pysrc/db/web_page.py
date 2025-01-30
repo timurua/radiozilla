@@ -47,7 +47,8 @@ class WebPageChannel(TimestampModel):
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     
     scraper_seeds: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, nullable=True, default=None)
-    scraper_path_filters: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    include_path_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    exclude_path_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
     scraper_follow_web_page_links: Mapped[bool] = mapped_column(Boolean, default=False)
     scraper_follow_feed_links: Mapped[bool] = mapped_column(Boolean, default=True)
     scraper_follow_sitemap_links: Mapped[bool] = mapped_column(Boolean, default=True)

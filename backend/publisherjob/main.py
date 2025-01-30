@@ -122,7 +122,7 @@ async def main():
     
     publisher_context = await publish_firebase_channels(rz_firebase)
     
-    task_manager = ParallelTaskManager(8)
+    task_manager = ParallelTaskManager(4)
     for normalized_url in normalized_urls_need_publishing:
         task_manager.submit_task(publish(normalized_url, rz_firebase, publisher_context))
     for normalized_url in normalized_urls_need_unpublishing:

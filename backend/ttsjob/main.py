@@ -12,6 +12,9 @@ import soundfile as sf  # type: ignore
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.process.runner import ProcessRunner
 from pysrc.config.jobs import Jobs
+from pysrc.summarizer.markdown import MarkdownStripper
+from pysrc.utils.numberspeller import NumberTextPreprocessor
+from pysrc.utils.latexcleaner import LatexCleaner
 
 @click.command()
 async def main():
@@ -115,11 +118,21 @@ def convert_wav_to_m4a(input_wav_path, output_m4a_path) -> bool:
                             
 
 async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel) -> WebPageSummary:    
-    summarized_text = web_page_summary.summarized_text
+    
+    summarized_text = MarkdownStripper().strip_all(web_page_summary.summarized_text)
+    summarized_text = f"""{channel.name} 
+        {web_page_summary.published_at.strftime("%B %d %Y") if web_page_summary.published_at is not None else ""} 
+        {summarized_text} """
+
+    summarized_text = LatexCleaner().clean(summarized_text, "math equation")
+    summarized_text = NumberTextPreprocessor().preprocess(summarized_text)
+    summarized_text.replace("%", " percent ")
+
+    logging.warning(f"Summarized text: {web_page_summary.summarized_text}")
+    logging.warning(f"TTS text: {summarized_text}")
+
     text_file = f"/app/audio/{web_page_summary.normalized_url_hash}.txt"
-    with open(text_file, "w", encoding="utf-8") as f:
-        f.write(channel.name + "\n")
-        f.write(web_page_summary.published_at.strftime("%B %d %Y") if web_page_summary.published_at is not None else "" + "\n") 
+    with open(text_file, "w", encoding="utf-8") as f:    
         f.write(summarized_text)
 
     audio_file_wav = f"/app/audio/{web_page_summary.normalized_url_hash}.wav"

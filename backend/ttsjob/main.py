@@ -4,7 +4,7 @@ import asyncio
 import logging
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageSummaryService, WebPageJobService, WebPageChannelService
-from pysrc.db.web_page import WebPageSummary, WebPageJobState, WebPageChannel
+from pysrc.db.web_page import WebPageSummary, WebPageJobState, WebPageChannel, WebPageJob
 import ffmpeg # type: ignore
 from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig
@@ -25,15 +25,21 @@ async def main():
     
     async def process_web_page_summary(normalized_url: str):
         web_page_summary = None
+        web_page_channel = None
 
         async with Database.get_session() as session:
-            web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
-            web_page_channel = await WebPageChannelService(session).find_by_hash(web_page_summary.channel_normalized_url_hash)
+            web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)            
+            if web_page_summary:
+                web_page_channel = await WebPageChannelService(session).find_by_hash(web_page_summary.channel_normalized_url_hash)
         logging.info(f"Processing summary for URL: {normalized_url}")
-        if web_page_summary:
+        if web_page_summary and web_page_channel:
             updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)
             async with Database.get_session() as session:
                 await WebPageSummaryService(session).upsert(updated_web_page_summary)
+                await WebPageJobService(session).upsert(WebPageJob(
+                    normalized_url = normalized_url,
+                    state = WebPageJobState.TTSED_NEED_PUBLISHING,                
+                ))   
                 
             
             

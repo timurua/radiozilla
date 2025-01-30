@@ -100,7 +100,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://anthropic.com/",
-                name="Anthropic",
+                name="News about Anthropic",
                 description="News from Anthropic",
                 image_url="https://anthropic.com/favicon.ico",
                 enabled=True,
@@ -176,7 +176,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://cohere.com/",
-                name="Cohere",
+                name="News about Cohere",
                 description="News about Cohere",
                 image_url="https://cohere.com/favicon.ico",
                 enabled=True,
@@ -192,7 +192,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blog.crewai.com/",
-                name="CrewAI",
+                name="News about CrewAI",
                 description="News about CrewAI",
                 image_url="https://www.crewai.com/favicon.ico",
                 enabled=True,

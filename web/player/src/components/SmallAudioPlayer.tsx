@@ -2,21 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { storageUtils } from '../firebase';
 
 import { Button, ButtonGroup, Image, ProgressBar } from 'react-bootstrap';
-import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
+import { BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
+import { useNavigate } from 'react-router-dom';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
-import { useNavigate } from 'react-router-dom';
 
 
 function SmallAudioPlayerImpl() {
   const {
     play,
+    playNext,
+    playPrevious,
     pause,
     rzAudio,
     isPlaying,
     currentTime,
-    duration,
-    setCurrentTime } = useAudio();
+    duration } = useAudio();
 
   const navigate = useNavigate();
 
@@ -30,17 +31,26 @@ function SmallAudioPlayerImpl() {
     }
   };
 
-  const handleRewind = () => {
-    if (currentTime) {
-      setCurrentTime(Math.max(0, currentTime - 10));
-    }
+  // const handleRewind = () => {
+  //   if (currentTime) {
+  //     setCurrentTime(Math.max(0, currentTime - 10));
+  //   }
+  // };
+
+  // const handleForward = () => {
+  //   if (currentTime) {
+  //     setCurrentTime(Math.min(duration, currentTime + 10));
+  //   }
+  // };
+
+  const handlePrevious = () => {
+    playPrevious();
   };
 
-  const handleForward = () => {
-    if (currentTime) {
-      setCurrentTime(Math.min(duration, currentTime + 10));
-    }
+  const handleNext = () => {
+    playNext();
   };
+
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -93,14 +103,14 @@ function SmallAudioPlayerImpl() {
         ) : null}
         <div className="d-flex align-items-center">
           <ButtonGroup>
-            <Button variant="dark" onClick={handleRewind}>
-              <BsRewindFill size={20} />
+            <Button variant="dark" onClick={handlePrevious}>
+              <BsSkipStartFill size={20} />
             </Button>
             <Button variant="dark" onClick={togglePlayPause}>
               {isPlaying ? (<BsPause size={30} />) : (<BsPlayFill size={30} />)}
             </Button>
-            <Button variant="dark" onClick={handleForward}>
-              <BsFastForwardFill size={20} />
+            <Button variant="dark" onClick={handleNext}>
+              <BsSkipEndFill size={20} />
             </Button>
           </ButtonGroup>
         </div>

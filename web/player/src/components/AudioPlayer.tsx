@@ -1,18 +1,20 @@
 import { Suspense, useEffect, useState } from 'react';
 
 import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
-import { BsFastForwardFill, BsHandThumbsDownFill, BsHandThumbsUpFill, BsPause, BsPlayFill, BsRewindFill } from 'react-icons/bs';
+import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
-import BootstrapMarkdown from './Markdown';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';
+import BootstrapMarkdown from './Markdown';
 
 function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudio = null }: { showExtendedInfo?: boolean, displayAudio? : RZAudio|null }) {
   const {
     play,
+    playNext,
+    playPrevious,
     pause,
     rzAudio,
     isPlaying,
@@ -46,17 +48,25 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
     }
   };
 
-  const handleLike = () => {
-    if (currentTime) {
-      setCurrentTime(Math.max(0, currentTime - 10));
-    }
-  };  
+  const handlePrevious = () => {
+    playPrevious();
+  };
 
-  const handleDislike = () => {
-    if (currentTime) {
-      setCurrentTime(Math.max(0, currentTime - 10));
-    }
-  };    
+  const handleNext = () => {
+    playNext();
+  };
+
+  // const handleLike = () => {
+  //   if (currentTime) {
+  //     setCurrentTime(Math.max(0, currentTime - 10));
+  //   }
+  // };  
+
+  // const handleDislike = () => {
+  //   if (currentTime) {
+  //     setCurrentTime(Math.max(0, currentTime - 10));
+  //   }
+  // };    
 
   const handleForward = () => {
     if (currentTime) {
@@ -111,8 +121,11 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
         
         <div className="d-flex justify-content-center m-3">
           <ButtonGroup>
-            <Button size="sm" variant="dark" onClick={handleLike} className="flex-fill">
+            {/* <Button size="sm" variant="dark" onClick={handleLike} className="flex-fill">
               <BsHandThumbsUpFill size={20} />              
+            </Button> */}
+            <Button variant="dark" onClick={handlePrevious}>
+              <BsSkipStartFill size={30} />
             </Button>
             <Button variant="dark" onClick={handleRewind}>
               <BsRewindFill size={30} />
@@ -123,9 +136,12 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
             <Button variant="dark" onClick={handleForward}>
               <BsFastForwardFill size={30} />
             </Button>
-            <Button size="sm" variant="dark" onClick={handleDislike} className="flex-fill">
+            <Button variant="dark" onClick={handleNext}>
+              <BsSkipEndFill size={30} />
+            </Button>            
+            {/* <Button size="sm" variant="dark" onClick={handleDislike} className="flex-fill">
               <BsHandThumbsDownFill size={20} />              
-            </Button>
+            </Button> */}
           </ButtonGroup>
         </div>
         <div>

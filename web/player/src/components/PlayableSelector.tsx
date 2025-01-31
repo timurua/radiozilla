@@ -24,7 +24,7 @@ export function PlayableModeSelector() {
 
     return (
         
-        <ButtonGroup className="text-center mb-4 pt-4 d-flex justify-content-center">
+        <ButtonGroup className="text-center mb-4 d-flex justify-content-center">
             {modes.map((sorting) => (
                 <Button key={sorting} variant={playableRetrieval.mode === sorting ? "outline-light active" : "outline-light"} size="sm" onClick={() => setSorting(sorting)}>{sorting}</Button>
             ))}

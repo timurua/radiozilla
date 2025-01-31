@@ -23,7 +23,7 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer
                 <TopNavbar />
             </div>
 
-            <div style={{ paddingTop: '50px', paddingBottom: '100px' }}>
+            <div style={{ paddingTop: '30px', paddingBottom: '100px' }}>
                 {children}
             </div>
             <div className='bg-dark w-100 border-top border-secondary' style={{ position: 'fixed', left: '0', right: '0', bottom: '0' }}>

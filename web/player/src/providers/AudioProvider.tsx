@@ -6,7 +6,6 @@ import {
     useContext,
     useEffect,
     useMemo,
-    useRef,
     useState
 } from 'react';
 import { RZAudio } from '../data/model';
@@ -18,6 +17,8 @@ import { userDataState } from '../state/userData';
 
 interface AudioContextProps {
     play: (audio?: RZAudio) => Promise<void>;
+    playNext: () => Promise<void>;
+    playPrevious: () => Promise<void>;
     pause: () => void;
     rzAudio: RZAudio | null;
     setRzAudio: (rzAudio: RZAudio | null) => void;
@@ -29,11 +30,6 @@ interface AudioContextProps {
     hasEnded: boolean;
     currentTime: number;
     duration: number;
-    subscribeToPlay: (callback: () => void) => () => void;
-    subscribeToPause: (callback: () => void) => () => void;
-    subscribeToEnded: (callback: () => void) => () => void;
-    subscribeToLoadedMetadata: (callback: () => void) => () => void;
-    subscribeToTimeUpdate: (callback: (currentTime: number) => void) => () => void;
 }
 
 const AudioContext = createContext<AudioContextProps | undefined>(undefined);
@@ -75,13 +71,6 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const userData = useRecoilValue(userDataState);
     const setUserData = useSetRecoilState(userDataState);
 
-    // Subscription arrays and methods
-    const onPlaySubscribers = useRef<Array<() => void>>([]);
-    const onPauseSubscribers = useRef<Array<() => void>>([]);
-    const onEndedSubscribers = useRef<Array<() => void>>([]);
-    const onLoadedMetadataSubscribers = useRef<Array<() => void>>([]);
-    const onTimeUpdateSubscribers = useRef<Array<(currentTime: number) => void>>([]);
-
     const [reportedMinute, setReportedMinute] = useState<number>(-1);
 
     const audioElement = useMemo(() => {
@@ -111,53 +100,6 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.load(); // Reset the audio element
         };
     }, [audioElement]);
-
-    // Subscription methods (same as before)
-    // Subscription methods
-    const subscribeToPlay = useCallback((callback: () => void) => {
-        onPlaySubscribers.current.push(callback);
-        return () => {
-            onPlaySubscribers.current = onPlaySubscribers.current.filter(
-                (cb) => cb !== callback
-            );
-        };
-    }, [onPlaySubscribers]);
-
-    const subscribeToPause = useCallback((callback: () => void) => {
-        onPauseSubscribers.current.push(callback);
-        return () => {
-            onPauseSubscribers.current = onPauseSubscribers.current.filter(
-                (cb) => cb !== callback
-            );
-        };
-    }, [onPauseSubscribers]);
-
-    const subscribeToEnded = useCallback((callback: () => void) => {
-        onEndedSubscribers.current.push(callback);
-        return () => {
-            onEndedSubscribers.current = onEndedSubscribers.current.filter(
-                (cb) => cb !== callback
-            );
-        };
-    }, [onEndedSubscribers]);
-
-    const subscribeToLoadedMetadata = useCallback((callback: () => void) => {
-        onLoadedMetadataSubscribers.current.push(callback);
-        return () => {
-            onLoadedMetadataSubscribers.current = onLoadedMetadataSubscribers.current.filter(
-                (cb) => cb !== callback
-            );
-        };
-    }, [onLoadedMetadataSubscribers]);
-
-    const subscribeToTimeUpdate = useCallback((callback: (currentTime: number) => void) => {
-        onTimeUpdateSubscribers.current.push(callback);
-        return () => {
-            onTimeUpdateSubscribers.current = onTimeUpdateSubscribers.current.filter(
-                (cb) => cb !== callback
-            );
-        };
-    }, [onTimeUpdateSubscribers]);
 
     const setDocumentTitle = useCallback((rzAudio: RZAudio) => {
         document.title = `${rzAudio.name} - ${rzAudio.author.name}`;
@@ -192,6 +134,34 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         }
     }, [rzAudio, rzAudioList, setAudio, audioElement]);
 
+    const playNext = useCallback(async () => {        
+        setIsPlaying(false);
+        setIsPaused(false);
+        setHasEnded(true);
+        if (rzAudio) {
+            const index = rzAudioList.indexOf(rzAudio);
+            if (index < rzAudioList.length - 1) {
+                await play(rzAudioList[index + 1]);
+            }
+        } else if (rzAudioList.length > 0) {
+            await play(rzAudioList[0]);
+        }    
+    }, [rzAudio, rzAudioList, play]);
+
+    const playPrevious = useCallback(async () => {        
+        setIsPlaying(false);
+        setIsPaused(false);
+        setHasEnded(true);
+        if (rzAudio) {
+            const index = rzAudioList.indexOf(rzAudio);
+            if (index > 0) {
+                await play(rzAudioList[index - 1]);
+            }
+        } else if (rzAudioList.length > 0) {
+            await play(rzAudioList[0]);
+        }        
+    }, [rzAudio, rzAudioList, play]);
+
     const pause = useCallback(() => {
         audioElement.pause();
     }, [audioElement]);
@@ -208,20 +178,17 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             setIsPlaying(true);
             setIsPaused(false);
             setHasEnded(false);
-            onPlaySubscribers.current.forEach((callback) => callback());
         };
 
         const handlePause = () => {
             setIsPlaying(false);
             setIsPaused(true);
-            onPauseSubscribers.current.forEach((callback) => callback());
         };
 
         const handleEnded = async () => {
             setIsPlaying(false);
             setIsPaused(false);
             setHasEnded(true);
-            onEndedSubscribers.current.forEach((callback) => callback());
             if (rzAudio) {
                 const index = rzAudioList.indexOf(rzAudio);
                 if (index < rzAudioList.length - 1) {
@@ -234,15 +201,11 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
 
         const handleLoadedMetadata = () => {
             setDuration(audioElement.duration);
-            onLoadedMetadataSubscribers.current.forEach((callback) => callback());
         };
 
         const handleTimeUpdate = () => {
             setCurrentTimeState(audioElement.currentTime);
             setReportedMinute(Math.floor((audioElement.currentTime - 15) / 60));
-            onTimeUpdateSubscribers.current.forEach((callback) =>
-                callback(audioElement.currentTime)
-            );
         };
 
         const handleError = (error: Event | Error | unknown) => {
@@ -303,12 +266,14 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.removeEventListener('timeupdate', handleTimeUpdate);
             audioElement.removeEventListener('error', handleError);
         };
-    }, [rzAudio, rzAudioList, play, audioElement, setCurrentTimeState, onPlaySubscribers, onPauseSubscribers, onEndedSubscribers, onLoadedMetadataSubscribers, onTimeUpdateSubscribers]);
+    }, [rzAudio, rzAudioList, play, audioElement, setCurrentTimeState]);
 
     return (
         <AudioContext.Provider
             value={{
                 play,
+                playNext,
+                playPrevious,
                 pause,
                 rzAudio: rzAudio,
                 setRzAudio: setRzAudioState,
@@ -320,11 +285,6 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
                 hasEnded,
                 currentTime: currentTimeState,
                 duration,
-                subscribeToPlay,
-                subscribeToPause,
-                subscribeToEnded,
-                subscribeToLoadedMetadata,
-                subscribeToTimeUpdate,
             }}
         >
             {children}

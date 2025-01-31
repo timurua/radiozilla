@@ -1,7 +1,6 @@
 import { Nav, Navbar } from "react-bootstrap";
-import { BsSearch, BsMusicNote, BsPerson, BsHouseFill, BsHouse } from 'react-icons/bs';
-import { Link } from "react-router-dom";
-import { useNavigate } from 'react-router-dom';
+import { BsHouse, BsPerson, BsSearch } from 'react-icons/bs';
+import { Link, useNavigate } from "react-router-dom";
 
 export default function BottomNavbar() {
 

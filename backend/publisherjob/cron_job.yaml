@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: publisherjob
+  labels:
+    app: publisherjob
+    type: batch-process
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: publisherjob
+            type: batch-process
+        spec:
+          containers:
+          - name: python-container
+            image: localhost:32000/radiozilla-publisherjob:latest
+            resources:
+              requests:
+                memory: "16Gi"
+                cpu: "4000m"
+              limits:
+                memory: "16Gi"
+                cpu: "4000m"
+          restartPolicy: Never

@@ -76,8 +76,8 @@ class SummarizerService:
             except Exception as e:
                 self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")
                 
-            if published_at is None:
-                published_at = web_page.metadata_published_at
+            # if published_at is None:
+            #     published_at = web_page.metadata_published_at
 
             self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
             

@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scraperjob  # Changed from generateName since CronJob needs a fixed name
+  labels:
+    app: scraperjob
+    type: batch-process
+spec:
+  schedule: "0 0 * * *"  # Runs at midnight every day
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: scraperjob
+            type: batch-process
+        spec:
+          containers:
+          - name: python-container
+            image: localhost:32000/radiozilla-scraperjob:latest
+            resources:
+              requests:
+                memory: "8Gi"
+                cpu: "2000m"
+              limits:
+                memory: "8Gi"
+                cpu: "2000m"
+          restartPolicy: Never

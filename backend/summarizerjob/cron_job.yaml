@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: summarizerjob
+  labels:
+    app: summarizerjob
+    type: batch-process
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: summarizerjob
+            type: batch-process
+        spec:
+          containers:
+          - name: python-container
+            image: localhost:32000/radiozilla-summarizerjob:latest
+            resources:
+              requests:
+                memory: "16Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "1"    # Request 1 GPU
+              limits:
+                memory: "16Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "1"    # Request 1 GPU
+          restartPolicy: Never

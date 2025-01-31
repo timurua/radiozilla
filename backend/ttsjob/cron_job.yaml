@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ttsjob  # Changed from generateName since CronJobs need a fixed name
+  labels:
+    app: ttsjob
+    type: batch-process
+spec:
+  schedule: "0 * * * *"  # Run every hour at minute 0
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: ttsjob
+            type: batch-process
+        spec:
+          containers:
+          - name: python-container
+            image: localhost:32000/radiozilla-ttsjob:latest
+            resources:
+              requests:
+                memory: "64Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "1"
+              limits:
+                memory: "64Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "1"
+          restartPolicy: Never

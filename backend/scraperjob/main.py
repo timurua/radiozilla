@@ -168,7 +168,7 @@ async def create_channels()->None:
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://blogs.microsoft.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
                 ]),
-                include_path_patterns = ["/blog/2022/", "/blog/2023/", "/blog/2024/", "/blog/2025/"],
+                include_path_patterns = ["/blog/2025/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   

@@ -1,9 +1,6 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import { ListGroup } from "react-bootstrap";
-import { useRecoilValue } from "recoil";
-import { PlayableFeedMode, RZAudio } from "../data/model";
-import { useAudio } from "../providers/AudioProvider";
-import { audioRetrivalState, rzAudiosState } from "../state/audio";
+import { RZAudio } from "../data/model";
 import { AudioListItem } from './AudioListItem';
 import { SuspenseLoading } from './SuspenseLoading';
 
@@ -64,61 +61,35 @@ function isSameDay(date1: Date, date2: Date): boolean {
     );
 }
 
-
-export function AudioList() {
+export function AudioList({ rzAudios, onClick }: { rzAudios: RZAudio[], onClick?: (audio: RZAudio) => void }) {
     return (
-        <Suspense fallback={<SuspenseLoading/>}>
-            <AudioListImpl/>
+        <Suspense fallback={<SuspenseLoading />}>
+            <AudioListImpl rzAudios={rzAudios} onClick={onClick} />
         </Suspense>
     );
 };
 
 export default AudioList;
 
-function AudioListImpl() {
-    const rzAudios = useRecoilValue(rzAudiosState);
-    const audioRetrieval = useRecoilValue(audioRetrivalState);    
-
-    const {
-        setRzAudios: setPlayablesList } = useAudio();
-
-    useEffect(() => {
-        setPlayablesList(rzAudios);
-    }, [rzAudios, setPlayablesList]);
-
-    if(audioRetrieval.mode === PlayableFeedMode.Latest) {
-        let bucketedAudioList = bucketByDate(rzAudios)
-        bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
-        return (
-            <Suspense fallback={<div>Loading...</div>}>
-                {
-                    Array.from(bucketedAudioList).map(([name, audios]) => (
-                        <div key={name}>
-                            <h5 className="mt-4 text-light">{name}</h5>
-                            <ListGroup variant="flush" key={name} className="w-100">
-                                {audios
-                                    .map((rzAudio) => (
-                                        <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
-                                    ))
-                                }
-                            </ListGroup>
-                        </div>
-                    ))
-                }
-            </Suspense>
-        );
-    } else {
-        return (
-            <Suspense fallback={<SuspenseLoading />}>
-                <ListGroup variant="flush" className="w-100">
-                {
-                    rzAudios.map(rzAudio => (
-                        <AudioListItem rzAudio={rzAudio} key={rzAudio.id} />
-                    ))
-                }
-                </ListGroup>
-            </Suspense>
-        );
-    }
-
+function AudioListImpl({ rzAudios, onClick }: { rzAudios: RZAudio[], onClick?: (audio: RZAudio) => void }) {
+    let bucketedAudioList = bucketByDate(rzAudios)
+    bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            {
+                Array.from(bucketedAudioList).map(([name, audios]) => (
+                    <div key={name}>
+                        <h5 className="mt-4 text-light">{name}</h5>
+                        <ListGroup variant="flush" key={name} className="w-100">
+                            {audios
+                                .map((rzAudio) => (
+                                    <AudioListItem rzAudio={rzAudio} onClick={onClick} key={rzAudio.id} />
+                                ))
+                            }
+                        </ListGroup>
+                    </div>
+                ))
+            }
+        </Suspense>
+    );
 }

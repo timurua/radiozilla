@@ -1,5 +1,5 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp } from 'firebase/firestore';
-import { RZAudio, RZAuthor, RZChannel, RZUserData, } from "../data/model";
+import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp, orderBy, DocumentData } from 'firebase/firestore';
+import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "../data/model";
 import { db } from '../firebase';
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
@@ -95,7 +95,7 @@ export const getAllChannelIds = async (): Promise<string[]> => {
     return querySnapshot.docs.map(doc => doc.id);
 }
 
-export const audioFromData = async (data: any, id: string): Promise<RZAudio> => {
+export const audioFromData = async (data: DocumentData, id: string): Promise<RZAudio> => {
     const createdAt = data.createdAt.toDate();
     const authorId = data.author;
     const channelId = data.channel;
@@ -156,9 +156,36 @@ export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
     const audios = await Promise.all(ids.map(async (id) => {
         try{
             return await getAudio(id);
-        } catch (e) {
+        } catch {
             return null;
         }
     }));    
     return audios.filter((audio): audio is RZAudio => audio !== null);
 }
+
+export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedChannelIds: string[]): Promise<RZAudio[]> => {
+    let resultAudios: RZAudio[] = [];
+    //const playedAudioIdsSet = new Set(userData.playedAudioIds);
+
+    const audiosRef = collection(db, 'audios');
+    const audioQuery = query(audiosRef,             
+        orderBy('publishedAt', 'desc'),
+        orderBy('__name__', 'desc') // Use document ID as secondary sort to handle null values
+      );
+    const querySnapshot = await getDocs(audioQuery);   
+    //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
+    const filteredDocs = querySnapshot.docs;
+
+    resultAudios = await Promise.all(filteredDocs.map(async (doc) => {            
+        const data = doc.data();
+        return await audioFromData(data, doc.id);
+    }));
+
+    if(feedMode == PlayableFeedMode.Subscribed) {
+        const subscribedChannelIdsSet = new Set(subscribedChannelIds);
+        resultAudios = resultAudios.filter(rzAudio => subscribedChannelIdsSet.has(rzAudio.channel.id));
+    }
+
+    return resultAudios;
+}
+

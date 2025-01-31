@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Col, Form, FormControl, InputGroup, ListGroup, Row } from 'react-bootstrap';
+import { Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
+import AudioList from '../components/AudioList';
 import PlayerScreen from '../components/PlayerScreen';
 import { getAudioListByIds } from '../data/firebase';
 import { RZAudio } from '../data/model';
+import { useAudio } from '../providers/AudioProvider';
 import { useTfIdf } from '../tfidf/tf-idf-provider';
-import { AudioListItem } from '../components/AudioListItem';
-import { useSearchParams } from 'react-router-dom';
 
 function Search() {
 
@@ -13,6 +14,7 @@ function Search() {
     const { search } = useTfIdf();
     const inputRef = useRef<HTMLInputElement>(null);
     const [searchParams, setSearchParams] = useSearchParams();
+    const {setRzAudios:setPlayerAudios} = useAudio();
 
     const searchValue = searchParams.get('query') || '';
 
@@ -20,6 +22,10 @@ function Search() {
         const newParams = new URLSearchParams(searchParams)
         newParams.set("query", event.target.value);
         setSearchParams(newParams);
+    };
+
+    const onAudioClick = () => {
+        setPlayerAudios(rzAudios);
     };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -55,20 +61,7 @@ function Search() {
                     </Form>
                 </Col>
             </Row>
-            <div className='mt-5'>
-                <Card className='bg-dark text-white mt-3 no-border'>
-                    <Card.Body>
-                        <ListGroup variant="flush" className='bg-dark text-white'>
-                            {rzAudios.length === 0 ? (
-                                null
-                            ) : rzAudios.map((rzAudio) => (
-                                <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
-                            ))}
-                        </ListGroup>
-
-                    </Card.Body>
-                </Card>
-            </div>
+            <AudioList rzAudios={rzAudios} onClick={onAudioClick} /> 
         </PlayerScreen>
     );
 }

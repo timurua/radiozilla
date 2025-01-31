@@ -1,9 +1,4 @@
 
-export enum PlayableFeedMode {
-  Latest = "Latest",
-  Subscribed = "Subscribed",
-}
-
 export class RZChannel {
   constructor(
     public id: string,
@@ -12,6 +7,7 @@ export class RZChannel {
     public imageUrl: string,
   ) {
   }
+  
 
   static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZChannel {
     return new RZChannel(
@@ -23,6 +19,10 @@ export class RZChannel {
   }
 }
 
+export enum PlayableFeedMode {
+  Latest = "Latest",
+  Subscribed = "Subscribed",
+}
 
 export class RZUser {
   constructor(

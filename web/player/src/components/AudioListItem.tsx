@@ -9,7 +9,7 @@ import { useAudio } from "../providers/AudioProvider";
 import { userDataPlayedAudioIdsSelector, userDataSubscribedChannelIdsSelector } from '../state/userData';
 import logger from '../utils/logger';
 
-export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
+export function AudioListItem({ rzAudio, onClick }: { rzAudio: RZAudio, onClick?: (audio: RZAudio) => void }) {
     const { rzAudio: currentPlayable } = useAudio();
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
     const navigate = useNavigate();
@@ -34,6 +34,9 @@ export function AudioListItem({ rzAudio }: { rzAudio: RZAudio }) {
     }
 
     function onAudioClick(isPlaying: boolean, rzAudio: RZAudio) {
+        if (onClick) {
+            onClick(rzAudio);
+        }
         if (isPlaying) {
             openAudio(rzAudio);
         } else {

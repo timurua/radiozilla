@@ -8,7 +8,7 @@ export function ChannelSubscribeButton({ channelId }: { channelId: string }) {
     const setUserData = useSetRecoilState(userDataState);
     const isSubscribed = userData.subscribedChannelIds.includes(channelId);
 
-    const handleSubscribe = (e: any) => {
+    const handleSubscribe = (e: React.MouseEvent<HTMLElement>) => {
         const newUserData = userData.clone();
         if (isSubscribed) {
             newUserData.subscribedChannelIds = newUserData.subscribedChannelIds.filter(id => id !== channelId);            

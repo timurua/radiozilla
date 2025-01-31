@@ -65,17 +65,19 @@ class SummarizerService:
 
             summary = await self.ollama_client.generate(prompt)
 
-            published_at = web_page.metadata_published_at
+            published_at = None            
+            date_deduction_prompt = DateDeductionPrompt(
+                web_page.visible_text,
+            )
+            published_at_text = await self.ollama_client.generate(date_deduction_prompt.get_prompt())
+            try:
+                published_at = parse(published_at_text)
+                self.logger.info(f"Deduced published at date: {published_at} from text")            
+            except Exception as e:
+                self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")
+                
             if published_at is None:
-                date_deduction_prompt = DateDeductionPrompt(
-                    web_page.visible_text,
-                )
-                published_at_text = await self.ollama_client.generate(date_deduction_prompt.get_prompt())
-                try:
-                    published_at = parse(published_at_text)
-                    self.logger.info(f"Deduced published at date: {published_at} from text")            
-                except Exception as e:
-                    self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")            
+                published_at = web_page.metadata_published_at
 
             self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
             

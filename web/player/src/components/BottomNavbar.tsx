@@ -1,5 +1,5 @@
 import { Nav, Navbar } from "react-bootstrap";
-import { BsSearch, BsMusicNote, BsPerson } from 'react-icons/bs';
+import { BsSearch, BsMusicNote, BsPerson, BsHouseFill, BsHouse } from 'react-icons/bs';
 import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 
@@ -22,8 +22,7 @@ export default function BottomNavbar() {
                         to="/feed"
                         active={window.location.pathname.startsWith('/feed')}
                         className={`text-center text-light`} onClick={(e) => transitionTo(e, "/feed")}>
-                        <BsMusicNote size={20} strokeWidth={window.location.pathname.startsWith('/feed') ? 1 : 0} />
-                        <div className={window.location.pathname.startsWith('/feed') ? "fw-bold" : ""}>Listen</div>
+                        <BsHouse size={20} strokeWidth={window.location.pathname.startsWith('/feed') ? 1 : 0} />
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
@@ -32,7 +31,6 @@ export default function BottomNavbar() {
                         to="/search"
                         className={`text-center text-light`} onClick={(e) => transitionTo(e, "/search")}>
                         <BsSearch size={20} strokeWidth={window.location.pathname.startsWith('/search') ? 1 : 0} />
-                        <div className={window.location.pathname.startsWith('/search') ? "fw-bold" : ""}>Search</div>
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
@@ -43,8 +41,6 @@ export default function BottomNavbar() {
                         onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
 
                         <BsPerson size={20} strokeWidth={window.location.pathname.startsWith('/profile') ? 1 : 0} />
-
-                        <div className={window.location.pathname.startsWith('/profile') ? "fw-bold" : ""}>Me</div>
                     </Nav.Link>
                 </Nav.Item>
             </Nav>

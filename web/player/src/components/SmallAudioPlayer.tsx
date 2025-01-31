@@ -67,7 +67,7 @@ function SmallAudioPlayerImpl() {
 
 
   return (
-    <div className='bg-dark pt-2 pb-1 w-100 border-top border-secondary'>
+    <div className='bg-dark pt-2 pb-1 w-100'>
       <div className="d-flex justify-content-between align-items-center w-100">
         {rzAudio ? (
           <div className="d-flex align-items-center text-light bg-dark flex-grow-1 w-100" style={{maxWidth: "calc(100% - 200px)",}} onClick={onTextClick}>

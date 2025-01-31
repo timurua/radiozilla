@@ -26,7 +26,7 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer
             <div style={{ paddingTop: '50px', paddingBottom: '100px' }}>
                 {children}
             </div>
-            <div className='bg-dark' style={{ position: 'fixed', left: '0', right: '0', bottom: '0' }}>
+            <div className='bg-dark w-100 border-top border-secondary' style={{ position: 'fixed', left: '0', right: '0', bottom: '0' }}>
                 <div style={{width:'100%', paddingLeft: '20px', paddingRight: '20px'}}>
                     {
                         !noShowSmallPlayer && rzAudio ? (

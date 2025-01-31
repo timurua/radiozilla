@@ -4,7 +4,7 @@ FROM ollama/ollama:latest
 # Download Ollama model during build (replace 'llama2' with your desired model)
 RUN nohup ollama serve > /var/log/ollama.log 2>&1 & \
     sleep 5 && \
-    ollama pull qwen2.5:7b && \
+    ollama pull qwen2.5:14b && \
     pkill ollama
 
 # Expose Ollama's default port

@@ -1,17 +1,18 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { atom, selector } from "recoil";
-import { PlayableSorting } from "../data/model";
-import { db } from '../firebase';
 import { audioFromData } from '../data/firebase';
+import { PlayableFeedMode, RZAudio } from "../data/model";
+import { db } from '../firebase';
+import { userDataState } from './userData';
 
 interface AudioRetreival {
-    sorting: PlayableSorting | null;
+    mode: PlayableFeedMode | null;
 }
 
 export const audioRetrivalState = atom<AudioRetreival>({
-    key: 'CurrentAudioSorting',
+    key: 'CurrentAudioMode',
     default: {        
-        sorting: PlayableSorting.Date,
+        mode: PlayableFeedMode.Latest,
     },
 });
 
@@ -19,37 +20,29 @@ export const rzAudiosState = selector({
     key: 'RzAudios',
     get: async ({get}) => {
         const audioRetrieval = get(audioRetrivalState);
-        var resultAudios = [];
+        const userData = get(userDataState)
 
-        const querySnapshot = await getDocs(collection(db, 'audios'));
-        resultAudios = await Promise.all(querySnapshot.docs.map(async (doc) => {
+        var resultAudios: RZAudio[] = [];
+        const playedAudioIdsSet = new Set(userData.playedAudioIds);
+
+        const audiosRef = collection(db, 'audios');
+        const audioQuery = query(audiosRef,             
+            orderBy('publishedAt', 'desc'),
+            orderBy('__name__', 'desc') // Use document ID as secondary sort to handle null values
+          );
+        const querySnapshot = await getDocs(audioQuery);   
+        const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
+
+        resultAudios = await Promise.all(filteredDocs.map(async (doc) => {            
             const data = doc.data();
             return await audioFromData(data, doc.id);
-        }));            
+        }));
 
-        if (!audioRetrieval.sorting) {
-            return resultAudios;
+        if(audioRetrieval.mode == PlayableFeedMode.Subscribed) {
+            const subscribedChannelIds = new Set(userData.subscribedChannelIds);
+            resultAudios = resultAudios.filter(rzAudio => subscribedChannelIds.has(rzAudio.channel.id));
         }
 
-        const sortedAudios = [...resultAudios].sort((a, b) => {
-            switch (audioRetrieval.sorting) {
-                case PlayableSorting.Date:
-                    if (a.publishedAt === b.publishedAt) {
-                        return 0;
-                    }
-                    if (!a.publishedAt) {
-                        return 1;
-                    }
-                    if (!b.publishedAt) {
-                        return -1;
-                    }                    
-                    return b.publishedAt.getTime() - a.publishedAt.getTime();
-                case PlayableSorting.Name:
-                    return a.name.localeCompare(b.name);
-                default:
-                    return 0;
-            }
-        });        
-        return sortedAudios;
+        return resultAudios;
     },
 });

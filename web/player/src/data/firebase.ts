@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp } from 'firebase/firestore';
 import { RZAudio, RZAuthor, RZChannel, RZUserData, } from "../data/model";
 import { db } from '../firebase';
 import { TfIdfDocument } from '../tfidf/types';
@@ -59,7 +59,8 @@ export const saveUserData = async (userData: RZUserData) => {
         playedAudioIds: Array.from(playedAudioIds),
         likedAudioIds: Array.from(likedAudioIds),
         searchHistory,
-        subscribedChannelIds: Array.from(subscribedChannelIds)
+        subscribedChannelIds: Array.from(subscribedChannelIds),
+        lastActiveAt: serverTimestamp()
     });
 }
 
@@ -148,7 +149,11 @@ export const getSearchDocuments = async (): Promise<TfIdfDocument[]> => {
 
 export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
     const audios = await Promise.all(ids.map(async (id) => {
-        return getAudio(id);
+        try{
+            return await getAudio(id);
+        } catch (e) {
+            return null;
+        }
     }));    
     return audios.filter((audio): audio is RZAudio => audio !== null);
 }

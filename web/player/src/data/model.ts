@@ -1,7 +1,7 @@
 
-export enum PlayableSorting {
-  Date = "Date",
-  Name = "Name",
+export enum PlayableFeedMode {
+  Latest = "Latest",
+  Subscribed = "Subscribed",
 }
 
 export class RZChannel {
@@ -46,6 +46,7 @@ export class RZUserData {
     public likedAudioIds: string[],
     public playedAudioIds: string[],
     public searchHistory: string[],
+    public lastActiveAt: Date|null = null,
   ) {    
   }
 
@@ -60,6 +61,7 @@ export class RZUserData {
       [],
       [],
       [],
+      null,
     );
   }
 
@@ -74,6 +76,7 @@ export class RZUserData {
       this.likedAudioIds.slice(),
       this.playedAudioIds.slice(),
       this.searchHistory.slice(),
+      this.lastActiveAt,
     );
   }    
 }

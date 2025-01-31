@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from 'react';
 import { ListGroup } from "react-bootstrap";
 import { useRecoilValue } from "recoil";
-import { PlayableSorting, RZAudio } from "../data/model";
+import { PlayableFeedMode, RZAudio } from "../data/model";
 import { useAudio } from "../providers/AudioProvider";
 import { audioRetrivalState, rzAudiosState } from "../state/audio";
 import { AudioListItem } from './AudioListItem';
@@ -88,7 +88,7 @@ function AudioListImpl() {
         setPlayablesList(rzAudios);
     }, [rzAudios, setPlayablesList]);
 
-    if(audioRetrieval.sorting === PlayableSorting.Date) {
+    if(audioRetrieval.mode === PlayableFeedMode.Latest) {
         let bucketedAudioList = bucketByDate(rzAudios)
         bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
         return (

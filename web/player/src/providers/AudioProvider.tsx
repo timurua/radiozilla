@@ -93,6 +93,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         if (rzAudio && isPlaying && userId) {
             const newUserData = userData.clone();            
             newUserData.playedAudioIds.push(rzAudio.id);
+            newUserData.playedAudioIds = Array.from(new Set(newUserData.playedAudioIds));
             setUserData(newUserData);            
         }
     }

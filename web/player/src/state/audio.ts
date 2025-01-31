@@ -3,7 +3,7 @@ import { atom, selector } from "recoil";
 import { audioFromData } from '../data/firebase';
 import { PlayableFeedMode, RZAudio } from "../data/model";
 import { db } from '../firebase';
-import { userDataState } from './userData';
+import { userDataSubscribedChannelIdsSelector } from './userData';
 
 interface AudioRetreival {
     mode: PlayableFeedMode | null;
@@ -20,10 +20,9 @@ export const rzAudiosState = selector({
     key: 'RzAudios',
     get: async ({get}) => {
         const audioRetrieval = get(audioRetrivalState);
-        const userData = get(userDataState)
-
-        var resultAudios: RZAudio[] = [];
-        const playedAudioIdsSet = new Set(userData.playedAudioIds);
+        
+        let resultAudios: RZAudio[] = [];
+        //const playedAudioIdsSet = new Set(userData.playedAudioIds);
 
         const audiosRef = collection(db, 'audios');
         const audioQuery = query(audiosRef,             
@@ -31,7 +30,8 @@ export const rzAudiosState = selector({
             orderBy('__name__', 'desc') // Use document ID as secondary sort to handle null values
           );
         const querySnapshot = await getDocs(audioQuery);   
-        const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
+        //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
+        const filteredDocs = querySnapshot.docs;
 
         resultAudios = await Promise.all(filteredDocs.map(async (doc) => {            
             const data = doc.data();
@@ -39,7 +39,7 @@ export const rzAudiosState = selector({
         }));
 
         if(audioRetrieval.mode == PlayableFeedMode.Subscribed) {
-            const subscribedChannelIds = new Set(userData.subscribedChannelIds);
+            const subscribedChannelIds = new Set(get(userDataSubscribedChannelIdsSelector));
             resultAudios = resultAudios.filter(rzAudio => subscribedChannelIds.has(rzAudio.channel.id));
         }
 

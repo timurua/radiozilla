@@ -78,7 +78,7 @@ export class LevenshteinSearchIndex {
         }
 
         for (let j = 1; j <= targetLength; j++) {
-            let currentRow = [j];
+            const currentRow = [j];
             let minDistance = j;
 
             for (let i = 1; i <= sourceLength; i++) {

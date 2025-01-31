@@ -89,6 +89,11 @@ export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
     return channels;
 }
 
+export const getAllChannelIds = async (): Promise<string[]> => {
+    const ref = collection(db, 'channels');    
+    const querySnapshot = await getDocs(ref);   
+    return querySnapshot.docs.map(doc => doc.id);
+}
 
 export const audioFromData = async (data: any, id: string): Promise<RZAudio> => {
     const createdAt = data.createdAt.toDate();

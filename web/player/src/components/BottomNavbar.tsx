@@ -1,8 +1,18 @@
 import { Nav, Navbar } from "react-bootstrap";
 import { BsSearch, BsMusicNote, BsPerson } from 'react-icons/bs';
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 export default function BottomNavbar() {
+
+    const navigate = useNavigate();
+
+    function transitionTo(e: React.MouseEvent<HTMLElement>, path: string): void {
+        e.preventDefault();
+        navigate(path);
+        window.scrollTo({ top: 0, behavior: 'instant' });        
+    }
+
     return (
         <Navbar bg="dark" variant="dark">
             <Nav className="w-100 d-flex justify-content-around">
@@ -11,7 +21,7 @@ export default function BottomNavbar() {
                         as={Link}
                         to="/feed"
                         active={window.location.pathname.startsWith('/feed')}
-                        className={`text-center text-light`} onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
+                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/feed")}>
                         <BsMusicNote size={20} strokeWidth={window.location.pathname.startsWith('/feed') ? 1 : 0} />
                         <div className={window.location.pathname.startsWith('/feed') ? "fw-bold" : ""}>Listen</div>
                     </Nav.Link>
@@ -20,7 +30,7 @@ export default function BottomNavbar() {
                     <Nav.Link
                         as={Link}
                         to="/search"
-                        className={`text-center text-light`} onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
+                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/search")}>
                         <BsSearch size={20} strokeWidth={window.location.pathname.startsWith('/search') ? 1 : 0} />
                         <div className={window.location.pathname.startsWith('/search') ? "fw-bold" : ""}>Search</div>
                     </Nav.Link>

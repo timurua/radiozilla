@@ -5,8 +5,8 @@ import { useRecoilValue } from 'recoil';
 import { AudioListItem } from '../components/AudioListItem';
 import ChannelListItem from '../components/ChannelListItem';
 import PlayerScreen from '../components/PlayerScreen';
-import { getAudioListByIds, getChannels } from '../data/firebase';
-import { RZAudio, RZChannel } from "../data/model";
+import { getAudioListByIds } from '../data/firebase';
+import { RZAudio } from "../data/model";
 import { useAuth } from '../providers/AuthProvider';
 import { userDataState } from '../state/userData';
 
@@ -14,18 +14,14 @@ function UserProfile() {
 
   const { user } = useAuth();
   const [playedAudios, setPlayedAudios] = useState<RZAudio[]>([]);
-  const [subscribedChannels, setSubscribedChannels] = useState<RZChannel[]>([]);
   const userData = useRecoilValue(userDataState);
 
-  useEffect(() => {    
+  useEffect(() => {
     const fetchHistory = async () => {
       const userId = user?.id;
       if (!userId) {
         return;
-      }      
-      const userSubscribedChannels = await getChannels(userData.subscribedChannelIds);
-      setSubscribedChannels(userSubscribedChannels);
-
+      }
       const userPlayedAudios = await getAudioListByIds(userData.playedAudioIds);
       setPlayedAudios(userPlayedAudios);
     };
@@ -60,33 +56,25 @@ function UserProfile() {
             </Row>
           </Card.Body>
         </Card>
-        <Card className='bg-dark text-white mt-3 border-secondary'>
-          <Card.Body>
-            <Card.Title>Subscribed Channels</Card.Title>
-            <ListGroup variant="flush" className='bg-dark text-white'>
-              {subscribedChannels.length === 0 ? (
-                <ListGroup.Item className='bg-dark text-white'>Subscribe to channels to get the latest updates</ListGroup.Item>
-              ) : subscribedChannels.map((channel) => (
-                <ChannelListItem key={channel.id} channel={channel} />                
-              ))}
-            </ListGroup>
+        <h5 className="mt-4 text-light">Subscribed Channels</h5>
+        <ListGroup variant="flush" className='bg-dark text-white w-100'>
+          {userData.subscribedChannelIds.length === 0 ? (
+            <ListGroup.Item className='bg-dark text-white'>Subscribe to channels to get the latest updates</ListGroup.Item>
+          ) : userData.subscribedChannelIds.map((channelId) => (
+            <ChannelListItem key={channelId} channelId={channelId} />
+          ))}
+        </ListGroup>
 
-          </Card.Body>
-        </Card>
+        <h5 className="mt-4 text-light">History</h5>
 
-        <Card className='bg-dark text-white mt-3 border-secondary'>
-          <Card.Body>
-            <Card.Title>History</Card.Title>
-            <ListGroup variant="flush" className='bg-dark text-white'>
-              {playedAudios.length === 0 ? (
-                <ListGroup.Item className='bg-dark text-white'>No audios in history</ListGroup.Item>
-              ) : playedAudios.map((rzAudio) => (
-                <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
-              ))}
-            </ListGroup>
+        <ListGroup variant="flush" className='bg-dark text-white w-100'>
+          {playedAudios.length === 0 ? (
+            <ListGroup.Item className='bg-dark text-white'>No audios in history</ListGroup.Item>
+          ) : playedAudios.map((rzAudio) => (
+            <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
+          ))}
+        </ListGroup>
 
-          </Card.Body>
-        </Card>
       </PlayerScreen>
     </Suspense>
   );

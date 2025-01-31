@@ -90,10 +90,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
 
     const reportPlayback = async () => {
         const userId = user?.id;
-        if (rzAudio && isPlaying && userId) {
+        if (rzAudio && isPlaying && userId && reportedMinute >= 0) {
             const newUserData = userData.clone();            
-            newUserData.playedAudioIds.push(rzAudio.id);
-            newUserData.playedAudioIds = Array.from(new Set(newUserData.playedAudioIds));
+            newUserData.playedAudioIds = Array.from(new Set([...newUserData.playedAudioIds, rzAudio.id]));
             setUserData(newUserData);            
         }
     }
@@ -240,7 +239,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
 
         const handleTimeUpdate = () => {
             setCurrentTimeState(audioElement.currentTime);
-            setReportedMinute(Math.floor(audioElement.currentTime / 60));
+            setReportedMinute(Math.floor((audioElement.currentTime - 15) / 60));
             onTimeUpdateSubscribers.current.forEach((callback) =>
                 callback(audioElement.currentTime)
             );

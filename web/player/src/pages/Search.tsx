@@ -56,11 +56,11 @@ function Search() {
                 </Col>
             </Row>
             <div className='mt-5'>
-                <Card className='bg-dark text-white mt-3 border-secondary'>
+                <Card className='bg-dark text-white mt-3 no-border'>
                     <Card.Body>
                         <ListGroup variant="flush" className='bg-dark text-white'>
                             {rzAudios.length === 0 ? (
-                                <ListGroup.Item className='bg-dark text-white'>Type search phrase</ListGroup.Item>
+                                null
                             ) : rzAudios.map((rzAudio) => (
                                 <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
                             ))}

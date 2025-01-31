@@ -104,7 +104,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
             <div>
               <div>{rzAudioToDisplay.name}</div>
               <small className="user-select-none" onClick={(e) => openChannel(rzAudioToDisplay, e)}>{rzAudioToDisplay.channel.name}</small>              
-                <ChannelSubscribeButton channel={rzAudioToDisplay.channel} />                
+                <ChannelSubscribeButton channelId={rzAudioToDisplay.channel.id} />
           </div>
           </div>
         ) : null}

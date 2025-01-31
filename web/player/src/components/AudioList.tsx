@@ -1,10 +1,11 @@
-import React, { Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { ListGroup } from "react-bootstrap";
 import { useRecoilValue } from "recoil";
 import { PlayableFeedMode, RZAudio } from "../data/model";
 import { useAudio } from "../providers/AudioProvider";
 import { audioRetrivalState, rzAudiosState } from "../state/audio";
 import { AudioListItem } from './AudioListItem';
+import { SuspenseLoading } from './SuspenseLoading';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -63,14 +64,11 @@ function isSameDay(date1: Date, date2: Date): boolean {
     );
 }
 
-interface PlayableListProps {
-    // other props
-}
 
-export const AudioList: React.FC<PlayableListProps> = ({ ...props }) => {
+export function AudioList() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <AudioListImpl {...props} />
+        <Suspense fallback={<SuspenseLoading/>}>
+            <AudioListImpl/>
         </Suspense>
     );
 };
@@ -79,7 +77,7 @@ export default AudioList;
 
 function AudioListImpl() {
     const rzAudios = useRecoilValue(rzAudiosState);
-    const audioRetrieval = useRecoilValue(audioRetrivalState);
+    const audioRetrieval = useRecoilValue(audioRetrivalState);    
 
     const {
         setRzAudios: setPlayablesList } = useAudio();
@@ -111,7 +109,7 @@ function AudioListImpl() {
         );
     } else {
         return (
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<SuspenseLoading />}>
                 <ListGroup variant="flush" className="w-100">
                 {
                     rzAudios.map(rzAudio => (

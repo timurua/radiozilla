@@ -117,8 +117,10 @@ self.addEventListener('message', (event: MessageEvent<TfIdfWorkerMessage>) => {
             self.postMessage({ type: 'ADD_DOCUMENTS', requestId, payload: null });
             break;
         case 'SEARCH':
-            const results = worker.search(payload.query, payload.topK);
-            self.postMessage({ type: 'SEARCH', requestId, payload: results });
+            {
+                const results = worker.search(payload.query, payload.topK);
+                self.postMessage({ type: 'SEARCH', requestId, payload: results });
+            }
             break;
     }
 });

@@ -72,10 +72,10 @@ export class RZUserData {
       this.email,
       this.imageURL,
       this.createdAt,
-      this.subscribedChannelIds.slice(),
-      this.likedAudioIds.slice(),
-      this.playedAudioIds.slice(),
-      this.searchHistory.slice(),
+      this.subscribedChannelIds,
+      this.likedAudioIds,
+      this.playedAudioIds,
+      this.searchHistory,
       this.lastActiveAt,
     );
   }    

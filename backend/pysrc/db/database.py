@@ -38,6 +38,9 @@ class Database:
     @classmethod
     @asynccontextmanager
     async def get_session(cls) -> AsyncGenerator[AsyncSession, None]:        
+        if cls._session_factory is None:
+            raise Exception("Database not initialized")
+        
         session = cls._session_factory()
         try:
             yield session

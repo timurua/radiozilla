@@ -73,6 +73,36 @@ class TtsVoice(TimestampModel):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     wav_file: Mapped[str] = mapped_column(String)
     txt_file: Mapped[str] = mapped_column(String)    
+    
+class WebImage(TimestampModel):
+    __tablename__ = "web_images"
+    
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)  # SHA-256 hash as primary key    
+    normalized_url: Mapped[str] = mapped_column(String)
+    url: Mapped[str] = mapped_column(String)
+        
+    width: Mapped[int] = mapped_column(Integer, primary_key=True)
+    height: Mapped[int] = mapped_column(Integer, primary_key=True)    
+
+    source_width: Mapped[int] = mapped_column(Integer)
+    source_height: Mapped[int] = mapped_column(Integer)
+    
+    image_bytes: Mapped[bytes] = mapped_column(LargeBinary, default=None)
+    
+
+# Automatically set hash when content is modified
+@event.listens_for(WebImage.url, 'set')
+def web_image_set_content_hash(target: WebImage, value, oldvalue, initiator):
+    target.normalized_url = normalize_url(value)
+    target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+
+# Set hash before insert/update
+@event.listens_for(WebImage, 'before_insert')
+@event.listens_for(WebImage, 'before_update')
+def web_image_ensure_hash(mapper, connection, target: WebImage):
+    if target.url:
+        target.normalized_url = normalize_url(target.url)
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url)    
 
 
 class WebPage(TimestampModel):

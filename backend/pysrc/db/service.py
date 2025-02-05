@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
-from .web_page import WebPage, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState
+from .web_page import WebPage, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
@@ -37,6 +37,24 @@ class WebPageChannelService:
         channels = result.all()
         return list(channels)
 
+class WebImageService:
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("web_page_service")
+
+    async def upsert(self, web_image: WebImage) -> None:
+        await self.session.merge(web_image, load=True)
+        
+
+    async def find_by_url(self, normalized_url: str, *, width: int, height: int) -> WebImage|None:
+        hash = normalized_url_hash(normalized_url)
+        stmt = select(WebImage).execution_options(readonly=True) \
+            .where(WebImage.normalized_url_hash == hash) \
+            .where(WebImage.width == width).where(WebImage.height == height) 
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
 class WebPageService:
     
     def __init__(self, session: AsyncSession):
@@ -51,7 +69,7 @@ class WebPageService:
         hash = normalized_url_hash(normalized_url)
         stmt = select(WebPage).execution_options(readonly=True).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()    
               
 class WebPageJobService:
     
@@ -127,6 +145,8 @@ class FrontendAudioService:
     async def find_similar_for_text(self, text, limit: int = 10, probes: int = 10) -> list[FrontendAudioSearchResult]:
         probes = 10
         text_embeddings = EmbeddingService.calculate_embeddings(text)
+        if text_embeddings is None:
+            return []
         await self.session.execute(sql_text(f"SET LOCAL ivfflat.probes = {probes}"))
 
         title_similars = await self.select_with_similarity(FrontendAudio.title_embedding_mlml6v2, limit, text_embeddings)

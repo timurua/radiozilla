@@ -5,10 +5,9 @@ from pysrc.db.database import Database
 from pysrc.db.service import WebPageChannelService
 from pysrc.db.web_page import WebPageChannel, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
 from pysrc.observe.log import Logging
-from pysrc.scraper.store import get_scraper_store_factory
+from pysrc.scraper.store import ServiceScraperStore
 from pysrc.config.rzconfig import RzConfig
 from pysrc.utils.parallel import ParallelTaskManager
-import json
 from pysrc.config.jobs import Jobs
 
 @click.command()
@@ -48,7 +47,7 @@ async def scrape_channel(channel: WebPageChannel)->None:
             follow_sitemap_links=channel.scraper_follow_sitemap_links,
             follow_feed_links=channel.scraper_follow_feed_links,
             follow_web_page_links=channel.scraper_follow_web_page_links,            
-            scraper_store_factory=get_scraper_store_factory(on_web_page=on_web_page),
+            callback=ServiceScraperStore(on_web_page=on_web_page),
         ),
     )
     await scraper.run()    

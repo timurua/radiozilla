@@ -19,9 +19,9 @@ spec:
         image: localhost:32000/radiozilla-scraperjob:latest  # Replace with your image registry
       resources:
         requests:
-          memory: "8Gi"
-          cpu: "2000m"
+          memory: "32Gi"
+          cpu: "8000m"
         limits:
-          memory: "8Gi"
-          cpu: "2000m"
+          memory: "32Gi"
+          cpu: "8000m"
       restartPolicy: Never

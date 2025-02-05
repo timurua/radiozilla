@@ -74,7 +74,8 @@ class RzChannel:
         })
         
     def upload_and_save(self, firebase: Firebase):
-        self.image.upload(firebase, "channel_images", self.id)
+        if self.image:
+            self.image.upload(firebase, "channel_images", self.id)
         self.save(firebase)                
             
 class RzAudio:

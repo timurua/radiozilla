@@ -9,7 +9,7 @@ from ..db.service import WebPageService, WebPageSummaryService, WebPageJobServic
 from ..db.web_page import WebPage
 from ..utils.parallel import ParallelTaskManager
 from dateutil.parser import parse
-from .markdown import MarkdownStripper
+from datetime import datetime
 
 logger = logging.getLogger("summarizer")
 
@@ -71,13 +71,18 @@ class SummarizerService:
             )
             published_at_text = await self.ollama_client.generate(date_deduction_prompt.get_prompt())
             try:
-                published_at = parse(published_at_text)
+                parsed_date = parse(published_at_text)
+                if parsed_date:
+                    if parsed_date > datetime.now():
+                        self.logger.warning(f"Deduced date {parsed_date} is in the future, skipping")
+                    else:             
+                        published_at = parsed_date.replace(tzinfo=None)
                 self.logger.info(f"Deduced published at date: {published_at} from text")            
             except Exception as e:
                 self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")
                 
-            # if published_at is None:
-            #     published_at = web_page.metadata_published_at
+            if published_at is None:
+                published_at = web_page.metadata_published_at
 
             self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
             

@@ -6,7 +6,7 @@ import logging
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import Callable, Awaitable
+from typing import Callable, Awaitable, Optional
 from ..summarizer.texts import EmbeddingService
 from dataclasses import dataclass
 from sqlalchemy.orm import Mapped
@@ -161,7 +161,7 @@ class FrontendAudioService:
         results = sorted(best_by_hash.values(), key=lambda x: x.similarity_score)
         return results
 
-    async def select_with_similarity(self, column: Mapped[list[float]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
+    async def select_with_similarity(self, column: Mapped[Optional[list[float]]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
         similarity_expr = (
             func.cosine_distance(column, text_embeddings)
         ).label("similarity_score")

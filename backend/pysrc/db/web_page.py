@@ -2,7 +2,7 @@ from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean, Any, Tuple
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash, normalize_url
@@ -119,10 +119,10 @@ class WebPage(TimestampModel):
     requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))
     
-    metadata_title: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    metadata_description: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    metadata_image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    metadata_published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    metadata_title: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=None)
 
     canonical_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     outgoing_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)

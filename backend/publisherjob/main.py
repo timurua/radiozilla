@@ -4,7 +4,7 @@ import logging
 import os
 from pysrc.db.database import Database
 from pysrc.observe.log import Logging
-from pysrc.db.service import FrontendAudioService, WebPageSummaryService, WebPageChannelService, WebPageJobService
+from pysrc.db.service import FrontendAudioService, WebImage, WebImageService, WebPageSummaryService, WebPageChannelService, WebPageJobService
 from pysrc.db.web_page import WebPageSummary, WebPageChannel, WebPageJobState, WebPageJob
 from pysrc.db.frontend import FrontendAudio
 from pysrc.config.rzconfig import RzConfig
@@ -14,6 +14,7 @@ import pysrc.fb.rzfb as rzfb
 from pyminiscraper.url import normalized_url_hash
 from urllib.parse import urlparse
 from datetime import datetime
+from pysrc.scraper.store import thumbnailed_image_height, thumbnailed_image_width
 from pysrc.summarizer.texts import EmbeddingService
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.config.jobs import Jobs
@@ -50,7 +51,7 @@ async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
         channels[channel.normalized_url_hash] = rz_channel
     return PublisherContext(rz_author, channels)
 
-async def publish_frontend_audio(                                
+async def save_frontend_audio_to_db(                                
                                  web_page_summary: WebPageSummary, 
                                  publisher_context: PublisherContext) -> None:
     
@@ -66,7 +67,7 @@ async def publish_frontend_audio(
             title=web_page_summary.title,        
             audio_text=web_page_summary.summarized_text,
             description=web_page_summary.description,
-            image_url=web_page_summary.image_url,
+            image_url=web_page_summary.image_url,            
             topics=web_page_summary.topics if web_page_summary.topics else [],
             author_id=publisher_context.rz_author.id,
             channel_id=web_page_summary.channel_normalized_url_hash,
@@ -86,16 +87,18 @@ async def publish_frontend_audio(
         
 async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_context: PublisherContext) -> None:
     web_page_summary = None
+    web_image = None
     async with Database.get_session() as session:
         web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
+        web_image = await WebImageService(session).find_by_url(normalized_url, width=thumbnailed_image_width, height=thumbnailed_image_height)
         
     if web_page_summary is None or web_page_summary.title is None:
         logging.info(f"Skipping (no title) processing summary for URL: {normalized_url}")
         return
     
     logging.info(f"Publishing URL: {normalized_url}")
-    await publish_web_summary(rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary)            
-    await publish_frontend_audio(web_page_summary=web_page_summary, 
+    await publish_front_end_audio(rz_firebase=rz_firebase, publisher_context=publisher_context, web_page_summary=web_page_summary, web_image=web_image)
+    await save_frontend_audio_to_db(web_page_summary=web_page_summary, 
                                 publisher_context=publisher_context)        
     
 async def unpublish(normalized_url: str, rz_firebase: rzfb.Firebase) -> None:
@@ -146,7 +149,7 @@ def convert_wav_to_m4a(input_wav_path, output_m4a_path):
         logging.error("FFmpeg is not installed or not found in system PATH.")                
                             
 
-async def publish_web_summary(rz_firebase: rzfb.Firebase, publisher_context: PublisherContext, web_page_summary: WebPageSummary) -> None:    
+async def publish_front_end_audio(rz_firebase: rzfb.Firebase, publisher_context: PublisherContext, web_page_summary: WebPageSummary, web_image: WebImage|None) -> None:    
     url = web_page_summary.summarized_text_audio_url
     if url is None:
         return
@@ -163,13 +166,14 @@ async def publish_web_summary(rz_firebase: rzfb.Firebase, publisher_context: Pub
     
     minio_client = MinioClient(RzConfig.instance().minio_endpoint, RzConfig.instance().minio_access_key, RzConfig.instance().minio_secret_key)
     await minio_client.download_file(RzConfig.instance().minio_bucket, filename, temp_audio_file)
-
+    
     rz_audio = rzfb.RzAudio(
         id= normalized_url_hash(web_page_summary.normalized_url),
         name=web_page_summary.title,
         description=web_page_summary.description,
         author_id=publisher_context.rz_author.id,
         channel_id=web_page_summary.channel_normalized_url_hash,
+        image=rzfb.PngImage(id=web_image.normalized_url_hash, png_buffer=web_image.image_bytes) if web_image else None,
         image_url=web_page_summary.image_url,
         audio=rzfb.Blob(file_path=temp_audio_file),
         topics=web_page_summary.topics if web_page_summary.topics else [],

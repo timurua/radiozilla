@@ -1,4 +1,6 @@
 from sqlalchemy import text as sql_text, select, insert
+
+from pysrc.scraper.image import thumbnailed_image_height, thumbnailed_image_width
 from ..db.web_page import WebPage, WebPageJob, WebPageJobState, WebImage
 from pyminiscraper.model import ScraperWebPage, ScraperUrl
 from pyminiscraper.config import ScraperCallback, ScraperContext
@@ -15,25 +17,28 @@ from ..db.web_page import is_state_good_for_publishing
 from .minhash import MinHasher
 import asyncio
 import concurrent.futures
-from typing import ByteString
 from PIL import Image, ImageOps
 import io
 
 logger = logging.getLogger("scraper_store")
 
-thumbnailed_image_width = 50
-thumbnailed_image_height = 50
-
 def drop_time_zone(dt: datetime|None) -> datetime|None:
     if dt is None:
         return None
     return dt.replace(tzinfo=None)
+
+def compute_similarity(existing_web_page: WebPage, new_web_page: WebPage)-> float:
+    min_hasher = MinHasher(num_permutations=256)
+    existing_signature = min_hasher.compute_signature(existing_web_page.content.decode("utf-8"))
+    new_signature = min_hasher.compute_signature(new_web_page.content.decode("utf-8"))
+    return MinHasher.estimate_similarity(existing_signature, new_signature)
        
 class ServiceScraperStore(ScraperCallback):
 
     def __init__(self, on_web_page: Callable[[WebPage],None]|None, rerequest_after_hours: int=24*30):  
         self.rerequest_after_hours = rerequest_after_hours
-        self._on_web_page = on_web_page
+        self._on_web_page = on_web_page        
+
 
     @override
     async def on_web_page(self, context: ScraperContext, request: ScraperUrl, response: ScraperWebPage) -> None:
@@ -82,16 +87,7 @@ class ServiceScraperStore(ScraperCallback):
                     await self.request_and_store_image(session, context, response.metadata_image_url)                
                 return
             
-            similarity = 0.0
-            
-            def compute_similarity()-> float:
-                min_hasher = MinHasher(num_permutations=256)
-                existing_signature = min_hasher.compute_signature(existing_web_page.content.decode("utf-8"))
-                new_signature = min_hasher.compute_signature(new_web_page.content.decode("utf-8"))
-                return MinHasher.estimate_similarity(existing_signature, new_signature)
-                
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                similarity = await asyncio.get_event_loop().run_in_executor(executor, compute_similarity)
+            similarity = compute_similarity(existing_web_page, new_web_page)
                 
             if similarity < 0.8:
                 await WebPageService(session).upsert(new_web_page)                
@@ -122,20 +118,16 @@ class ServiceScraperStore(ScraperCallback):
                 
                 await WebImageService(session).upsert(
                     WebImage(
-                        normalized_url=url,
-                        normalized_url_hash=normalized_url_hash(url),
+                        url=url,                        
                         width=thumbnailed_image_width,
                         height=thumbnailed_image_height,
-                        content= output_io.getvalue(),
                         source_width = img.size[0],
                         source_height = img.size[1],
                         image_bytes = output_io.getvalue()
                     ))
                 
         except Exception as e: 
-            logger.info(f"Failed to store image: {url}", exc_info=e)
-            raise Exception(f"""Failed to stpre image: {url}""") from e
-        
+            logger.info(f"Failed to store image: {url}")        
         
 
     @override

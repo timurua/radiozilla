@@ -1,4 +1,6 @@
+from ast import unparse
 from typing import Optional
+from urllib.parse import urlparse
 from google.cloud import firestore # type: ignore
 from firebase_admin import credentials, storage, initialize_app # type: ignore
 from pathlib import Path
@@ -14,7 +16,7 @@ class Firebase:
         self._db = firestore.Client.from_service_account_json(google_account_file)
         self._bucket = storage.bucket()
         
-    def upload_file(self, remote_directory: str, remote_file_name: str, local_file_path: str):
+    def upload_file(self, remote_directory: str, remote_file_name: str, local_file_path: str) -> str:
         mime_type, _ = mimetypes.guess_type(local_file_path)
         content_type = mime_type if mime_type else 'application/octet-stream'
         blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}{Path(local_file_path).suffix}")
@@ -23,7 +25,14 @@ class Firebase:
         gs_url = f'gs://{self._bucket.name}/{blob.name}'
         return gs_url
     
-    def file_blob(self, file_path: str):
+    def upload_buffer(self, remote_directory: str, remote_file_name: str, buffer: bytes, content_type: str) -> str:                
+        blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}")
+        blob.upload_from_string(buffer, content_type=content_type)
+        blob.make_public()
+        gs_url = f'gs://{self._bucket.name}/{blob.name}'
+        return gs_url    
+    
+    def file_blob(self, file_path: str) -> "Blob":
         return Blob(file_path=file_path)
     
 class Blob:
@@ -31,10 +40,20 @@ class Blob:
         self.url = url
         self.file_path = file_path
         
-    def upload(self, firebase: Firebase, remote_directory: str, remote_file_name: str):
+    def upload(self, firebase: Firebase, remote_directory: str, remote_file_name: str) -> str | None:
         if self.url is None and self.file_path is not None:
             self.url = firebase.upload_file(remote_directory, remote_file_name, self.file_path)
         return self.url
+    
+class PngImage:
+    def __init__(self, *, id: str, png_buffer: bytes ) -> None:
+        self.id = id
+        self.png_buffer = png_buffer
+        
+    def upload(self, firebase: Firebase) -> str:
+        mime_type = "image/png"        
+        self.url = firebase.upload_buffer("web_images", self.id, self.png_buffer, mime_type)
+        return self.url    
         
 
         
@@ -45,14 +64,14 @@ class RzAuthor:
         self.description = description
         self.image = image
 
-    def save(self, firebase: Firebase):
+    def save(self, firebase: Firebase) -> None:
         firebase._db.collection('authors').document(self.id).set({
             'name': self.name,
             'description': self.description,
             'imageUrl': self.image.url,
         })
         
-    def upload_and_save(self, firebase: Firebase):
+    def upload_and_save(self, firebase: Firebase) -> None:
         self.image.upload(firebase, "author_images", self.id)
         self.save(firebase)
         
@@ -65,7 +84,7 @@ class RzChannel:
         self.image = image
         self.source_urls = source_urls
         
-    def save(self, firebase: Firebase):
+    def save(self, firebase: Firebase) -> None:
         firebase._db.collection('channels').document(self.id).set({
             'name': self.name,
             'description': self.description,
@@ -73,13 +92,13 @@ class RzChannel:
             'sourceUrls': self.source_urls,
         })
         
-    def upload_and_save(self, firebase: Firebase):
+    def upload_and_save(self, firebase: Firebase) -> None:
         if self.image:
             self.image.upload(firebase, "channel_images", self.id)
         self.save(firebase)                
             
 class RzAudio:
-    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio_text: str, audio: Blob, image_url: str | None, image: Blob | None = None, topics: list[str] = [], duration_seconds: int | None = None, web_url: str | None = None, published_at: datetime | None = None, uploaded_at: datetime | None = None ) -> None:
+    def __init__(self, id: str, author_id: str, channel_id: str, name: str, description: str, audio_text: str, audio: Blob, image_url: str | None, image: PngImage | None = None, topics: list[str] = [], duration_seconds: int | None = None, web_url: str | None = None, published_at: datetime | None = None, uploaded_at: datetime | None = None ) -> None:
         self.id = id
         self.created_at = firestore.SERVER_TIMESTAMP
         self.author_id = author_id
@@ -96,7 +115,7 @@ class RzAudio:
         self.uploaded_at = uploaded_at
         self.audio_text = audio_text
         
-    def save(self, firebase: Firebase):
+    def save(self, firebase: Firebase) -> None:
         firebase._db.collection('audios').document(self.id).set({
             'createdAt': self.created_at,
             'author':  f"{self.author_id}",
@@ -113,10 +132,10 @@ class RzAudio:
             'audioText': self.audio_text
         })
         
-    def upload_and_save(self, firebase: Firebase):
+    def upload_and_save(self, firebase: Firebase) -> None:
         self.audio.upload(firebase, "audio_media", self.id)
         if self.image:
-            self.image.upload(firebase, "audio_images", self.id)
+            self.image_url = self.image.upload(firebase)
         self.save(firebase)
         
     @classmethod

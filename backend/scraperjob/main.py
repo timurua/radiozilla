@@ -9,6 +9,10 @@ from pysrc.scraper.store import ServiceScraperStore
 from pysrc.config.rzconfig import RzConfig
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.config.jobs import Jobs
+from datetime import datetime
+from pysrc.scraper.text import extract_date_from_url
+from sqlalchemy import Null
+
 
 @click.command()
 async def main():
@@ -34,6 +38,13 @@ async def scrape_channel(channel: WebPageChannel)->None:
     
     def on_web_page(web_page: WebPage):
         web_page.channel_normalized_url_hash = channel.normalized_url_hash
+        url_date = extract_date_from_url(web_page.url)
+        if web_page.metadata_published_at and abs((web_page.metadata_published_at - web_page.requested_at).total_seconds()) < 60 * 60 * 24:
+                web_page.metadata_published_at = None
+        if url_date:
+            web_page.metadata_published_at = url_date
+            
+        
 
     scraper = Scraper(
         ScraperConfig(

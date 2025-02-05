@@ -3,3 +3,4 @@
 *.pyc
 .DS_Store
 web/player/tsconfig.app.tsbuildinfo
+backend/config/google-account.json

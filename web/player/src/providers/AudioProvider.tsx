@@ -116,7 +116,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         setDocumentTitle(rzAudio);
     }, [audioElement, setRzAudioState, setDocumentTitle]);
 
-    const play = useCallback(async (newRzAudio?: RZAudio) => {
+    const play = useCallback(async (newRzAudio?: RZAudio|null) => {
         if (newRzAudio) {
             await setAudio(newRzAudio);
         }

@@ -116,8 +116,7 @@ function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onC
     
     const bucketedAudioList = useMemo(()=> {
         let bucketedAudioList = bucketByDate(rzAudios)
-        removeEmptyBuckets(bucketedAudioList);
-        return bucketedAudioList;
+        return removeEmptyBuckets(bucketedAudioList);
     }, [rzAudios]);
    
     return (

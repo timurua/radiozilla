@@ -7,6 +7,7 @@ import { SuspenseLoading } from '../components/SuspenseLoading';
 import { FeedAudioLoader } from '../data/loaders';
 import { useAudio } from '../providers/AudioProvider';
 import { userDataSubscribedChannelIdsSelector } from '../state/userData';
+import { AllChannelList } from '../components/ChannelList';
 
 export enum PlayableFeedMode {
   Latest = "Latest",
@@ -42,7 +43,19 @@ function InnerFeed() {
       </ButtonGroup>
 
     </div>
-    <AudioList audioLoader={audioLoader} />
+    {
+      feedMode === PlayableFeedMode.Latest 
+      ? <AudioList audioLoader={audioLoader} />
+      : ((userDataSubscribedChannelIds.length === 0) 
+          ? (<div>
+            No subscribed channels
+            <div>
+              <AllChannelList />
+            </div>
+          </div>) 
+          : <AudioList audioLoader={audioLoader} />)
+    } 
+
   </>;
 }
 

@@ -57,7 +57,7 @@ function UserProfile() {
         <h5 className="mt-4 text-light">History</h5>
 
         {userData.playedAudioIds.length > 0 ? 
-          <AudioList audioLoader={audioLoader} /> : 
+          <AudioList audioLoader={audioLoader} showDates={false}/> : 
           <div className='bg-dark text-white'>No audios in history</div>
         }
       </PlayerScreen>

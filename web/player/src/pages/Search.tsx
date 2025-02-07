@@ -54,7 +54,7 @@ function Search() {
                     </Form>
                 </Col>
             </Row>
-            {audioLoader && <AudioList audioLoader={audioLoader}/>}            
+            {audioLoader && <AudioList audioLoader={audioLoader} showDates={false}/>}            
         </PlayerScreen>
     );
 }

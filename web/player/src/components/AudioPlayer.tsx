@@ -31,7 +31,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
     if (isPlaying) {
       pause();
     } else {
-      play();
+      play(rzAudioToDisplay);
     }
   };
 

@@ -21,7 +21,7 @@ export interface AudioPrevNext {
 }
 
 interface AudioContextProps {
-    play: (audio?: RZAudio) => Promise<void>;
+    play: (audio?: RZAudio|null) => Promise<void>;
     playNext: () => Promise<void>;
     playPrevious: () => Promise<void>;
     pause: () => void;

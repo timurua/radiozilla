@@ -1,14 +1,12 @@
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Button, ButtonGroup } from 'react-bootstrap';
 import { useRecoilValue } from 'recoil';
 import { AudioList } from '../components/AudioList';
-import { AllChannelList } from '../components/ChannelList';
 import PlayerScreen from '../components/PlayerScreen';
-import { Suspense, useEffect, useState } from 'react';
 import { SuspenseLoading } from '../components/SuspenseLoading';
-import { getFeedAudioList } from '../data/firebase';
-import { RZAudio } from '../data/model';
-import { userDataSubscribedChannelIdsSelector } from '../state/userData';
-import { Button, ButtonGroup } from 'react-bootstrap';
+import { FeedAudioLoader } from '../data/loaders';
 import { useAudio } from '../providers/AudioProvider';
+import { userDataSubscribedChannelIdsSelector } from '../state/userData';
 
 export enum PlayableFeedMode {
   Latest = "Latest",
@@ -18,23 +16,17 @@ export enum PlayableFeedMode {
 function InnerFeed() {
 
   const [feedMode, setFeedMode] = useState<PlayableFeedMode>(PlayableFeedMode.Latest);
-  const [rzAudios, setRzAudios] = useState<RZAudio[]>([]);
   const userDataSubscribedChannelIds = useRecoilValue(userDataSubscribedChannelIdsSelector);
-  const { setRzAudios: setPlayerRzAudios } = useAudio();
-  const [isLoading, setIsLoading] = useState(true);
+  const { setAudioPrevNext } = useAudio();
 
   useEffect(() => {
-    const fetchAudios = async () => {
-      const audios = await getFeedAudioList(feedMode, userDataSubscribedChannelIds);
-      setRzAudios(audios);
-      setIsLoading(false);
-    };
-    fetchAudios();
+    const feedAudioList = new FeedAudioLoader(feedMode, userDataSubscribedChannelIds);    
+    setAudioPrevNext(feedAudioList);
   }, [feedMode, userDataSubscribedChannelIds]);
 
-  const onAudioClick = () => {
-    setPlayerRzAudios(rzAudios);
-  };
+  const audioLoader = useMemo(() => {
+    return new FeedAudioLoader(feedMode, userDataSubscribedChannelIds);
+  }, [feedMode, userDataSubscribedChannelIds]);
 
   return <>
     <div>
@@ -50,20 +42,7 @@ function InnerFeed() {
       </ButtonGroup>
 
     </div>
-    {
-      isLoading ? <SuspenseLoading /> : (
-
-        feedMode === PlayableFeedMode.Latest ?
-          (<AudioList rzAudios={rzAudios} onClick={onAudioClick} />) :
-          (rzAudios.length > 0
-            ? (<AudioList rzAudios={rzAudios} onClick={onAudioClick} />)
-            : (<div>
-              No subscribed channels
-              <div>
-                <AllChannelList />
-              </div>
-            </div>)
-          ))}
+    <AudioList audioLoader={audioLoader} />
   </>;
 }
 

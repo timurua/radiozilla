@@ -1,8 +1,9 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ListGroup } from "react-bootstrap";
 import { RZAudio } from "../data/model";
 import { AudioListItem } from './AudioListItem';
 import { SuspenseLoading } from './SuspenseLoading';
+import AudioLoader from '../utils/AudioLoader';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -61,19 +62,64 @@ function isSameDay(date1: Date, date2: Date): boolean {
     );
 }
 
-export function AudioList({ rzAudios, onClick }: { rzAudios: RZAudio[], onClick?: (audio: RZAudio) => void }) {
+export function AudioList({ audioLoader }: { audioLoader: AudioLoader }) {
     return (
         <Suspense fallback={<SuspenseLoading />}>
-            <AudioListImpl rzAudios={rzAudios} onClick={onClick} />
+            <AudioListImpl audioLoader={audioLoader}/>
         </Suspense>
     );
 };
 
 export default AudioList;
 
-function AudioListImpl({ rzAudios, onClick }: { rzAudios: RZAudio[], onClick?: (audio: RZAudio) => void }) {
-    let bucketedAudioList = bucketByDate(rzAudios)
-    bucketedAudioList = removeEmptyBuckets(bucketedAudioList);
+function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onClick?: (audio: RZAudio) => void }) {
+
+    const [rzAudios, setRzAudios] = useState<RZAudio[]>(audioLoader.getAudios());
+    const [isComplete, setIsComplete] = useState<boolean>(false);
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const loadingRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const subscriber = () => {
+            setRzAudios([...audioLoader.getAudios()]);
+            setIsComplete(audioLoader.isComplete());
+        };
+        if (audioLoader.getAudios().length === 0 && !audioLoader.isComplete()) {
+            audioLoader.getNextAudioPage();
+        }
+        const unsubscribe = audioLoader.subscribe(subscriber);
+        return unsubscribe;
+    }, [audioLoader]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {                
+                if (entries[0].isIntersecting) {
+                    audioLoader.getNextAudioPage();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observerRef.current = observer;
+
+        if (loadingRef.current) {
+            observer.observe(loadingRef.current);
+        }
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, [audioLoader, observerRef, loadingRef]);
+
+    
+    const bucketedAudioList = useMemo(()=> {
+        let bucketedAudioList = bucketByDate(rzAudios)
+        removeEmptyBuckets(bucketedAudioList);
+        return bucketedAudioList;
+    }, [rzAudios]);
+   
     return (
         <Suspense fallback={<div>Loading...</div>}>
             {
@@ -90,6 +136,15 @@ function AudioListImpl({ rzAudios, onClick }: { rzAudios: RZAudio[], onClick?: (
                     </div>
                 ))
             }
+            <div 
+                ref={loadingRef} 
+                className="h-10 flex items-center justify-center"
+            >
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-t-transparent" />
+                {isComplete && (
+                    <div className="text-gray-500">No more items to load</div>
+                )}
+            </div>
         </Suspense>
     );
 }

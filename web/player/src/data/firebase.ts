@@ -165,7 +165,6 @@ export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
 
 export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedChannelIds: string[]): Promise<RZAudio[]> => {
     let resultAudios: RZAudio[] = [];
-    //const playedAudioIdsSet = new Set(userData.playedAudioIds);
 
     const audiosRef = collection(db, 'audios');
     const audioQuery = query(audiosRef,             
@@ -188,4 +187,6 @@ export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedCha
 
     return resultAudios;
 }
+
+
 

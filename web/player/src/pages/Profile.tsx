@@ -1,40 +1,23 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useMemo } from 'react';
 import { Card, Col, ListGroup, Row } from 'react-bootstrap';
 import { BsPerson, BsPersonCircle } from 'react-icons/bs';
 import { useRecoilValue } from 'recoil';
 import AudioList from '../components/AudioList';
 import ChannelListItem from '../components/ChannelListItem';
 import PlayerScreen from '../components/PlayerScreen';
-import { getAudioListByIds } from '../data/firebase';
-import { RZAudio } from "../data/model";
+import { IdsAudioLoader } from '../data/loaders';
 import { useAuth } from '../providers/AuthProvider';
 import { userDataState } from '../state/userData';
-import { useAudio } from '../providers/AudioProvider';
 
 function UserProfile() {
 
-  const { user } = useAuth();
-  const [playedAudios, setPlayedAudios] = useState<RZAudio[]>([]);
+  const { user } = useAuth();  
   const userData = useRecoilValue(userDataState);
-  const { setRzAudios } = useAudio();
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      const userId = user?.id;
-      if (!userId) {
-        return;
-      }
-      const userPlayedAudios = await getAudioListByIds([...userData.playedAudioIds].reverse());
-      setPlayedAudios(userPlayedAudios);
-    };
-
-    fetchHistory();
-  }, [user, userData]);
-
-  const onAudioClick = () => {
-    setRzAudios(playedAudios);
-  };
-
+  const audioLoader = useMemo(() => {
+    return new IdsAudioLoader([...userData.playedAudioIds].reverse());
+  }, [userData.playedAudioIds]);
+  
   return (
 
     <Suspense fallback={<div>Loading...</div>}>
@@ -73,16 +56,13 @@ function UserProfile() {
 
         <h5 className="mt-4 text-light">History</h5>
 
-        {playedAudios.length > 0 ? 
-          <AudioList rzAudios={playedAudios} onClick={onAudioClick} /> : 
+        {userData.playedAudioIds.length > 0 ? 
+          <AudioList audioLoader={audioLoader} /> : 
           <div className='bg-dark text-white'>No audios in history</div>
         }
-
       </PlayerScreen>
     </Suspense>
   );
 }
-
-
 
 export default UserProfile;

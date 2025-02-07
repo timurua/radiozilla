@@ -29,7 +29,7 @@ export function ChannelListItem({ channelId }: { channelId: string }) {
             }
         };
         fetchChannel();
-    }, [channel?.imageUrl, setImageUrl]);
+    }, [channel?.imageUrl, channelId, setImageUrl]);
 
     return (
         <ListGroup.Item onClick={handleClick} key={channelId} className={"no-select d-flex align-items-center text-light bg-dark"}>

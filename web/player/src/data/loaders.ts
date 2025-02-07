@@ -111,6 +111,50 @@ export class IdsAudioLoader extends SubscriberAudioLoader implements AudioLoader
     }
 }
 
+export class MultiAudioLoader extends SubscriberAudioLoader implements AudioLoader {
+
+    private audios: RZAudio[];
+
+    constructor(audios: RZAudio[]) {
+        super();
+        this.audios = audios;
+    }
+
+    async getPreviosAudio(audio: RZAudio): Promise<RZAudio | null> {
+        const index = this.audios.findIndex(a => a.id === audio.id);
+        if (index < 0) {
+            throw new Error('Audio not found in list');
+        }
+        if (index > 0) {
+            return this.audios[index - 1];
+        }
+        return null;
+    }
+
+    async getNextAudio(audio: RZAudio): Promise<RZAudio | null> {
+        const index = this.audios.findIndex(a => a.id === audio.id);
+        if (index < 0) {
+            throw new Error('Audio not found in list');
+        }
+        if (index < this.audios.length - 1) {
+            return this.audios[index + 1];
+        }
+        return null;
+    }
+
+    async getNextAudioPage(): Promise<void> {
+        return;
+    }
+    
+    getAudios(): RZAudio[] {
+        return this.audios;
+    }
+
+    isComplete(): boolean {
+        return true;
+    }
+}
+
 export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoader {
 
     private audios: RZAudio[] = [];
@@ -182,10 +226,12 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         const audioQuery = this.lastFirebaseDoc
             ? query(audiosRef,
                 orderBy('publishedAt', 'desc'),
+                orderBy('__name__', 'desc'),
                 startAfter(this.lastFirebaseDoc),
                 limit(this.pageSize))
             : query(audiosRef,
                 orderBy('publishedAt', 'desc'),
+                orderBy('__name__', 'desc'),
                 limit(this.pageSize));
 
         const querySnapshot = await getDocs(audioQuery);

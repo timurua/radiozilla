@@ -177,7 +177,10 @@ export const getAudio = async (id: string): Promise<RZAudio> => {
 export const getAudioListForChannel = async (channelId: string): Promise<RZAudio[]> => {
 
     const audioRef = collection(db, 'audios');
-    const queryAudios = query(audioRef, where('channel', '==', channelId));
+    const queryAudios = query(audioRef, 
+        where('channel', '==', channelId),
+        orderBy('publishedAt', 'desc'),
+        orderBy('__name__', 'desc'));
     const querySnapshot = await getDocs(queryAudios);
 
     const audios = await Promise.all(querySnapshot.docs.map(doc =>
@@ -212,7 +215,7 @@ export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedCha
     const audiosRef = collection(db, 'audios');
     const audioQuery = query(audiosRef,
         orderBy('publishedAt', 'desc'),
-        orderBy('__name__', 'desc') // Use document ID as secondary sort to handle null values
+        orderBy('__name__', 'desc')
     );
     const querySnapshot = await getDocs(audioQuery);
     //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));

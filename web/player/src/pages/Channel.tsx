@@ -7,12 +7,16 @@ import { ChannelList } from '../components/ChannelList';
 import PlayerScreen from '../components/PlayerScreen';
 import { getAudioListForChannel } from '../data/firebase';
 import { RZAudio } from "../data/model";
+import AudioLoader from '../utils/AudioLoader';
+import { MultiAudioLoader } from '../data/loaders';
+import AudioList from '../components/AudioList';
+import { SuspenseLoading } from '../components/SuspenseLoading';
 
 
 function Channel() {
 
   const { channelId } = useParams();
-  const [rzAudios, setRZAudios] = useState<RZAudio[]>([]);
+  const [loader, setLoader] = useState<AudioLoader|null>(null);
 
 
   useEffect(() => {
@@ -21,7 +25,8 @@ function Channel() {
         return;
       }
       const audios = await getAudioListForChannel(channelId);
-      setRZAudios(audios);
+      const loader = new MultiAudioLoader(audios);
+      setLoader(loader);
     };
 
     fetchChannel();
@@ -37,15 +42,7 @@ function Channel() {
         {channelId && <ChannelList channelIds={[channelId]} />}
 
         <h5 className="mt-4 text-light">Audios</h5>
-
-        <ListGroup variant="flush" className='bg-dark text-white w-100'>
-          {rzAudios.length === 0 ? (
-            <ListGroup.Item className='bg-dark text-white'>No Audios</ListGroup.Item>
-          ) : rzAudios.map((rzAudio) => (
-            <AudioListItem key={rzAudio.id} rzAudio={rzAudio} />
-          ))}
-        </ListGroup>
-
+        {loader ? <AudioList audioLoader={loader} showDates={true} /> : <SuspenseLoading/>}
       </div>
     </PlayerScreen>
   );

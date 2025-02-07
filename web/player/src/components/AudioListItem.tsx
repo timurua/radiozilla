@@ -61,18 +61,20 @@ export function AudioListItem({ rzAudio, onClick }: { rzAudio: RZAudio, onClick?
 
     return (
         <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + (isPlaying ? "bg-secondary rounded" : "bg-dark")} onClick={() => onAudioClick(isPlaying, rzAudio)}>
-            <div className="no-select d-flex align-items-center text-light me-3">
-                <Image src={imageUrl} rounded className="text-light" width={50} height={50} />
+            <div className="no-select d-flex align-items-center text-light me-3 flex-grow-0">
+                <Image src={imageUrl} rounded className="flex-grow-0" width={50} height={50} />
                 {userDataPlayedAudioIds.includes(rzAudio.id) &&
-                    <BsCheckCircleFill style={{
-                        position: 'relative',
-                        top: '0px',
-                        right: '40px',
-                        opacity: 0.6
-                    }} size={30} />
+                    <div style={{ position: 'relative' }}>
+                        <BsCheckCircleFill style={{
+                            position: 'absolute',
+                            top: '-15px',
+                            left: '-40px',
+                            opacity: 0.6
+                        }} size={30} />
+                    </div>
                 }
             </div>
-            <div>
+            <div className='flex-grow-1'>
                 {rzAudio.name} {
                     rzAudio.publishedAt ?
                         " - " + new Date(rzAudio.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''

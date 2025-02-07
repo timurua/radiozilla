@@ -125,7 +125,7 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         super();
         this.pageSize = pageSize;
         this.mode = mode;
-        this.subscribedChannelIds = new Set(...subscribedChannelIds);
+        this.subscribedChannelIds = new Set(subscribedChannelIds);
     }
 
     async getPreviosAudio(audio: RZAudio): Promise<RZAudio | null> {
@@ -182,15 +182,17 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         const audioQuery = this.lastFirebaseDoc
             ? query(audiosRef,
                 orderBy('publishedAt', 'desc'),
-                orderBy('__name__', 'desc'),
                 startAfter(this.lastFirebaseDoc),
                 limit(this.pageSize))
             : query(audiosRef,
                 orderBy('publishedAt', 'desc'),
-                orderBy('__name__', 'desc'),
                 limit(this.pageSize));
 
         const querySnapshot = await getDocs(audioQuery);
+        if (querySnapshot.docs.length === 0) {
+            this.loadIsComplete = true;
+            return;
+        }
         this.lastFirebaseDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
         this.loadIsComplete = querySnapshot.docs.length < this.pageSize;
 
@@ -202,6 +204,8 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         if (this.mode == PlayableFeedMode.Subscribed) {
             resultAudios = resultAudios.filter(rzAudio => this.subscribedChannelIds.has(rzAudio.channel.id));
         }
+        const playedAudioIdsSet = new Set(this.audios.map(a => a.id));
+        resultAudios = resultAudios.filter(rzAudio => !playedAudioIdsSet.has(rzAudio.id));
         this.audios.push(...resultAudios);
         this.notifySubscribers();
     }

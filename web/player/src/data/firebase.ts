@@ -148,7 +148,9 @@ export const audioFromData = async (data: DocumentData, id: string): Promise<RZA
         webUrl,
         publishedAt
     };
-    return RZAudio.fromObject(audioData, id, createdAt, author, channel);
+    const audio = RZAudio.fromObject(audioData, id, createdAt, author, channel);
+    audioCache.set(id, audio);
+    return audio;
 }
 
 // Modify getAudio with caching

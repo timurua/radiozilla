@@ -45,7 +45,7 @@ function InnerFeed() {
     </div>
     {
       feedMode === PlayableFeedMode.Latest 
-      ? <AudioList audioLoader={audioLoader} />
+      ? <AudioList audioLoader={audioLoader} showDates={true} />
       : ((userDataSubscribedChannelIds.length === 0) 
           ? (<div>
             No subscribed channels

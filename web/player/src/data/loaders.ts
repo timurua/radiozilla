@@ -144,7 +144,7 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         if (index < 0) {
             index = 0;
         }
-        return await this.getAudioAtIndex(index);
+        return await this.getAudioAtIndex(index+1);
     }
 
     async getNextAudioPage(): Promise<void> {

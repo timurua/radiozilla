@@ -4,6 +4,7 @@ import { RZAudio } from "../data/model";
 import { AudioListItem } from './AudioListItem';
 import { SuspenseLoading } from './SuspenseLoading';
 import AudioLoader from '../utils/AudioLoader';
+import { useAudio } from '../providers/AudioProvider';
 
 // Static method to bucket playables by date
 function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
@@ -12,28 +13,36 @@ function bucketByDate(audios: RZAudio[]): Map<string, RZAudio[]> {
     yesterday.setDate(today.getDate() - 1);
 
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setDate(today.getDate() - 7);
+    const startOfMonth = new Date(today);
+    startOfMonth.setDate(today.getDate() - 30);
 
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const startOfYear = new Date(today);
+    startOfYear.setDate(today.getDate() - 365);
 
     const buckets = new Map<string, RZAudio[]>([
         ["Today", []],
         ["Yesterday", []],
         ["Last Week", []],
+        ["Last Month", []],
         ["Last Year", []],
+        ["All", []],
     ]);
 
     audios.forEach((audio) => {
-        const createdAt = new Date(audio.createdAt);
-
-        if (isSameDay(createdAt, today)) {
+        const publishedAt = audio.publishedAt !== null ? new Date(audio.publishedAt) : new Date(0);
+        if (isSameDay(publishedAt, today)) {
             buckets.get("Today")!.push(audio);
-        } else if (isSameDay(createdAt, yesterday)) {
+        } else if (isSameDay(publishedAt, yesterday)) {
             buckets.get("Yesterday")!.push(audio);
-        } else if (createdAt >= startOfWeek) {
+        } else if (publishedAt >= startOfWeek) {
             buckets.get("Last Week")!.push(audio);
-        } else if (createdAt >= startOfYear) {
+        } else if (publishedAt >= startOfMonth) {
+            buckets.get("Last Month")!.push(audio);
+        } else if (publishedAt >= startOfYear) {
             buckets.get("Last Year")!.push(audio);
+        } else {
+            buckets.get("All")!.push(audio);
         }
     });
 
@@ -62,22 +71,23 @@ function isSameDay(date1: Date, date2: Date): boolean {
     );
 }
 
-export function AudioList({ audioLoader }: { audioLoader: AudioLoader }) {
+export function AudioList({ audioLoader, showDates = true }: { audioLoader: AudioLoader, showDates?: boolean }) {
     return (
         <Suspense fallback={<SuspenseLoading />}>
-            <AudioListImpl audioLoader={audioLoader}/>
+            <AudioListImpl audioLoader={audioLoader} showDates={showDates} />
         </Suspense>
     );
 };
 
 export default AudioList;
 
-function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onClick?: (audio: RZAudio) => void }) {
+function AudioListImpl({ audioLoader, showDates = true }: { audioLoader: AudioLoader, showDates: boolean }) {
 
     const [rzAudios, setRzAudios] = useState<RZAudio[]>(audioLoader.getAudios());
     const [isComplete, setIsComplete] = useState<boolean>(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadingRef = useRef<HTMLDivElement>(null);
+    const { setAudioPrevNext } = useAudio();
     useEffect(() => {
         const subscriber = () => {
             setRzAudios([...audioLoader.getAudios()]);
@@ -92,7 +102,7 @@ function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onC
 
     useEffect(() => {
         const observer = new IntersectionObserver(
-            (entries) => {                
+            (entries) => {
                 if (entries[0].isIntersecting) {
                     audioLoader.getNextAudioPage();
                 }
@@ -113,30 +123,51 @@ function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onC
         };
     }, [audioLoader, observerRef, loadingRef]);
 
-    
-    const bucketedAudioList = useMemo(()=> {
+    const onClick = (_: RZAudio) => {
+        setAudioPrevNext({
+            getPreviosAudio: async (audio: RZAudio) => {
+                return audioLoader.getPreviosAudio(audio);
+            },
+            getNextAudio: async (audio: RZAudio) => {
+                return audioLoader.getNextAudio(audio);
+            }
+        });
+    }
+
+
+    const bucketedAudioList = useMemo(() => {
         let bucketedAudioList = bucketByDate(rzAudios)
         return removeEmptyBuckets(bucketedAudioList);
     }, [rzAudios]);
-   
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
             {
-                Array.from(bucketedAudioList).map(([name, audios]) => (
-                    <div key={name}>
-                        <h5 className="mt-4 text-light">{name}</h5>
-                        <ListGroup variant="flush" key={name} className="w-100">
-                            {audios
+                showDates ?
+                    Array.from(bucketedAudioList).map(([name, audios]) => (
+                        <div key={name}>
+                            <h5 className="mt-4 text-light">{name}</h5>
+                            <ListGroup variant="flush" key={name} className="w-100">
+                                {audios
+                                    .map((rzAudio) => (
+                                        <AudioListItem rzAudio={rzAudio} onClick={onClick} key={rzAudio.id} />
+                                    ))
+                                }
+                            </ListGroup>
+                        </div>
+                    ))
+                    : <>
+                        <ListGroup variant="flush" className="w-100 mt-4">
+                            {rzAudios
                                 .map((rzAudio) => (
                                     <AudioListItem rzAudio={rzAudio} onClick={onClick} key={rzAudio.id} />
                                 ))
                             }
                         </ListGroup>
-                    </div>
-                ))
+                    </>
             }
-            <div 
-                ref={loadingRef} 
+            <div
+                ref={loadingRef}
                 className="h-10 flex items-center justify-center"
             >
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-t-transparent" />
@@ -146,4 +177,5 @@ function AudioListImpl({ audioLoader, onClick }: { audioLoader: AudioLoader, onC
             </div>
         </Suspense>
     );
+
 }

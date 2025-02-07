@@ -22,7 +22,7 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer
 
 
     return (
-        <div style={{ paddingTop: '50px', paddingBottom: '100px' }} className="min-vh-100 w-100 bg-dark text-white">
+        <div style={{ paddingTop: '50px', paddingBottom: '120px' }} className="min-vh-100 w-100 bg-dark text-white">
 
             <div ref={topNavbarRef}>
                 <TopNavbar />

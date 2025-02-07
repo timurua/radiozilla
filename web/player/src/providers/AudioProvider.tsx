@@ -15,7 +15,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { userDataState } from '../state/userData';
 
-export interface AudioPrevNext {    
+export interface AudioPrevNext {
     getPreviosAudio(audio: RZAudio): Promise<RZAudio | null>;
     getNextAudio(audio: RZAudio): Promise<RZAudio | null>;
 }
@@ -26,7 +26,7 @@ interface AudioContextProps {
     playPrevious: () => Promise<void>;
     pause: () => void;
     rzAudio: RZAudio | null;
-    setRzAudio: (rzAudio: RZAudio | null) => void;    
+    setRzAudio: (rzAudio: RZAudio | null) => void;
     setAudioPrevNext: (audioPrevNext: AudioPrevNext) => void;
     setCurrentTime: (time: number) => void;
     isPlaying: boolean;
@@ -71,7 +71,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
-    const [audioPrevNext, setAudioPrevNext] = useState<AudioPrevNext|null>(null);
+    const [audioPrevNext, setAudioPrevNext] = useState<AudioPrevNext | null>(null);
     const userData = useRecoilValue(userDataState);
     const setUserData = useSetRecoilState(userDataState);
 
@@ -84,9 +84,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const reportPlayback = async () => {
         const userId = user?.id;
         if (rzAudio && isPlaying && userId && reportedMinute >= 0) {
-            const newUserData = userData.clone();            
+            const newUserData = userData.clone();
             newUserData.playedAudioIds = Array.from(new Set([...newUserData.playedAudioIds, rzAudio.id]));
-            setUserData(newUserData);            
+            setUserData(newUserData);
         }
     }
 
@@ -94,7 +94,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         reportPlayback();
     }, [rzAudio, reportedMinute, isPlaying]);
 
-    const {user} = useAuth();
+    const { user } = useAuth();
 
     useEffect(() => {
         // Cleanup function to remove the audio element on unmount
@@ -123,38 +123,38 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
         audioElement.play();
         if ('mediaSession' in navigator && rzAudio) {
             navigator.mediaSession.metadata = new MediaMetadata({
-            title: rzAudio.name,
-            artist: rzAudio.author.name,
-            album: rzAudio.channel.name,
-            artwork: [
-                {
-                src: rzAudio.imageUrl || rzAudio.channel.imageUrl || rzAudio.author.imageUrl,
-                sizes: '512x512',
-                }
-            ]
+                title: rzAudio.name,
+                artist: rzAudio.author.name,
+                album: rzAudio.channel.name,
+                artwork: [
+                    {
+                        src: rzAudio.imageUrl || rzAudio.channel.imageUrl || rzAudio.author.imageUrl,
+                        sizes: '512x512',
+                    }
+                ]
             });
         }
     }, [rzAudio, setAudio, audioElement]);
 
-    const playNext = useCallback(async () => {        
-        setIsPlaying(false);
-        setIsPaused(false);
-        setHasEnded(true);
-        if(rzAudio && audioPrevNext) {
+    const playNext = useCallback(async () => {
+        if (rzAudio && audioPrevNext) {
             const nextAudio = await audioPrevNext?.getNextAudio(rzAudio);
-            if(nextAudio) {
+            if (nextAudio) {
+                setIsPlaying(false);
+                setIsPaused(false);
+                setHasEnded(true);
                 await play(nextAudio);
             }
-        }        
+        }
     }, [rzAudio, audioPrevNext, play]);
 
-    const playPrevious = useCallback(async () => {        
-        setIsPlaying(false);
-        setIsPaused(false);
-        setHasEnded(true);
-        if(rzAudio && audioPrevNext) {
+    const playPrevious = useCallback(async () => {
+        if (rzAudio && audioPrevNext) {
             const nextAudio = await audioPrevNext?.getPreviosAudio(rzAudio);
-            if(nextAudio) {
+            if (nextAudio) {
+                setIsPlaying(false);
+                setIsPaused(false);
+                setHasEnded(true);
                 await play(nextAudio);
             }
         }
@@ -188,9 +188,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             setIsPaused(false);
             setHasEnded(true);
             if (rzAudio) {
-                if(audioPrevNext) {
+                if (audioPrevNext) {
                     const nextAudio = await audioPrevNext?.getNextAudio(rzAudio);
-                    if(nextAudio) {
+                    if (nextAudio) {
                         await play(nextAudio);
                     }
                 }

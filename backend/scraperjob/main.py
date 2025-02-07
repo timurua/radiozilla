@@ -245,6 +245,7 @@ async def create_channels()->None:
                     WebPageSeed(url="https://stability.ai/", type=WebPageSeedType.HTML),
                 ]),
                 include_path_patterns = ["/news/"],
+                exclude_path_patterns = ["/news/tag/"],
                 scraper_follow_web_page_links=True,
                 scraper_follow_feed_links=True,
                 scraper_follow_sitemap_links=True   

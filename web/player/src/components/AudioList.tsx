@@ -172,7 +172,7 @@ function AudioListImpl({ audioLoader, showDates = true }: { audioLoader: AudioLo
             >
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-t-transparent" />
                 {isComplete && (
-                    <div className="text-gray-500">No more items to load</div>
+                    <div className="text-gray-500"></div>
                 )}
             </div>
         </Suspense>

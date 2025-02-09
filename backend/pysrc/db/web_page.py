@@ -43,7 +43,7 @@ class WebPageChannel(TimestampModel):
     normalized_url: Mapped[str] = mapped_column(String)    
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     
     scraper_seeds: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, nullable=True, default=None)

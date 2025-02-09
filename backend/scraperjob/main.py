@@ -112,7 +112,7 @@ async def create_channels()->None:
             WebPageChannel(
                 url="https://anthropic.com/",
                 name="News about Anthropic",
-                description="News from Anthropic",
+                description="News scraped from Anthropic website",
                 image_url="https://anthropic.com/favicon.ico",
                 enabled=True,
                 scraper_seeds= web_page_seed_to_dict([WebPageSeed("https://anthropic.com/", WebPageSeedType.HTML)]),
@@ -124,8 +124,50 @@ async def create_channels()->None:
         )
         await web_page_channel_service.upsert(
             WebPageChannel(
+                url="https://www.llamaindex.ai/",
+                name="News about LlamaIndex",
+                description="News scraped from LlamaIndex website",
+                image_url="https://www.llamaindex.ai/apple-touch-icon.png",
+                enabled=True,
+                scraper_seeds= web_page_seed_to_dict([WebPageSeed("https://www.llamaindex.ai/sitemap.xml", WebPageSeedType.SITEMAP)]),
+                include_path_patterns = ["/blog/"],
+                scraper_follow_web_page_links=False,
+                scraper_follow_feed_links=True,
+                scraper_follow_sitemap_links=True   
+            )
+        )
+        await web_page_channel_service.upsert(
+            WebPageChannel(
+                url="https://huggingface.co/",
+                name="News about Huggingface",
+                description="News scraped from Haggingface website",
+                image_url="https://huggingface.co/favicon.ico",
+                enabled=True,
+                scraper_seeds= web_page_seed_to_dict([WebPageSeed("https://huggingface.co/blog/feed.xml", WebPageSeedType.FEED)]),
+                include_path_patterns = ["/blog/"],
+                scraper_follow_web_page_links=False,
+                scraper_follow_feed_links=True,
+                scraper_follow_sitemap_links=False   
+            )
+        )                
+        await web_page_channel_service.upsert(
+            WebPageChannel(
+                url="https://www.palantir.com/",
+                name="News about Palantir",
+                description="News scraped from Palantir website",
+                image_url=None,
+                enabled=True,
+                scraper_seeds= web_page_seed_to_dict([WebPageSeed("https://blog.palantir.com/sitemap/sitemap.xml", WebPageSeedType.SITEMAP)]),
+                include_path_patterns = [],
+                scraper_follow_web_page_links=False,
+                scraper_follow_feed_links=True,
+                scraper_follow_sitemap_links=True   
+            )
+        )
+        await web_page_channel_service.upsert(
+            WebPageChannel(
                 url="https://deepmind.google/",
-                name="News about DeepMind",
+                name="News scraped from DeepMind website",
                 description="News from DeepMind",
                 image_url="https://deepmind.google/favicon.ico",
                 enabled=True,
@@ -142,7 +184,7 @@ async def create_channels()->None:
             WebPageChannel(
                 url="https://openai.com/",
                 name="News about OpenAI",
-                description="News from OpenAI",
+                description="News scraped from OpenAI website",
                 image_url="https://openai.com/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([
@@ -172,7 +214,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blogs.microsoft.com/",
-                name="News about Microsoft AI Blogs",
+                name="News scraped from Microsoft AI website",
                 description="News from Microsoft AI",
                 enabled=True,            
                 scraper_seeds=web_page_seed_to_dict([
@@ -187,7 +229,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://cohere.com/",
-                name="News about Cohere",
+                name="News scraped from Cohere website",
                 description="News about Cohere",
                 image_url="https://cohere.com/favicon.ico",
                 enabled=True,
@@ -205,7 +247,7 @@ async def create_channels()->None:
             WebPageChannel(
                 url="https://blog.crewai.com/",
                 name="News about CrewAI",
-                description="News about CrewAI",
+                description="News scraped from CrewAI website",
                 image_url="https://www.crewai.com/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([
@@ -222,7 +264,7 @@ async def create_channels()->None:
             WebPageChannel(
                 url="https://scale.com/",
                 name="News about Scale AI",
-                description="News from Scale AI",
+                description="News scraped from Scale AI website",
                 image_url="https://scale.com/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([
@@ -237,7 +279,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://stability.ai/",
-                name="News about Stability AI",
+                name="News scraped from Stabilty AI website",
                 description="News from Stability AI",
                 image_url="https://stability.ai/favicon.ico",
                 enabled=True,

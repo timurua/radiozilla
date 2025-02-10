@@ -82,7 +82,7 @@ async def clean_channel_web_pages(channel: WebPageChannel)->None:
         web_page_job_service = WebPageJobService(session)
         web_page_service = WebPageService(session)
         include_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], True)
-        exclude_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], True)
+        exclude_path_filter = PathFilter(channel.exclude_path_patterns if channel.exclude_path_patterns else [], False)
         web_page_normalized_urls = await web_page_service.find_normalized_urls_by_channel(channel.normalized_url_hash)
         for web_page_normalized_url in web_page_normalized_urls:
             job = await web_page_job_service.find_by_url(web_page_normalized_url)

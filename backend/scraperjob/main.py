@@ -21,6 +21,7 @@ from pyminiscraper.filter import PathFilter
 async def main():
     await Jobs.initialize()
     await create_channels()    
+    await clean_channels()    
     await scrape_channels()
     await clean_channels()
     
@@ -82,7 +83,7 @@ async def clean_channel_web_pages(channel: WebPageChannel)->None:
         web_page_job_service = WebPageJobService(session)
         web_page_service = WebPageService(session)
         include_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], True)
-        exclude_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], False)
+        exclude_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], True)
         web_page_normalized_urls = await web_page_service.find_normalized_urls_by_channel(channel.normalized_url_hash)
         for web_page_normalized_url in web_page_normalized_urls:
             job = await web_page_job_service.find_by_url(web_page_normalized_url)

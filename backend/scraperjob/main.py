@@ -14,7 +14,9 @@ from datetime import datetime
 from pysrc.scraper.text import extract_date_from_url
 from sqlalchemy import Null
 from pyminiscraper.filter import PathFilter
+import logging
 
+logger = logging.getLogger("scraperjob")
 
 @click.command()
 async def main():
@@ -34,6 +36,7 @@ def convert_seed_type(seed_type: WebPageSeedType)->ScraperUrlType:
     return ScraperUrlType.HTML
     
 async def scrape_channel(channel: WebPageChannel)->None:
+    logger.info(f"Scraping channel {channel.normalized_url}")
     seed_urls = [ScraperUrl(
             url=seed.url, 
             type=convert_seed_type(seed.type),  # Convert enum to string value
@@ -48,8 +51,6 @@ async def scrape_channel(channel: WebPageChannel)->None:
         if url_date:
             web_page.metadata_published_at = url_date
             
-        
-
     scraper = Scraper(
         ScraperConfig(
             seed_urls=seed_urls,
@@ -65,12 +66,13 @@ async def scrape_channel(channel: WebPageChannel)->None:
             callback=ServiceScraperStore(on_web_page=on_web_page),
         ),
     )
-    await scraper.run()    
+    await scraper.run()   
+    logger.info(f"Finished scraping channel {channel.normalized_url}")
     
 async def scrape_channels()->None:
     async with Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
-        task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
+        task_manager = ParallelTaskManager[None](max_concurrent_tasks=1)
                  
         for channel in await web_page_channel_service.find_all():
             task_manager.submit_task(scrape_channel(channel))            

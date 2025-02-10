@@ -25,7 +25,7 @@ class PublisherContext:
         self.rz_author = rz_author
         self.rz_channels = rz_channels
 
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
 
 async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
     rz_author = rzfb.RzAuthor(

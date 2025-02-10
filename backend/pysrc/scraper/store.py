@@ -32,6 +32,8 @@ def compute_similarity(existing_web_page: WebPage, new_web_page: WebPage)-> floa
     existing_signature = min_hasher.compute_signature(existing_web_page.content.decode("utf-8"))
     new_signature = min_hasher.compute_signature(new_web_page.content.decode("utf-8"))
     return MinHasher.estimate_similarity(existing_signature, new_signature)
+
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
        
 class ServiceScraperStore(ScraperCallback):
 
@@ -87,7 +89,7 @@ class ServiceScraperStore(ScraperCallback):
                     await self.request_and_store_image(session, context, response.metadata_image_url)                
                 return
             
-            similarity = compute_similarity(existing_web_page, new_web_page)
+            similarity = await asyncio.get_event_loop().run_in_executor(executor, compute_similarity, existing_web_page, new_web_page)
                 
             if similarity < 0.8:
                 await WebPageService(session).upsert(new_web_page)                

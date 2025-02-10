@@ -242,10 +242,12 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         this.lastFirebaseDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
         this.loadIsComplete = querySnapshot.docs.length < this.pageSize;
 
-        resultAudios = await Promise.all(querySnapshot.docs.map(async (doc) => {
+        const resultAudiosWithNulls = await Promise.all(querySnapshot.docs.map(async (doc) => {
             const data = doc.data();
             return await audioFromData(data, doc.id);
         }));
+
+        resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
 
         if (this.mode == PlayableFeedMode.Subscribed) {
             resultAudios = resultAudios.filter(rzAudio => this.subscribedChannelIds.has(rzAudio.channel.id));

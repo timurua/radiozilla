@@ -128,33 +128,38 @@ export const getAllChannelIds = async (): Promise<string[]> => {
     return querySnapshot.docs.map(doc => doc.id);
 }
 
-export const audioFromData = async (data: DocumentData, id: string): Promise<RZAudio> => {
-    const createdAt = data.createdAt.toDate();
-    const authorId = data.author;
-    const channelId = data.channel;
-    const audioText = data.audioText;
-    const durationSeconds = data.durationSeconds;
-    const webUrl = data.webUrl;
-    const publishedAt = data.publishedAt ? data.publishedAt.toDate() : null;
-    const author = await getAuthor(authorId);
-    const channel = await getChannel(channelId);
-    const audioData = {
-        name: data.name,
-        audioUrl: data.audioUrl,
-        imageUrl: data.imageUrl,
-        topics: data.topics,
-        audioText,
-        durationSeconds,
-        webUrl,
-        publishedAt
-    };
-    const audio = RZAudio.fromObject(audioData, id, createdAt, author, channel);
-    audioCache.set(id, audio);
-    return audio;
+export const audioFromData = async (data: DocumentData, id: string): Promise<RZAudio|null> => {
+    try {     
+        const createdAt = data.createdAt.toDate();
+        const authorId = data.author;
+        const channelId = data.channel;
+        const audioText = data.audioText;
+        const durationSeconds = data.durationSeconds;
+        const webUrl = data.webUrl;
+        const publishedAt = data.publishedAt ? data.publishedAt.toDate() : null;
+        const author = await getAuthor(authorId);
+        const channel = await getChannel(channelId);
+        const audioData = {
+            name: data.name,
+            audioUrl: data.audioUrl,
+            imageUrl: data.imageUrl,
+            topics: data.topics,
+            audioText,
+            durationSeconds,
+            webUrl,
+            publishedAt
+        };
+        const audio = RZAudio.fromObject(audioData, id, createdAt, author, channel);
+        audioCache.set(id, audio);
+        return audio;
+    } catch (error) {
+        logger.error(`Error creating audio from data: ${error}`);
+        return null;
+    }
 }
 
 // Modify getAudio with caching
-export const getAudio = async (id: string): Promise<RZAudio> => {
+export const getAudio = async (id: string): Promise<RZAudio|null> => {
     const cached = audioCache.get(id);
     if (cached) {
         return cached;
@@ -166,6 +171,9 @@ export const getAudio = async (id: string): Promise<RZAudio> => {
     if (docSnap.exists()) {
         const data = docSnap.data();
         const audio = await audioFromData(data, docSnap.id);
+        if (!audio) {
+            return null;
+        }
         audioCache.set(id, audio);
         return audio;
     } else {
@@ -183,9 +191,10 @@ export const getAudioListForChannel = async (channelId: string): Promise<RZAudio
         orderBy('__name__', 'desc'));
     const querySnapshot = await getDocs(queryAudios);
 
-    const audios = await Promise.all(querySnapshot.docs.map(doc =>
+    const resultAudiosWithNulls = await Promise.all(querySnapshot.docs.map(doc =>
         audioFromData(doc.data(), doc.id)
     ));
+    const audios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
     return audios;
 }
 
@@ -221,10 +230,12 @@ export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedCha
     //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
     const filteredDocs = querySnapshot.docs;
 
-    resultAudios = await Promise.all(filteredDocs.map(async (doc) => {
+    const resultAudiosWithNulls = await Promise.all(filteredDocs.map(async (doc) => {
         const data = doc.data();
         return await audioFromData(data, doc.id);
     }));
+
+    resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
 
     if (feedMode == PlayableFeedMode.Subscribed) {
         const subscribedChannelIdsSet = new Set(subscribedChannelIds);

@@ -1,7 +1,6 @@
 from aiohttp import web
 import asyncclick as click
 import asyncio
-from librosa import ex
 from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperUrlType
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageChannelService, WebPageJobService, WebPageService

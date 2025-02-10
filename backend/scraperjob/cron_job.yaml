@@ -6,7 +6,7 @@ metadata:
     app: scraperjob
     type: batch-process
 spec:
-  schedule: "0 0 * * *"  # Runs at midnight every day
+  schedule: "0 * * * *"  # Runs at midnight every day
   jobTemplate:
     spec:
       ttlSecondsAfterFinished: 600

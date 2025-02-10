@@ -72,7 +72,7 @@ async def scrape_channel(channel: WebPageChannel)->None:
 async def scrape_channels()->None:
     async with Database.get_session() as session:
         web_page_channel_service = WebPageChannelService(session)
-        task_manager = ParallelTaskManager[None](max_concurrent_tasks=1)
+        task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
                  
         for channel in await web_page_channel_service.find_all():
             task_manager.submit_task(scrape_channel(channel))            

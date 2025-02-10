@@ -166,7 +166,7 @@ class WebPageJob(TimestampModel):
     normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)
     normalized_url: Mapped[str] = mapped_column(String)    
     state: Mapped[WebPageJobState] = mapped_column(nullable=False)
-    context: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default={})   
+    context: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False, default={})       
     
     
 # Automatically set hash when content is modified

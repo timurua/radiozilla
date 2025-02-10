@@ -70,6 +70,11 @@ class WebPageService:
         stmt = select(WebPage).execution_options(readonly=True).where(WebPage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()    
+    
+    async def find_normalized_urls_by_channel(self, channel_normalized_url_hash: str) -> list[str]:
+        stmt = select(WebPage.normalized_url).where(WebPage.channel_normalized_url_hash == channel_normalized_url_hash)    
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
               
 class WebPageJobService:
     
@@ -89,6 +94,11 @@ class WebPageJobService:
     
     async def find_with_state(self, state: WebPageJobState) -> list[str]:
         stmt = select(WebPageJob.normalized_url).where(WebPageJob.state == state)    
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+    
+    async def find_web_pages_by_channel(self, channel_id: str) -> list[str]:
+        stmt = select(WebPageJob.normalized_url).where(WebPageJob.channel_id == channel_id)    
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     

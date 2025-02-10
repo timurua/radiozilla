@@ -6,11 +6,11 @@ services:
   db:
     image: pgvector/pgvector:0.8.0-pg17
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_password
       POSTGRES_DB: db
     ports:
-      - "5432:5432"
+      - "30432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -1,7 +1,5 @@
-import json
-from typing import List, Dict, Optional
+from typing import List
 from crewai import Agent, Task, Crew, LLM # type: ignore[import-untyped] 
-from git import exc
 from langchain_community.llms.ollama import Ollama
 import logging
 

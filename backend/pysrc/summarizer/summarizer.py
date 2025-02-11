@@ -1,5 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
 import logging
+
+from .crewai_summarizer import CrewAISummarizer
 from ..db.web_page import WebPageSummary, WebPageJobState, WebPageJob
 from ..db.database import Database
 from pyminiscraper.url import normalized_url_hash, normalize_url
@@ -13,11 +17,13 @@ from datetime import datetime
 
 logger = logging.getLogger("summarizer")
 
+executor = ThreadPoolExecutor(max_workers=4)
+
 class SummarizerService:
     
-    def __init__(self, ollama_client: OllamaClient):
+    def __init__(self, ollama_model: str) -> None:
+        self.ollama_model = ollama_model
         self.logger = logging.getLogger("summarizer")        
-        self.ollama_client = ollama_client
         self.logger.info("Summarizer service initialized")
 
 
@@ -35,6 +41,27 @@ class SummarizerService:
             manager.submit_task(self.summarize_web_page(normalized_url))
 
         await manager.wait_all()
+        
+    async def summarize_text_v1(self, text: str) -> str:
+        summary_confug = SummaryConfig(
+            "English",
+            SummaryLength.medium,
+            SummaryTone.neutral,
+            [SummaryFocus.key_points],
+        )
+
+        summary_prompt = SummaryPrompt(
+            text,
+            summary_confug,
+        )
+
+        prompt = summary_prompt.get_prompt()
+
+        return await OllamaClient(model=self.ollama_model).generate(prompt)
+    
+    async def summarize_text_v2(self, text: str) -> str:
+        news_summarizer = CrewAISummarizer(self.ollama_model)
+        return await asyncio.get_event_loop().run_in_executor(executor, news_summarizer.generate_summary, text)        
 
         
     async def summarize_web_page(self, normalized_url: str) -> None: 
@@ -49,27 +76,14 @@ class SummarizerService:
                 self.logger.error(f"Web page has no title: {normalized_url}")
                 return
             self.logger.info(f"Summarizing web page: {web_page.url}")
-            summary_confug = SummaryConfig(
-                "English",
-                SummaryLength.medium,
-                SummaryTone.neutral,
-                [SummaryFocus.key_points],
-            )
-
-            summary_prompt = SummaryPrompt(
-                web_page.visible_text,
-                summary_confug,
-            )
-
-            prompt = summary_prompt.get_prompt()
-
-            summary = await self.ollama_client.generate(prompt)
+            
+            summary = await self.summarize_text_v2(web_page.visible_text)
 
             published_at = None            
             date_deduction_prompt = DateDeductionPrompt(
                 web_page.visible_text,
             )
-            published_at_text = await self.ollama_client.generate(date_deduction_prompt.get_prompt())
+            published_at_text = await OllamaClient(model=self.ollama_model).generate(date_deduction_prompt.get_prompt())
             try:
                 parsed_date = parse(published_at_text)
                 if parsed_date:

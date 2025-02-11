@@ -97,11 +97,6 @@ class WebPageJobService:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def find_web_pages_by_channel(self, channel_id: str) -> list[str]:
-        stmt = select(WebPageJob.normalized_url).where(WebPageJob.channel_id == channel_id)    
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
-    
     
 class WebPageSummaryService:
     _model = None

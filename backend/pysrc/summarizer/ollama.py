@@ -7,7 +7,7 @@ class OllamaClientException(Exception):
     pass
 
 class OllamaClient:
-    def __init__(self, model: str = "qwen2.5:7b", base_url="http://localhost:11434"):
+    def __init__(self, model: str, base_url="http://localhost:11434"):
         self.base_url = f"{base_url}/api"
         self.headers = {
             "Content-Type": "application/json"

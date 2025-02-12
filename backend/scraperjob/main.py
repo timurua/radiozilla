@@ -205,8 +205,8 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://deepmind.google/",
-                name="News scraped from DeepMind website",
-                description="News from DeepMind",
+                name="News from DeepMind",
+                description="News scraped from DeepMind website",
                 image_url="https://deepmind.google/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([
@@ -254,8 +254,8 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blogs.microsoft.com/",
-                name="News scraped from Microsoft AI website",
-                description="News from Microsoft AI",
+                name="News from Microsoft AI",
+                description="News scraped from Microsoft AI website",
                 enabled=True,            
                 scraper_seeds=web_page_seed_to_dict([
                     WebPageSeed(url="https://blogs.microsoft.com/sitemap.xml", type=WebPageSeedType.SITEMAP),
@@ -270,8 +270,8 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://cohere.com/",
-                name="News scraped from Cohere website",
-                description="News about Cohere",
+                name="News about Cohere",
+                description="News scraped from Cohere website",
                 image_url="https://cohere.com/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([
@@ -321,8 +321,8 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://stability.ai/",
-                name="News scraped from Stabilty AI website",
-                description="News from Stability AI",
+                name="News from Stability AI",
+                description="News scraped from Stabilty AI website",
                 image_url="https://stability.ai/favicon.ico",
                 enabled=True,
                 scraper_seeds=web_page_seed_to_dict([

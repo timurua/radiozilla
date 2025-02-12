@@ -1,4 +1,4 @@
-from pysrc.utils.numberspeller import NumberToWords, NumberMatcher, NumberTextPreprocessor
+from pysrc.utils.numberspeller import NumberToWords, NumberMatcher, NumbersToTextPreprocessor
 import pytest
 
 def test_single_digits():
@@ -121,6 +121,6 @@ def test_multiple_decimals():
     assert matcher.find_numbers("1.2.3 4.5.6") == ['1.2', '.3', '4.5', '.6']    
 
 def test_number_text_processor():
-    matcher = NumberTextPreprocessor()
+    matcher = NumbersToTextPreprocessor()
     assert matcher.preprocess("Price: -42.99, Count: 5, Quantity: .5, Magnitude: -.49, Number: -5, Impact: .32") \
         == 'Price: minus forty two point nine nine, Count: five, Quantity: point five, Magnitude: minus point four nine, Number: minus five, Impact: point three two'

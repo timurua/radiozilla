@@ -97,7 +97,7 @@ class NumberMatcher:
         matches = self.number_pattern.finditer(text)
         return [(match.group(), match.start(), match.end()) for match in matches]
 
-class NumberTextPreprocessor:
+class NumbersToTextPreprocessor:
     def __init__(self) -> None:
         self.number_to_words = NumberToWords()
         self.number_matcher = NumberMatcher()

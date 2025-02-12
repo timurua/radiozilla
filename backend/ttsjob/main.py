@@ -13,7 +13,7 @@ from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.process.runner import ProcessRunner
 from pysrc.config.jobs import Jobs
 from pysrc.summarizer.markdown import MarkdownStripper
-from pysrc.utils.numberspeller import NumberTextPreprocessor
+from pysrc.utils.numberspeller import NumbersToTextPreprocessor
 from pysrc.utils.latexcleaner import LatexCleaner
 
 @click.command()
@@ -125,7 +125,7 @@ async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel)
         {summarized_text} """
 
     summarized_text = LatexCleaner().clean(summarized_text, "math equation")
-    summarized_text = NumberTextPreprocessor().preprocess(summarized_text)
+    summarized_text = NumbersToTextPreprocessor().preprocess(summarized_text)
     summarized_text.replace("%", " percent ")
 
     logging.warning(f"Summarized text: {web_page_summary.summarized_text}")

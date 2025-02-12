@@ -145,7 +145,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://anthropic.com/",
-                name="News about Anthropic",
+                name="News from Anthropic",
                 description="News scraped from Anthropic website",
                 image_url="https://anthropic.com/favicon.ico",
                 enabled=True,
@@ -160,7 +160,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://www.llamaindex.ai/",
-                name="News about LlamaIndex",
+                name="News from LlamaIndex",
                 description="News scraped from LlamaIndex website",
                 image_url="https://www.llamaindex.ai/apple-touch-icon.png",
                 enabled=True,
@@ -175,7 +175,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://huggingface.co/",
-                name="News about Huggingface",
+                name="News from Huggingface",
                 description="News scraped from Haggingface website",
                 image_url="https://huggingface.co/favicon.ico",
                 enabled=True,
@@ -190,7 +190,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://www.palantir.com/",
-                name="News about Palantir",
+                name="News from Palantir",
                 description="News scraped from Palantir website",
                 image_url=None,
                 enabled=True,
@@ -222,7 +222,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://openai.com/",
-                name="News about OpenAI",
+                name="News from OpenAI",
                 description="News scraped from OpenAI website",
                 image_url="https://openai.com/favicon.ico",
                 enabled=True,
@@ -270,7 +270,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://cohere.com/",
-                name="News about Cohere",
+                name="News from Cohere",
                 description="News scraped from Cohere website",
                 image_url="https://cohere.com/favicon.ico",
                 enabled=True,
@@ -287,7 +287,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://blog.crewai.com/",
-                name="News about CrewAI",
+                name="News from CrewAI",
                 description="News scraped from CrewAI website",
                 image_url="https://www.crewai.com/favicon.ico",
                 enabled=True,
@@ -304,7 +304,7 @@ async def create_channels()->None:
         await web_page_channel_service.upsert(
             WebPageChannel(
                 url="https://scale.com/",
-                name="News about Scale AI",
+                name="News from Scale AI",
                 description="News scraped from Scale AI website",
                 image_url="https://scale.com/favicon.ico",
                 enabled=True,

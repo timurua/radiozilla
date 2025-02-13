@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { storageUtils } from '../firebase';
 
 import { Button, ButtonGroup, Image, ProgressBar } from 'react-bootstrap';
-import { BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
+import { BsList, BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
@@ -23,13 +23,13 @@ function SmallAudioPlayerImpl() {
 
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     if (isPlaying) {
       pause();
     } else {
       play();
     }
-  };
+  }, [isPlaying, pause, play]);
 
   // const handleRewind = () => {
   //   if (currentTime) {
@@ -43,14 +43,17 @@ function SmallAudioPlayerImpl() {
   //   }
   // };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     playPrevious();
-  };
+  }, [playPrevious]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     playNext();
-  };
+  }, [playNext]);
 
+  const handlePlaying = useCallback(() => {
+    navigate('/playing');
+  }, [navigate]);
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -103,6 +106,9 @@ function SmallAudioPlayerImpl() {
         ) : null}
         <div className="d-flex align-items-center">
           <ButtonGroup>
+            {/* <Button variant="dark" onClick={handlePlaying}>
+              <BsList size={30} />
+            </Button> */}
             <Button variant="dark" onClick={handlePrevious}>
               <BsSkipStartFill size={20} />
             </Button>

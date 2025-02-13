@@ -87,7 +87,7 @@ function AudioListImpl({ audioLoader, showDates = true }: { audioLoader: AudioLo
     const [isComplete, setIsComplete] = useState<boolean>(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadingRef = useRef<HTMLDivElement>(null);
-    const { setAudioPrevNext } = useAudio();
+    const { setAudioLoader } = useAudio();
     useEffect(() => {
         const subscriber = () => {
             setRzAudios([...audioLoader.getAudios()]);
@@ -123,20 +123,12 @@ function AudioListImpl({ audioLoader, showDates = true }: { audioLoader: AudioLo
         };
     }, [audioLoader, observerRef, loadingRef]);
 
-    const onClick = (_: RZAudio) => {
-        setAudioPrevNext({
-            getPreviosAudio: async (audio: RZAudio) => {
-                return audioLoader.getPreviosAudio(audio);
-            },
-            getNextAudio: async (audio: RZAudio) => {
-                return audioLoader.getNextAudio(audio);
-            }
-        });
+    const onClick = () => {
+        setAudioLoader(audioLoader);
     }
 
-
     const bucketedAudioList = useMemo(() => {
-        let bucketedAudioList = bucketByDate(rzAudios)
+        const bucketedAudioList = bucketByDate(rzAudios)
         return removeEmptyBuckets(bucketedAudioList);
     }, [rzAudios]);
 

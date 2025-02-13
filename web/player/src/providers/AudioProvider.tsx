@@ -14,11 +14,7 @@ import logger from '../utils/logger';
 import { useAuth } from '../providers/AuthProvider';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { userDataState } from '../state/userData';
-
-export interface AudioPrevNext {
-    getPreviosAudio(audio: RZAudio): Promise<RZAudio | null>;
-    getNextAudio(audio: RZAudio): Promise<RZAudio | null>;
-}
+import AudioLoader from '../utils/AudioLoader';
 
 interface AudioContextProps {
     play: (audio?: RZAudio|null) => Promise<void>;
@@ -27,13 +23,14 @@ interface AudioContextProps {
     pause: () => void;
     rzAudio: RZAudio | null;
     setRzAudio: (rzAudio: RZAudio | null) => void;
-    setAudioPrevNext: (audioPrevNext: AudioPrevNext) => void;
     setCurrentTime: (time: number) => void;
     isPlaying: boolean;
     isPaused: boolean;
     hasEnded: boolean;
     currentTime: number;
     duration: number;
+    audioLoader: AudioLoader | null;
+    setAudioLoader: (loader: AudioLoader) => void;
 }
 
 const AudioContext = createContext<AudioContextProps | undefined>(undefined);
@@ -70,8 +67,8 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const [hasEnded, setHasEnded] = useState<boolean>(false);
     const [currentTimeState, setCurrentTimeState] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
-    const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
-    const [audioPrevNext, setAudioPrevNext] = useState<AudioPrevNext | null>(null);
+    const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);    
+    const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
     const userData = useRecoilValue(userDataState);
     const setUserData = useSetRecoilState(userDataState);
 
@@ -137,8 +134,8 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     }, [rzAudio, setAudio, audioElement]);
 
     const playNext = useCallback(async () => {
-        if (rzAudio && audioPrevNext) {
-            const nextAudio = await audioPrevNext?.getNextAudio(rzAudio);
+        if (rzAudio && audioLoader) {
+            const nextAudio = await audioLoader?.getNextAudio(rzAudio);
             if (nextAudio) {
                 setIsPlaying(false);
                 setIsPaused(false);
@@ -146,11 +143,11 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
                 await play(nextAudio);
             }
         }
-    }, [rzAudio, audioPrevNext, play]);
+    }, [rzAudio, audioLoader, play]);
 
     const playPrevious = useCallback(async () => {
-        if (rzAudio && audioPrevNext) {
-            const nextAudio = await audioPrevNext?.getPreviosAudio(rzAudio);
+        if (rzAudio && audioLoader) {
+            const nextAudio = await audioLoader?.getPreviosAudio(rzAudio);
             if (nextAudio) {
                 setIsPlaying(false);
                 setIsPaused(false);
@@ -158,7 +155,7 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
                 await play(nextAudio);
             }
         }
-    }, [rzAudio, audioPrevNext, play]);
+    }, [rzAudio, audioLoader, play]);
 
     const pause = useCallback(() => {
         audioElement.pause();
@@ -187,12 +184,10 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             setIsPlaying(false);
             setIsPaused(false);
             setHasEnded(true);
-            if (rzAudio) {
-                if (audioPrevNext) {
-                    const nextAudio = await audioPrevNext?.getNextAudio(rzAudio);
-                    if (nextAudio) {
-                        await play(nextAudio);
-                    }
+            if (rzAudio && audioLoader) {
+                const nextAudio = await audioLoader?.getNextAudio(rzAudio);
+                if (nextAudio) {
+                    await play(nextAudio);
                 }
             }
         };
@@ -264,7 +259,13 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             audioElement.removeEventListener('timeupdate', handleTimeUpdate);
             audioElement.removeEventListener('error', handleError);
         };
-    }, [rzAudio, audioPrevNext, play, audioElement, setCurrentTimeState]);
+    }, [rzAudio, audioLoader, play, audioElement, setCurrentTimeState]);
+
+    useEffect(() => {
+        if (audioLoader) {
+            setAudioLoader(audioLoader);
+        }
+    }, [audioLoader]);
 
     return (
         <AudioContext.Provider
@@ -275,13 +276,14 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
                 pause,
                 rzAudio: rzAudio,
                 setRzAudio: setRzAudioState,
-                setAudioPrevNext,
                 setCurrentTime,
                 isPlaying,
                 isPaused,
                 hasEnded,
                 currentTime: currentTimeState,
                 duration,
+                audioLoader,
+                setAudioLoader,
             }}
         >
             {children}

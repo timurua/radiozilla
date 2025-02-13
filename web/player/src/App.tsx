@@ -16,6 +16,7 @@ import { AudioProvider } from './providers/AudioProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { NotificationProvider } from './providers/NotificationProvider';
 import { TfIdfProvider } from './tfidf/tf-idf-provider';
+import Playing from './pages/Playing';
 
 
 const App: React.FC = () => {
@@ -35,6 +36,7 @@ const App: React.FC = () => {
                     <Route path="/channel/:channelId" element={<Channel />} />
                     <Route path="/feed" element={<Feed />} />
                     <Route path="/search" element={<Search />} />
+                    <Route path="/playing" element={<Playing />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/company" element={<Company />} />
                     </Routes>

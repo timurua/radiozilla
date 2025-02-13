@@ -18,16 +18,15 @@ function InnerFeed() {
 
   const [feedMode, setFeedMode] = useState<PlayableFeedMode>(PlayableFeedMode.Latest);
   const userDataSubscribedChannelIds = useRecoilValue(userDataSubscribedChannelIdsSelector);
-  const { setAudioPrevNext } = useAudio();
-
-  useEffect(() => {
-    const feedAudioList = new FeedAudioLoader(feedMode, userDataSubscribedChannelIds);    
-    setAudioPrevNext(feedAudioList);
-  }, [feedMode, userDataSubscribedChannelIds]);
+  const { setAudioLoader } = useAudio();
 
   const audioLoader = useMemo(() => {
     return new FeedAudioLoader(feedMode, userDataSubscribedChannelIds);
   }, [feedMode, userDataSubscribedChannelIds]);
+
+  useEffect(() => {
+    setAudioLoader(audioLoader);
+  }, [audioLoader, setAudioLoader]);
 
   return <>
     <div>

@@ -16,7 +16,11 @@ export interface TfIdfSearchResult {
 export interface TfIdfWorkerMessage {
     type: 'ADD_DOCUMENT' | 'ADD_DOCUMENTS' | 'SEARCH' | 'INDEX_UPDATED';
     requestId: string;
-    payload: any;
+    payload: {
+        id?: string;
+        text?: string;
+        metadata?: Record<string, unknown>;
+    };
 }
 
 export interface TfIdfDocument {

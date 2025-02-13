@@ -11,6 +11,7 @@ import Audio from './pages/Audio';
 import Search from './pages/Search';
 import Channel from './pages/Channel';
 import Profile from './pages/Profile';
+import Company from './pages/Company';
 import { AudioProvider } from './providers/AudioProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { NotificationProvider } from './providers/NotificationProvider';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
                     <Route path="/feed" element={<Feed />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/company" element={<Company />} />
                     </Routes>
                 </div>
               </div>

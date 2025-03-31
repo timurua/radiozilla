@@ -1,15 +1,16 @@
 import time
+from typing import Any
 import psutil
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 class HealthService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self._start_time = time.time()
         self._version = "1.0.0"
 
-    async def get_basic_health(self):
+    async def get_basic_health(self)-> dict[str, Any]:
         """Basic health check"""
         db_status = await self._check_database()
         system_status = self._check_system_resources()
@@ -28,7 +29,7 @@ class HealthService:
             "uptime_seconds": time.time() - self._start_time
         }
 
-    async def get_detailed_health(self):
+    async def get_detailed_health(self) -> dict[str, Any]:
         """Detailed health check"""
         db_status = await self._check_database()
         system_status = self._check_system_resources()
@@ -54,7 +55,7 @@ class HealthService:
             ]
         }
 
-    async def _check_database(self):
+    async def _check_database(self) -> dict[str, str]:
         """Check database connectivity"""
         try:
             query = text("SELECT 1")

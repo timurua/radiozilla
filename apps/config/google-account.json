@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "radiozilla-92c5f",
+  "private_key_id": "94719bcd6e79bc1fab89b474c55ad8e8660ed4d6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQ0ObDk6DBtXQn\n0jT69uCE/HzredJjMxADpp+vrZ8Daxs9N+dTxn9exmPXv8tgYMIwnL+R5jI6Eesg\nSszjXn59NtipPqLoHZXeHKvxVZid6Edfl++AzhOiobENT8bsn0Sqd2YJsFnZcFEB\nFMS79tny4fCJF7b5hiYZHEfEVSGiZwY/PdR1aQuGANL4rYF6c238KRn+r823AsGp\nIlGel/HwAMGZacaEukElpQKxtlGFHGFTv59BVoismU7kEScN4vpeR+VYf9iFwwpv\n9nhcflID3z1Sb7brrhHHul/Cefmup3UgJ7YIgTZCFCNfaFJR+b/6Rt03W88tHJD6\nrTQGR+g/AgMBAAECggEAHKSC+tG9q8R1hd7OGJyTiHpPskcYBjZjXHTXE5RnquLe\nriOEbhfcscXZvSbYQUSUbnGZz2v5eMCrdVb9SrTT+d3zkyd91gP04i4hoa1hjUtm\nuuSO3CaoR9cQ/6fxO9TO6OkOzIZtlKdU3SaZo8TE+Y1nXo6rsQdnI2ufJn2c6vci\nDhPhp+Bmu+5a/5OL0XJ5e3Wvv+zeBrTNLx/YHN/KbwdtgDjbLK1ySrpsPJZCue7u\ng81aaHYMvLITzDKYBl+iAjuJw4VGXpRRexMwcRLH6LHQVL5cI6tlha1dbT4dRp8T\n+fvVMbbQHUozxldQJbFZxNcOCIGoWKOh+AH2IwlgtQKBgQD91mo9anX5+1zKzMsH\nuUxekM7Q4IBQlyVP9x7tXogsaSF2xHffSSsQZypnu042MaQZVtLNq2F/CiaPU99I\nnORd4HEfIzTc6R+bWii+5JPxBQMXM52JewZVxRHCSxkoNgtyUQ9fhLgFQOAHwxJl\n6ekBpxJ+PdX/7hXTth1oxb4GewKBgQDSmEz0hxFZ82hUm4BqbwdlI5WKq5ouhiXA\nhg6iLtXafdWjNT8Jt9i/xKcID2j+r60Q59AJOOEODkxnPwW1PDFGw2w9SS72xlpU\nfXUdoZJwuuuN+hCs0eB/ytExXK3g16TANlFcAnf2uOPFQDyB6gJSE3K2VATwJMjl\noYPJWBp8DQKBgFgfeAKaUxrWCQDe2B12Vuz9mM8rIWDZGDsKr9H4X44LcXKqAnOi\nEzE+n5ojjKOD2FRzr/t25AIWpAxeMcYjsaRlpuAIePG4fSCRzFN5R2MFOm1znd18\nuFZOdDvflnw/RvoI6i1fBgPM4fnP3zNCYYIRXno1PXX8UdeOAee9vprBAoGBAJpL\nG5bMntnYjEfw5lUUo8ZmG9pNf9k2T9KOZYpN5kD+kNfS2yyzlgpqejZdk/+Flrcc\nID+hfMJfl3rNodD3GONPqq38QHxtNyFQCc574l7VlF+hJzZ3TpRSdJJF5N8nH330\nTgerh1ksfTS3q51DZg/cT99mD3gie05C19tcwYrBAoGBAItLrAFWN1aPHvWiNLuE\nKgbsWsusjvEfF32tC+c2aMEHs9916hk7mCiAcOER2rwVcKh+4k9LI+X45FCaeM9m\nKqcTy+qLuUibv8t+6W+i73JTRe3D82GOxFPgOFsobnt5PO0sX6ZlARXaUTz2nCkD\nB18bHv+YEiXA5RlDAMDYQgyc\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-89rem@radiozilla-92c5f.iam.gserviceaccount.com",
+  "client_id": "109142718128409486766",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-89rem%40radiozilla-92c5f.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

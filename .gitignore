@@ -75,3 +75,4 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
+apps/config/google-account.json

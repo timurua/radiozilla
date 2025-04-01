@@ -59,8 +59,8 @@ class HealthService:
         """Check database connectivity"""
         try:
             query = text("SELECT 1")
-            async with self.session.begin() as transaction:
-                await transaction.execute(query)
+            async with self.session.begin():
+                await self.session.execute(query)
             return {
                 "status": "healthy",
                 "message": "Database connection successful"

@@ -42,7 +42,7 @@ class WebPageChannel(TimestampModel):
     url: Mapped[str] = mapped_column(String)
     normalized_url: Mapped[str] = mapped_column(String)    
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     

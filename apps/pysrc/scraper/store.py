@@ -37,7 +37,7 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
        
 class ServiceScraperStore(ScraperCallback):
 
-    def __init__(self, on_web_page: Callable[[WebPage],None]|None, rerequest_after_hours: int=24*30):  
+    def __init__(self, on_web_page: Callable[[WebPage],None]|None = None, rerequest_after_hours: int=24*30) -> None:  
         self.rerequest_after_hours = rerequest_after_hours
         self._on_web_page = on_web_page        
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, WebSocket
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ...services.health import HealthService
 from pysrc.db.database import Database
 from fastapi import HTTPException, status
@@ -10,14 +11,14 @@ from pydantic import BaseModel
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
 import asyncio
-from pysrc.db.web_page import WebPageSeed
-from .models import FAWebPage, FAWebPageSeed, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
+from pysrc.db.web_page import WebPageChannel, WebPageSeed
+from .models import FAWebPage, FAWebPageChannel, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
 from pysrc.db.frontend import FrontendAudioPlay
 from datetime import datetime
 
 router = APIRouter()
 
-async def get_health_service(db: AsyncSession = Depends(Database.get_db)) -> HealthService:
+async def get_health_service(db: AsyncSession = Depends(Database.get_session)) -> HealthService:
     return HealthService(db)
 
 _scraper_service: ScraperService|None = None
@@ -46,7 +47,7 @@ async def detailed_health_check(
     """
     return await health_service.get_detailed_health()
 
-async def get_web_page_service(db: AsyncSession = Depends(Database.get_db)) -> WebPageService:
+async def get_web_page_service(db: AsyncSession = Depends(Database.get_session)) -> WebPageService:
     return WebPageService(db)
 
 @router.get("/web-pages")
@@ -88,30 +89,31 @@ async def read_web_pages(
 class ScraperRunRequest(BaseModel):
     url: str
     max_depth: int
-    no_cache: bool
 
 class Callback(ScraperCallback):
-        def __init__(self, connection_manager: ConnectionManager):
+        def __init__(self, connection_manager: ConnectionManager) -> None:
             self.connection_manager = connection_manager
 
-        def on_log(self, text: str) -> None:
-            asyncio.create_task(self.connection_manager.broadcast(text))
+        async def on_log(self, text: str) -> None:
+            await self.connection_manager.broadcast(text)
 
 @router.post("/scraper-run")
 async def scraper_run(
     request: ScraperRunRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
-) -> FAScraperStats:
+) -> FAScraperStats | None:
     callback = Callback(connection_manager)
     try:
         logging.info(f"Starting scraper for url: {request.url}")
-        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
-        scraper_stats = await scraper_service.run(urls, callback, no_cache=request.no_cache)
-        return FAScraperStats(
-            initiated_urls_count=scraper_stats.initiated_urls_count,
-            requested_urls_count=scraper_stats.requested_urls_count,
-            completed_urls_count=scraper_stats.completed_urls_count,
+        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
+        scraper_stats = await scraper_service.run(urls, callback)
+        return None if scraper_stats is None else FAScraperStats(
+            queued_urls_count = scraper_stats.queued_urls_count,
+            requested_urls_count = scraper_stats.requested_urls_count,
+            success_urls_count = scraper_stats.success_urls_count,
+            error_urls_count = scraper_stats.error_urls_count,
+            skipped_urls_count = scraper_stats.skipped_urls_count,
             domain_stats={
                 domain: FADomainStats(
                     domain=domain,
@@ -134,16 +136,18 @@ async def summarizer_run(
     request: SummarizerRunRequest,
     scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
-) -> FAScraperStats:
+) -> FAScraperStats | None:
     callback = Callback(connection_manager)
     try:
         logging.info(f"Starting scraper for url: {request.url}")
-        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth, no_cache=True)]
-        scraper_stats = await scraper_service.run(urls, callback, no_cache=request.no_cache)
-        return FAScraperStats(
-            initiated_urls_count=scraper_stats.initiated_urls_count,
-            requested_urls_count=scraper_stats.requested_urls_count,
-            completed_urls_count=scraper_stats.completed_urls_count,
+        seed_urls = [ScraperUrl(url=request.url)]
+        scraper_stats = await scraper_service.run(seed_urls, callback)        
+        return None if scraper_stats is None else FAScraperStats(
+            queued_urls_count = scraper_stats.queued_urls_count,
+            requested_urls_count = scraper_stats.requested_urls_count,
+            success_urls_count = scraper_stats.success_urls_count,
+            error_urls_count = scraper_stats.error_urls_count,
+            skipped_urls_count = scraper_stats.skipped_urls_count,    
             domain_stats={
                 domain: FADomainStats(
                     domain=domain,
@@ -184,24 +188,31 @@ async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: C
         while True:
             data = await websocket.receive_text()
     except Exception as e:
-        connection_manager.disconnect(websocket)
+        await connection_manager.disconnect(websocket)
 
 
-@router.get("/web-page-seeds")
-async def read_web_page_seeds(db: AsyncSession = Depends(Database.get_db)) -> list[FAWebPageSeed]:
+@router.get("/web-page-channels")
+async def read_web_page_seeds(db: AsyncSession = Depends(Database.get_session)) -> list[FAWebPageChannel]:
     try:
-        result = await db.execute(select(WebPageSeed))
-        web_page_seeds = result.scalars()
+        result = await db.execute(select(WebPageChannel))
+        web_page_channels = result.scalars()
         return [
-            FAWebPageSeed(
-                normalized_url_hash=seed.normalized_url_hash,
-                normalized_url=seed.normalized_url,
-                url=seed.url,
-                max_depth=seed.max_depth,
-                url_patterns=seed.url_patterns,
-                use_headless_browser=seed.use_headless_browser,
-                allowed_domains=seed.allowed_domains
-            ) for seed in web_page_seeds
+            FAWebPageChannel(
+                normalized_url_hash=channel.normalized_url_hash,
+                normalized_url=channel.normalized_url,
+                url=channel.url,
+                name=channel.name,
+                description=channel.description,
+                image_url=channel.image_url,
+                enabled=channel.enabled,                
+                scraper_seeds=channel.scraper_seeds,
+                include_path_patterns=channel.include_path_patterns,
+                exclude_path_patterns=channel.exclude_path_patterns,
+                scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
+                scraper_follow_feed_links=channel.scraper_follow_feed_links,
+                scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
+                    
+            ) for channel in web_page_channels
         ]
     except Exception as e:
         logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
@@ -214,38 +225,38 @@ class UpsertWebPageSeedRequest(BaseModel):
     normalized_url_hash: str
     normalized_url: str
     url: str
-    max_depth: int
-    url_patterns: list[str] | None
-    use_headless_browser: bool
-    allowed_domains: list[str] | None
+    name: str
+    description: str | None
+    image_url: str | None
+    enabled: bool
 
-@router.post("/web-page-seeds")
+@router.post("/web-page-channels")
 async def upsert_web_page_seed(
     request: UpsertWebPageSeedRequest,
-    db: AsyncSession = Depends(Database.get_db)
-):
+    db: AsyncSession = Depends(Database.get_session)
+) -> dict[str, str]:
     try:
-        result = await db.execute(select(WebPageSeed).where(WebPageSeed.normalized_url_hash == request.normalized_url_hash))
-        web_page_seed = result.scalar_one_or_none()
+        result = await db.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.normalized_url_hash))
+        web_page_channel = result.scalar_one_or_none()
 
-        if web_page_seed:
-            web_page_seed.normalized_url = request.normalized_url
-            web_page_seed.url = request.url
-            web_page_seed.max_depth = request.max_depth
-            web_page_seed.url_patterns = request.url_patterns
-            web_page_seed.use_headless_browser = request.use_headless_browser
-            web_page_seed.allowed_domains = request.allowed_domains
+        if web_page_channel:
+            web_page_channel.normalized_url = request.normalized_url
+            web_page_channel.url = request.url
+            web_page_channel.name = request.name
+            web_page_channel.description = request.description
+            web_page_channel.image_url = request.image_url
+            web_page_channel.enabled = request.enabled
         else:
-            web_page_seed = WebPageSeed(
+            web_page_channel = WebPageChannel(
                 normalized_url_hash=request.normalized_url_hash,
                 normalized_url=request.normalized_url,
                 url=request.url,
-                max_depth=request.max_depth,
-                url_patterns=request.url_patterns,
-                use_headless_browser=request.use_headless_browser,
-                allowed_domains=request.allowed_domains
+                name=request.name,
+                description=request.description,
+                image_url=request.image_url,
+                enabled=request.enabled
             )
-            db.add(web_page_seed)
+            db.add(web_page_channel)
 
         await db.commit()
         return {"status": "success"}
@@ -257,9 +268,9 @@ async def upsert_web_page_seed(
         )
     
 @router.post("/frontend-audio-results-similar-for-text")
-async def frontend_audios_similar_for_text(
+async def post_frontend_audios_similar_for_text(
     text: str,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> list[FAFrontendAudioSearchResult]:
     try:        
         logging.info(f"Finding similar front end audios for text: {text}")
@@ -274,9 +285,9 @@ async def frontend_audios_similar_for_text(
 
     
 @router.get("/frontend-audios-similar-for-text")
-async def frontend_audios_similar_for_text(
+async def get_frontend_audios_similar_for_text(
     text: str,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> list[FAFrontendAudio]:
     try:        
         logging.info(f"Finding similar front end audios for text: {text}")
@@ -315,7 +326,7 @@ async def frontend_audios_similar_for_text(
 @router.get("/frontend-audio-results-similar-for-text")
 async def frontend_audio_results_similar_for_text(
     text: str,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> list[FAFrontendAudioSearchResult]:
     try:        
         logging.info(f"Finding similar front end audio results for text: {text}")
@@ -335,7 +346,7 @@ async def frontend_audio_results_similar_for_text(
 @router.get("/frontend-audio-for-url")
 async def frontend_audio_for_url(
     url: str,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> FAFrontendAudio | None:
     try:
         logging.info(f"Finding frontend audios for url: {url}")
@@ -371,7 +382,7 @@ async def frontend_audio_play(
     user_id: str,
     audio_id: str,
     duration_seconds: int,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> None:
     try:
         logging.info(f"Upserting front end audio play for user: {user_id}, audio: {audio_id}")
@@ -395,7 +406,7 @@ async def frontend_audio_play(
 @router.get("/frontend-audio-plays-for-user")
 async def frontend_audio_plays_for_user(
     user_id: str,
-    db: AsyncSession = Depends(Database.get_db)
+    db: AsyncSession = Depends(Database.get_session)
 ) -> list[FAFrontendAudioPlay]:
     try:
         logging.info(f"Finding front end audio plays for user: {user_id}")

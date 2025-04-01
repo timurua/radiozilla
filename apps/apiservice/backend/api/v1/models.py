@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import List, Dict
 
 class FAWebPage(BaseModel):
     normalized_url_hash: str
@@ -19,28 +20,37 @@ class FAWebPage(BaseModel):
     canonical_url: str|None
     outgoing_urls: list[str]|None
     visible_text: str|None
-    sitemap_url: str|None
+    sitemap_urls: list[str]|None
     robots_content: list[str]|None
     text_chunks: list[str]|None
 
-class FAWebPageSeed(BaseModel):
+class FAWebPageChannel(BaseModel):
     normalized_url_hash: str
     normalized_url: str
     url: str
-    max_depth: int
-    url_patterns: list[str] | None
-    use_headless_browser: bool
-    allowed_domains: list[str] | None     
+    name: str | None
+    description: str | None
+    image_url: str | None
+    enabled: bool | None
+    scraper_seeds: List[Dict[str, str]] | None
+    include_path_patterns: List[str] | None
+    exclude_path_patterns: List[str] | None
+    scraper_follow_web_page_links: bool | None
+    scraper_follow_feed_links: bool | None
+    scraper_follow_sitemap_links: bool | None
 
 class FADomainStats(BaseModel):
     domain: str
     frequent_subpaths: dict[str, int]
 
 class FAScraperStats(BaseModel):
-    initiated_urls_count: int
+    queued_urls_count: int
     requested_urls_count: int
-    completed_urls_count: int
-    domain_stats: dict[str, FADomainStats]    
+    success_urls_count: int
+    error_urls_count: int
+    skipped_urls_count: int
+    domain_stats: Dict[str, FADomainStats]
+    
 
 class FAFrontendAudio(BaseModel):
     normalized_url_hash: str

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import Client from '../client';
-import { configuration } from '../client';
+import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { FAScraperStats } from '../api';
+import Client, { wsPath } from '../client';
 
 const Scraper: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
@@ -15,9 +14,11 @@ const Scraper: React.FC = () => {
     const [_, setSocket] = useState<WebSocket | null>(null);
     const [messages, setMessages] = useState<string[]>([]);
 
+    const wsScraperPath = `${wsPath}/api/v1/scraper-ws`;
+
     useEffect(() => {
         // Create WebSocket connection
-        const ws = new WebSocket(configuration.basePath?? '');
+        const ws = new WebSocket(wsScraperPath);
         var reconnect = true;
         setSocket(ws);
 
@@ -28,14 +29,15 @@ const Scraper: React.FC = () => {
             setMessages(prev => [event.data, ...prev]);
         };
 
-        ws.onerror = function (_) {
+        ws.onerror = function (event) {
+            console.error('WebSocket error:', event);
         };
 
         ws.onclose = () => {
             console.log('Disconnected from WebSocket');
             if (reconnect) {
                 setTimeout(() => {
-                    const newWs = new WebSocket(configuration.basePath?? '');
+                    const newWs = new WebSocket(wsScraperPath);
                     setSocket(newWs);
                 }, 5000);
             }

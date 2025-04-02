@@ -187,8 +187,13 @@ async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: C
         await connection_manager.connect(websocket)
         while True:
             data = await websocket.receive_text()
+            logging.info(f"Received data: {data}")
+            # Optionally process the received data here
     except Exception as e:
+        logging.error(f"WebSocket error: {str(e)}", exc_info=True)
+    finally:
         await connection_manager.disconnect(websocket)
+        logging.info("WebSocket connection closed")
 
 
 @router.get("/web-page-channels")

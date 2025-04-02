@@ -38,5 +38,5 @@ app.include_router(endpoints.router, prefix="/api/v1")
 
 # Mount React static files
 static_director = os.getenv("STATIC_DIR", "ui/dist")
-app.mount("/", StaticFiles(directory=static_director, html=True), name="static")
+app.mount("/", StaticFiles(directory=static_director, html=True, check_dir=False), name="static")
  

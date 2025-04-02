@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import Client from '../client';
-import { basePath } from '../client';
+import React, { useState } from 'react';
+import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { FAScraperStats } from '../api';
+import Client from '../client';
 
 const Scraper: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
@@ -11,42 +10,6 @@ const Scraper: React.FC = () => {
     const [noCache, setNoCache] = useState(true);
     const [loading, setLoading] = useState(false);
     const [scraperStats, setScraperStats] = useState<FAScraperStats | null>(null);
-
-    const [_, setSocket] = useState<WebSocket | null>(null);
-    const [messages, setMessages] = useState<string[]>([]);
-
-    useEffect(() => {
-        // Create WebSocket connection
-        const ws = new WebSocket(basePath);
-        var reconnect = true;
-        setSocket(ws);
-
-        ws.onopen = () => {
-        };
-
-        ws.onmessage = (event) => {
-            setMessages(prev => [event.data, ...prev]);
-        };
-
-        ws.onerror = function (_) {
-        };
-
-        ws.onclose = () => {
-            console.log('Disconnected from WebSocket');
-            if (reconnect) {
-                setTimeout(() => {
-                    const newWs = new WebSocket(basePath);
-                    setSocket(newWs);
-                }, 5000);
-            }
-        };
-
-        // Cleanup on component unmount
-        return () => {
-            reconnect = false;
-            ws.close();
-        };
-    }, []);
 
     const handleStartScraping = async () => {
         try {
@@ -146,13 +109,6 @@ const Scraper: React.FC = () => {
                     </Col>
                 </Row>
             )}
-            <ListGroup>
-                {messages.map((msg, index) => (
-                    <ListGroup.Item key={index}>
-                        {msg}
-                    </ListGroup.Item>
-                ))}
-            </ListGroup>
         </Container>
     );
 };

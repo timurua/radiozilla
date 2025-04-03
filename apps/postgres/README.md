@@ -1,3 +1,7 @@
+# Google Cloud Managed SQL
+gcloud beta sql connect postgres01 --user=postgres --quiet
+
+
 
 # Kubernetes scripts
 

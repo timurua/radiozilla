@@ -45,8 +45,6 @@ class FrontendChannel(TimestampModel):
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     source_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    name_embedding_mlml6v2: Mapped[Optional[list[float]]] = mapped_column(Vector(dim=384), nullable=True, default=None)
-    description_embedding_mlml6v2: Mapped[Optional[list[float]]] = mapped_column(Vector(dim=384), nullable=True, default=None)
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendChannel.normalized_url, 'set')
@@ -76,10 +74,6 @@ class FrontendAudio(TimestampModel):
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    title_embedding_mlml6v2: Mapped[Optional[list[float]]] = mapped_column(Vector(dim=384), nullable=True, default=None)
-    description_embedding_mlml6v2: Mapped[Optional[list[float]]] = mapped_column(Vector(dim=384), nullable=True, default=None)
-    audio_text_embedding_mlml6v2: Mapped[Optional[list[float]]] = mapped_column(Vector(dim=384), nullable=True, default=None)
-
 
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAudio.normalized_url, 'set')
@@ -92,14 +86,6 @@ def frontend_audio_set_content_hash(target: FrontendAudio, value, oldvalue, init
 def frontend_audio_ensure_hash(mapper, connection, target: FrontendAudio):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
-
-
-async def create_vector_indexes(conn: AsyncConnection):    
-    await create_vector_index(conn, "frontend_audios", "title_embedding_mlml6v2", 1000)
-    await create_vector_index(conn, "frontend_audios", "description_embedding_mlml6v2", 1000)
-    await create_vector_index(conn, "frontend_audios", "audio_text_embedding_mlml6v2", 1000)
-    await create_vector_index(conn, "frontend_channels", "name_embedding_mlml6v2", 1000)
-    await create_vector_index(conn, "frontend_channels", "description_embedding_mlml6v2", 1000)
 
 class FrontendAudioPlay(Base):
     __tablename__ = "frontend_audio_plays"

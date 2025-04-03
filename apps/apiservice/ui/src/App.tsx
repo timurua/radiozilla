@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Health from './routes/Health';
 import Root from './components/Root';
-import Scraper from './routes/Scraper';
+import WebPageChannel from './routes/WebPageChannel';
 import WebPageSeeds from './routes/WebPageSeeds';
 import ViewWebPage from './routes/ViewWebPage';
 import WebPageSummary from './routes/WebPageSummary';
@@ -17,7 +17,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Health />} />
           <Route path="/health" element={<Health />} />
-          <Route path="/scraper" element={<Scraper />} />
+          <Route path="/web-page-channel/:channelId" element={<WebPageChannel />} />
           <Route path="/web-page-seeds" element={<WebPageSeeds />} />
           <Route path="/web-pages" element={<ViewWebPage />} />
           <Route path="/web-page-summary" element={<WebPageSummary />} />

@@ -4,8 +4,10 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import { FAScraperStats } from '../api';
 import Client, { wsPath } from '../client';
 
-const Scraper: React.FC = () => {
+const WebPageChannel: React.FC = () => {
     const [url, setUrl] = useState('https://www.anthropic.com/');
+    const [name, setName] = useState('Sample Name');
+    const [description, setDescription] = useState('Sample Description');
     const [maxDepth, setMaxDepth] = useState(5);
     const [noCache, setNoCache] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -77,6 +79,21 @@ const Scraper: React.FC = () => {
         }
     };
 
+    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)    
+    url: Mapped[str] = mapped_column(String)
+    normalized_url: Mapped[str] = mapped_column(String)    
+    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    scraper_seeds: Mapped[List[Dict[str, str]]] = mapped_column(JSONB, nullable=True, default=None)
+    include_path_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    exclude_path_patterns: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
+    scraper_follow_web_page_links: Mapped[bool] = mapped_column(Boolean, default=False)
+    scraper_follow_feed_links: Mapped[bool] = mapped_column(Boolean, default=True)
+    scraper_follow_sitemap_links: Mapped[bool] = mapped_column(Boolean, default=True)
+
     return (
         <Container>
             {loading && (
@@ -94,7 +111,14 @@ const Scraper: React.FC = () => {
             <Row className="my-4">
                 <Col>
                     <Form.Group controlId="textArea">
-                        <Form.Label>Seed URL</Form.Label>
+                        <Form.Label>URL</Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={1}
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                        />
+                        <Form.Label>Name</Form.Label>
                         <Form.Control
                             as="textarea"
                             rows={1}
@@ -159,4 +183,4 @@ const Scraper: React.FC = () => {
     );
 };
 
-export default Scraper;
+export default WebPageChannel;

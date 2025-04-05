@@ -41,7 +41,7 @@
             "cwd": "${workspaceFolder}/apps",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/apps",
-                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local"
+                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local.gcp"
             }
         }
     ]

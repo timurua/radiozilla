@@ -10,11 +10,18 @@ import logging
 from pydantic import BaseModel
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
-import asyncio
 from pysrc.db.web_page import WebPageChannel, WebPageSeed
 from .models import FAWebPage, FAWebPageChannel, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
 from pysrc.db.frontend import FrontendAudioPlay
 from datetime import datetime
+from pyminiscraper.url import normalized_url_hash, normalize_url
+from pyminiscraper.scraper import Scraper, ScraperConfig                    
+from typing import Optional
+from pysrc.scraper.utils import convert_seed_type
+from pysrc.scraper.text import extract_date_from_url
+from pysrc.db.web_page import web_page_seed_from_dict, web_page_seed_to_dict, WebPage
+from pysrc.scraper.store import ServiceScraperStore
+from pysrc.scraper.utils import ScraperUrlType
 
 router = APIRouter()
 
@@ -99,15 +106,38 @@ class Callback(ScraperCallback):
 
 @router.post("/scraper-run")
 async def scraper_run(
-    request: ScraperRunRequest,
+    channel: FAWebPageChannel,
     scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ) -> FAScraperStats | None:
     callback = Callback(connection_manager)
+
+    logging.info(f"Scraping channel {channel.normalized_url}")
+    seed_urls = [ScraperUrl(
+            url=seed.url, 
+            type=convert_seed_type(seed.type),  # Convert enum to string value
+            max_depth=2
+        ) for seed in web_page_seed_from_dict(channel.scraper_seeds)]
+            
+    scraper = Scraper(
+        ScraperConfig(
+            seed_urls=seed_urls,
+            include_path_patterns=channel.include_path_patterns if channel.include_path_patterns else [],
+            exclude_path_patterns=channel.exclude_path_patterns if channel.exclude_path_patterns else [],
+            max_parallel_requests=5,
+            use_headless_browser=False,
+            request_timeout_seconds=30,
+            crawl_delay_seconds=1,
+            follow_sitemap_links=channel.scraper_follow_sitemap_links,
+            follow_feed_links=channel.scraper_follow_feed_links,
+            follow_web_page_links=channel.scraper_follow_web_page_links,            
+            callback=callback,
+        ),
+    )
     try:
-        logging.info(f"Starting scraper for url: {request.url}")
-        urls = [ScraperUrl(url=request.url, max_depth=request.max_depth)]
-        scraper_stats = await scraper_service.run(urls, callback)
+        logging.info(f"Starting scraper for url: {channel.url}")
+        scraper_stats = await scraper.run()   
+        logging.info(f"Finished scraping for url {channel.url}")
         return None if scraper_stats is None else FAScraperStats(
             queued_urls_count = scraper_stats.queued_urls_count,
             requested_urls_count = scraper_stats.requested_urls_count,
@@ -197,12 +227,45 @@ async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: C
 
 
 @router.get("/web-page-channels")
-async def read_web_page_seeds(db: AsyncSession = Depends(Database.get_session)) -> list[FAWebPageChannel]:
+async def get_web_page_channels(db: AsyncSession = Depends(Database.get_session)) -> list[FAWebPageChannel]:
     try:
-        result = await db.execute(select(WebPageChannel))
-        web_page_channels = result.scalars()
-        return [
-            FAWebPageChannel(
+        async with db as session:
+            result = await session.execute(select(WebPageChannel))
+            web_page_channels = result.scalars().all()
+            return [
+                FAWebPageChannel(
+                    normalized_url_hash=channel.normalized_url_hash,
+                    normalized_url=channel.normalized_url,
+                    url=channel.url,
+                    name=channel.name,
+                    description=channel.description,
+                    image_url=channel.image_url,
+                    enabled=channel.enabled,                
+                    scraper_seeds=channel.scraper_seeds,
+                    include_path_patterns=channel.include_path_patterns,
+                    exclude_path_patterns=channel.exclude_path_patterns,
+                    scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
+                    scraper_follow_feed_links=channel.scraper_follow_feed_links,
+                    scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
+                        
+                ) for channel in web_page_channels
+            ]
+    except Exception as e:
+        logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    
+class UrlRequest(BaseModel):
+    url: str
+    
+@router.get("/web-page-channel-by-url")
+async def get_channel_by_url(request: UrlRequest, db: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
+    try:
+        result = await db.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == normalized_url_hash(request.url)))
+        channel = result.scalar_one_or_none()
+        return None if channel is None else FAWebPageChannel(
                 normalized_url_hash=channel.normalized_url_hash,
                 normalized_url=channel.normalized_url,
                 url=channel.url,
@@ -216,9 +279,7 @@ async def read_web_page_seeds(db: AsyncSession = Depends(Database.get_session)) 
                 scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
                 scraper_follow_feed_links=channel.scraper_follow_feed_links,
                 scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
-                    
-            ) for channel in web_page_channels
-        ]
+            )
     except Exception as e:
         logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -226,44 +287,79 @@ async def read_web_page_seeds(db: AsyncSession = Depends(Database.get_session)) 
             detail=str(e)
         )
     
-class UpsertWebPageSeedRequest(BaseModel):
-    normalized_url_hash: str
-    normalized_url: str
-    url: str
-    name: str
-    description: str | None
-    image_url: str | None
-    enabled: bool
+class IdRequest(BaseModel):
+    id: str    
+    
+@router.get("/web-page-channel-by-id")
+async def get_channel_by_url(request: IdRequest, db: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
+    try:
+        async with db as session:
+            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.id))
+            channel = result.scalar_one_or_none()
+            return None if channel is None else FAWebPageChannel(
+                    normalized_url_hash=channel.normalized_url_hash,
+                    normalized_url=channel.normalized_url,
+                    url=channel.url,
+                    name=channel.name,
+                    description=channel.description,
+                    image_url=channel.image_url,
+                    enabled=channel.enabled,                
+                    scraper_seeds=channel.scraper_seeds,
+                    include_path_patterns=channel.include_path_patterns,
+                    exclude_path_patterns=channel.exclude_path_patterns,
+                    scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
+                    scraper_follow_feed_links=channel.scraper_follow_feed_links,
+                    scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
+                )
+    except Exception as e:
+        logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )    
 
-@router.post("/web-page-channels")
-async def upsert_web_page_seed(
-    request: UpsertWebPageSeedRequest,
+
+@router.post("/web-page-channel")
+async def upsert_web_page_channel(
+    request: FAWebPageChannel,
     db: AsyncSession = Depends(Database.get_session)
 ) -> dict[str, str]:
     try:
-        result = await db.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.normalized_url_hash))
-        web_page_channel = result.scalar_one_or_none()
+        async with db as session:
+            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.normalized_url_hash))
+            web_page_channel = result.scalar_one_or_none()
 
-        if web_page_channel:
-            web_page_channel.normalized_url = request.normalized_url
-            web_page_channel.url = request.url
-            web_page_channel.name = request.name
-            web_page_channel.description = request.description
-            web_page_channel.image_url = request.image_url
-            web_page_channel.enabled = request.enabled
-        else:
-            web_page_channel = WebPageChannel(
-                normalized_url_hash=request.normalized_url_hash,
-                normalized_url=request.normalized_url,
-                url=request.url,
-                name=request.name,
-                description=request.description,
-                image_url=request.image_url,
-                enabled=request.enabled
-            )
-            db.add(web_page_channel)
-
-        await db.commit()
+            if web_page_channel:
+                web_page_channel.normalized_url = request.normalized_url
+                web_page_channel.url = request.url
+                web_page_channel.name = request.name
+                web_page_channel.description = request.description
+                web_page_channel.image_url = request.image_url
+                web_page_channel.enabled = request.enabled
+                web_page_channel.scraper_seeds = request.scraper_seeds
+                web_page_channel.include_path_patterns = request.include_path_patterns
+                web_page_channel.exclude_path_patterns = request.exclude_path_patterns
+                web_page_channel.scraper_follow_web_page_links = request.scraper_follow_web_page_links
+                web_page_channel.scraper_follow_feed_links = request.scraper_follow_feed_links
+                web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links
+            else:
+                web_page_channel = WebPageChannel(
+                    normalized_url_hash=request.normalized_url_hash,
+                    normalized_url=request.normalized_url,
+                    url=request.url,
+                    name=request.name,
+                    description=request.description,
+                    image_url=request.image_url,
+                    enabled=request.enabled,
+                    scraper_seeds=request.scraper_seeds,
+                    include_path_patterns=request.include_path_patterns,
+                    exclude_path_patterns=request.exclude_path_patterns,
+                    scraper_follow_web_page_links=request.scraper_follow_web_page_links,
+                    scraper_follow_feed_links=request.scraper_follow_feed_links,
+                    scraper_follow_sitemap_links=request.scraper_follow_sitemap_links
+                )
+                session.add(web_page_channel)
+                await session.commit()
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error upserting web page seed: {str(e)}", exc_info=True)

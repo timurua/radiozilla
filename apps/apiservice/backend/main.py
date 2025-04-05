@@ -10,6 +10,8 @@ from contextlib import asynccontextmanager
 from pysrc.config.jobs import Jobs
 import logging
 import os
+from pysrc.db.default_data import create_channels
+from pysrc.db.web_page import WebPageChannel
  
 
 @asynccontextmanager
@@ -17,6 +19,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     
     await Jobs.initialize()    
     logging.info(f"Starting apiservice for app: {app.title}")
+    await create_channels()
     yield 
     
 logger = logging.getLogger("apiservice.main")

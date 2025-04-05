@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Health from './routes/Health';
 import Root from './components/Root';
 import WebPageChannel from './routes/WebPageChannel';
-import WebPageSeeds from './routes/WebPageSeeds';
+import WebPageChannels from './routes/WebPageChannels';
 import ViewWebPage from './routes/ViewWebPage';
 import WebPageSummary from './routes/WebPageSummary';
 import FrontendAudios from './routes/FrontendAudios';
@@ -18,7 +18,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Health />} />
           <Route path="/health" element={<Health />} />
           <Route path="/web-page-channel/:channelId" element={<WebPageChannel />} />
-          <Route path="/web-page-seeds" element={<WebPageSeeds />} />
+          <Route path="/web-page-channels" element={<WebPageChannels />} />
           <Route path="/web-pages" element={<ViewWebPage />} />
           <Route path="/web-page-summary" element={<WebPageSummary />} />
           <Route path="/frontend-audios" element={<FrontendAudios />} />

@@ -1,6 +1,14 @@
 # Google Cloud Managed SQL
 gcloud beta sql connect postgres01 --user=postgres --quiet
+gcloud beta sql connect postgres01 --user=db_user --quiet
 
+## Proxy
+/Users/timur/Downloads/google-cloud-sdk/bin/cloud_sql_proxy -instances radiozilla-92c5f:us-central1:postgres01=tcp:9470 -credential_file /Users/timur/.config/gcloud/legacy_credentials/timurua@gmail.com/adc.json
+
+## Connect to Proxy
+```
+psql postgresql://db_user:db_password@localhost:9470/db
+```
 
 
 # Kubernetes scripts

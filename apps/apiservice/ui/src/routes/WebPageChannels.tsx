@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Table } from 'react-bootstrap';
-import { Button, Modal, Form } from 'react-bootstrap';
-import Client from '../client';
-import { FAWebPageChannel } from '../api';
+import React, { useEffect, useState } from 'react';
+import { Button, Form, Modal, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { FAWebPageChannel } from '../api';
+import Client from '../client';
 
 
 const AddWebPageSeeds: React.FC = () => {
@@ -121,7 +120,16 @@ const WebPageChannels: React.FC = () => {
                                     </a>
                                 </td>
                                 <td className="border px-4 py-2">{channel.description}</td>
-                                <td className="border px-4 py-2">{channel.normalized_url}</td>
+                                <td className="border px-4 py-2">
+                                <a className="text-blue-500 hover:underline" onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate(`/web-page-channel/${channel.normalized_url_hash}`);
+                                    }}>
+
+                                    {channel.normalized_url}
+                                        
+                                        </a>
+                                    </td>
                             </tr>
                         ))}
                     </tbody>

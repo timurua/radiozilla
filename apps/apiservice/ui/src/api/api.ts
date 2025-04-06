@@ -442,19 +442,6 @@ export interface HTTPValidationError {
 /**
  * 
  * @export
- * @interface IdRequest
- */
-export interface IdRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof IdRequest
-     */
-    'id': string;
-}
-/**
- * 
- * @export
  * @interface SummarizerRunRequest
  */
 export interface SummarizerRunRequest {
@@ -711,14 +698,14 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Get Channel By Url
-         * @param {IdRequest} idRequest 
+         * @summary Get Channel By Id
+         * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getChannelByUrlApiV1WebPageChannelByIdGet: async (idRequest: IdRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'idRequest' is not null or undefined
-            assertParamExists('getChannelByUrlApiV1WebPageChannelByIdGet', 'idRequest', idRequest)
+        getChannelByIdApiV1WebPageChannelByIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('getChannelByIdApiV1WebPageChannelByIdGet', 'id', id)
             const localVarPath = `/api/v1/web-page-channel-by-id`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -731,14 +718,15 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+            if (id !== undefined) {
+                localVarQueryParameter['id'] = id;
+            }
+
 
     
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(idRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1168,15 +1156,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get Channel By Url
-         * @param {IdRequest} idRequest 
+         * @summary Get Channel By Id
+         * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getChannelByUrlApiV1WebPageChannelByIdGet(idRequest: IdRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAWebPageChannel>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getChannelByUrlApiV1WebPageChannelByIdGet(idRequest, options);
+        async getChannelByIdApiV1WebPageChannelByIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAWebPageChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getChannelByIdApiV1WebPageChannelByIdGet(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getChannelByUrlApiV1WebPageChannelByIdGet']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getChannelByIdApiV1WebPageChannelByIdGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1369,13 +1357,13 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
-         * @summary Get Channel By Url
-         * @param {IdRequest} idRequest 
+         * @summary Get Channel By Id
+         * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getChannelByUrlApiV1WebPageChannelByIdGet(idRequest: IdRequest, options?: RawAxiosRequestConfig): AxiosPromise<FAWebPageChannel> {
-            return localVarFp.getChannelByUrlApiV1WebPageChannelByIdGet(idRequest, options).then((request) => request(axios, basePath));
+        getChannelByIdApiV1WebPageChannelByIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<FAWebPageChannel> {
+            return localVarFp.getChannelByIdApiV1WebPageChannelByIdGet(id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1547,14 +1535,14 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get Channel By Url
-     * @param {IdRequest} idRequest 
+     * @summary Get Channel By Id
+     * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public getChannelByUrlApiV1WebPageChannelByIdGet(idRequest: IdRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).getChannelByUrlApiV1WebPageChannelByIdGet(idRequest, options).then((request) => request(this.axios, this.basePath));
+    public getChannelByIdApiV1WebPageChannelByIdGet(id: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getChannelByIdApiV1WebPageChannelByIdGet(id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

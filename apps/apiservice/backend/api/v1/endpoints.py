@@ -287,14 +287,11 @@ async def get_channel_by_url(request: UrlRequest, db: AsyncSession = Depends(Dat
             detail=str(e)
         )
     
-class IdRequest(BaseModel):
-    id: str    
-    
 @router.get("/web-page-channel-by-id")
-async def get_channel_by_url(request: IdRequest, db: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
+async def get_channel_by_id(id: str, db: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
     try:
         async with db as session:
-            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.id))
+            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == id))
             channel = result.scalar_one_or_none()
             return None if channel is None else FAWebPageChannel(
                     normalized_url_hash=channel.normalized_url_hash,
@@ -326,11 +323,14 @@ async def upsert_web_page_channel(
 ) -> dict[str, str]:
     try:
         async with db as session:
-            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == request.normalized_url_hash))
+            normalized_url = normalize_url(request.url)
+            normalized_url_hash_var = normalized_url_hash(normalized_url)
+            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == normalized_url_hash_var))
             web_page_channel = result.scalar_one_or_none()
 
             if web_page_channel:
-                web_page_channel.normalized_url = request.normalized_url
+                web_page_channel.normalized_url_hash = normalized_url_hash_var
+                web_page_channel.normalized_url = normalized_url
                 web_page_channel.url = request.url
                 web_page_channel.name = request.name
                 web_page_channel.description = request.description
@@ -344,8 +344,8 @@ async def upsert_web_page_channel(
                 web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links
             else:
                 web_page_channel = WebPageChannel(
-                    normalized_url_hash=request.normalized_url_hash,
-                    normalized_url=request.normalized_url,
+                    normalized_url_hash=normalized_url_hash_var,
+                    normalized_url=normalized_url,
                     url=request.url,
                     name=request.name,
                     description=request.description,
@@ -358,8 +358,8 @@ async def upsert_web_page_channel(
                     scraper_follow_feed_links=request.scraper_follow_feed_links,
                     scraper_follow_sitemap_links=request.scraper_follow_sitemap_links
                 )
-                session.add(web_page_channel)
-                await session.commit()
+            session.add(web_page_channel)
+            session.commit()
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error upserting web page seed: {str(e)}", exc_info=True)

@@ -32,9 +32,10 @@ const WebPageChannel: React.FC = () => {
             if (!channelId) {
                 return;
             }
-            const response = await Client.getChannelByUrlApiV1WebPageChannelByIdGet({
-                id: channelId,
-            });
+            const response = await Client.getChannelByIdApiV1WebPageChannelByIdGet(channelId);
+            if (!response.data) {
+                return;
+            }
             setUrl(response.data.url);
             setNormalizedUrl(response.data.normalized_url);
             setNormalizedUrlHash(response.data.normalized_url_hash);

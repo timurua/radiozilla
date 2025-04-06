@@ -11,7 +11,7 @@ import FrontendAudios from './routes/FrontendAudios';
 
 const App: React.FC = () => {
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div style={{ minHeight: '100vh', width: '100vw' }}>
       <BrowserRouter>
       <Root>
         <Routes>

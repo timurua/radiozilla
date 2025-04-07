@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Navbar, Nav, Container, Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 interface RootProps {
@@ -25,8 +25,18 @@ const Root: React.FC<RootProps> = ({ children }) => {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-            {children}
-
+            
+            <Container>
+                {children}
+            </Container>
+            <Container className='mt-5'>
+                <Row>
+                    <Col>© 2025 Radiozilla Scrapper. All rights reserved.</Col>
+                </Row>
+                <Row>
+                    <Col>Author: Timur Valiulin</Col>
+                </Row>
+            </Container>
         </div>
     );
 };

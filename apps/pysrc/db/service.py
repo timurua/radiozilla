@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
 
 from pysrc.config.rzconfig import RzConfig
-from pysrc.dfs.dfs import WEB_PAGES_CONTENT, DFSClient
-from .web_page import WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
+from pysrc.dfs.dfs import WEB_IMAGES, WEB_PAGES_CONTENT, DFSClient
+from .web_page import WebImageContent, WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
@@ -47,7 +47,13 @@ class WebImageService:
         self.session = session
         self.logger = logging.getLogger("web_page_service")
 
-    async def upsert(self, web_image: WebImage) -> None:
+    async def upsert(self, web_image: WebImage, web_image_content: WebImageContent) -> None:
+        await DFSClient(RzConfig.instance()).upload_buffer(
+            WEB_IMAGES, 
+            web_image.normalized_url_hash,
+            web_image_content.to_bytes(),
+        )
+
         await self.session.merge(web_image, load=True)
         
 
@@ -58,6 +64,13 @@ class WebImageService:
             .where(WebImage.width == width).where(WebImage.height == height) 
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+    
+    async def get_content(self, web_image: WebImage) -> WebImageContent:
+        dfs_client = DFSClient(RzConfig.instance())
+        content = await dfs_client.download_buffer(
+            WEB_IMAGES, 
+            web_image.normalized_url_hash)
+        return WebImageContent.from_bytes(content)    
     
 class WebPageService:
     

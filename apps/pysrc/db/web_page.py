@@ -73,7 +73,27 @@ class TtsVoice(TimestampModel):
     
     id: Mapped[str] = mapped_column(String, primary_key=True)
     wav_file: Mapped[str] = mapped_column(String)
-    txt_file: Mapped[str] = mapped_column(String)    
+    txt_file: Mapped[str] = mapped_column(String)  
+
+@dataclass
+class WebImageContent:
+    url: str
+    normalized_url_hash: str
+    normalized_url: str
+    content: bytes | None
+    content_type: str | None
+    width: int
+    height: int
+    source_width: int
+    source_height: int
+    requested_at: datetime | None
+
+    def to_bytes(self) -> bytes:
+        return pickle.dumps(self)
+    
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "WebImageContent":
+        return pickle.loads(data)
     
 class WebImage(TimestampModel):
     __tablename__ = "web_images"
@@ -87,9 +107,8 @@ class WebImage(TimestampModel):
 
     source_width: Mapped[int] = mapped_column(Integer)
     source_height: Mapped[int] = mapped_column(Integer)
-    
-    image_bytes: Mapped[bytes] = mapped_column(LargeBinary, default=None)
-    
+
+    requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
 
 # Automatically set hash when content is modified
 @event.listens_for(WebImage.url, 'set')

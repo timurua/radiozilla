@@ -12,7 +12,6 @@ psutil>=6.1.0
 types_psutil>=7.0.0
 greenlet>=3.1.1
 sentence-transformers>=3.3.1
-pgvector>=0.3.6
 aiohttp>=3.11.10
 beautifulsoup4>=4.12.3
 selenium>=4.27.1
@@ -22,6 +21,5 @@ lxml>=5.3.0
 w3lib>=2.2.1
 extruct>=0.18.0
 python-dateutil>=2.9.0
-pgvector>=0.3.6
 pydantic-settings>=2.7.0
 uvicorn

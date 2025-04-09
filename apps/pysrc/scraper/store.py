@@ -1,7 +1,9 @@
+from httpx import request
 from pysrc.scraper.image import thumbnailed_image_height, thumbnailed_image_width
-from ..db.web_page import WebPage, WebPageContent, WebPageJob, WebPageJobState, WebImage
+from ..db.web_page import WebImageContent, WebPage, WebPageContent, WebPageJob, WebPageJobState, WebImage
 from pyminiscraper.model import ScraperWebPage, ScraperUrl
 from pyminiscraper.config import ScraperCallback, ScraperContext
+from pyminiscraper.url import normalize_url, normalized_url_hash
 import logging
 from typing import Awaitable, Optional, override
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -127,16 +129,32 @@ class ServiceScraperStore(ScraperCallback):
                 thumbnail = ImageOps.fit(img, (thumbnailed_image_width, thumbnailed_image_height), Image.Resampling.LANCZOS)            
                 output_io = io.BytesIO()
                 thumbnail.save(output_io, format="PNG")
+                now = drop_time_zone(datetime.now(timezone.utc))
+
+                new_web_image = WebImage(
+                    url=url,                        
+                    width=thumbnailed_image_width,
+                    height=thumbnailed_image_height,
+                    source_width = img.size[0],
+                    source_height = img.size[1],
+                    requested_at = now,
+                )
+
+                new_web_image_content = WebImageContent(
+                    url=url,
+                    normalized_url = normalize_url(url),
+                    normalized_url_hash = normalized_url_hash(url),
+                    content = output_io.getvalue(),
+                    content_type = "image/png",
+                    width=thumbnailed_image_width,
+                    height=thumbnailed_image_height,
+                    source_width = img.size[0],
+                    source_height = img.size[1],
+                    requested_at = now,
+                )
                 
                 await WebImageService(session).upsert(
-                    WebImage(
-                        url=url,                        
-                        width=thumbnailed_image_width,
-                        height=thumbnailed_image_height,
-                        source_width = img.size[0],
-                        source_height = img.size[1],
-                        image_bytes = output_io.getvalue()
-                    ))
+                    new_web_image, new_web_image_content)
                 
         except Exception as e: 
             logger.info(f"Failed to store image: {url}")        

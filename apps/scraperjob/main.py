@@ -1,11 +1,12 @@
 from aiohttp import web
 import asyncclick as click
 import asyncio
-from pyminiscraper.scraper import Scraper, ScraperConfig, ScraperUrl, ScraperUrlType
+from pyminiscraper.scraper import Scraper
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageChannelService, WebPageJobService, WebPageService
-from pysrc.db.web_page import WebPageChannel, WebPageJobState, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
+from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageJobState, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
 from pysrc.observe.log import Logging
+from pysrc.scraper.service import ScraperService
 from pysrc.scraper.store import ServiceScraperStore
 from pysrc.config.rzconfig import RzConfig
 from pysrc.utils.parallel import ParallelTaskManager
@@ -29,38 +30,17 @@ async def main():
     await clean_channels()
     
 async def scrape_channel(channel: WebPageChannel)->None:
-    logger.info(f"Scraping channel {channel.normalized_url}")
-    seed_urls = [ScraperUrl(
-            url=seed.url, 
-            type=convert_seed_type(seed.type),  # Convert enum to string value
-            max_depth=2
-        ) for seed in web_page_seed_from_dict(channel.scraper_seeds)]
-    
-    def on_web_page(web_page: WebPage):
-        web_page.channel_normalized_url_hash = channel.normalized_url_hash
-        url_date = extract_date_from_url(web_page.url)
-        if web_page.metadata_published_at and abs((web_page.metadata_published_at - web_page.requested_at).total_seconds()) < 60 * 60 * 24:
-                web_page.metadata_published_at = None
-        if url_date:
-            web_page.metadata_published_at = url_date
-            
-    scraper = Scraper(
-        ScraperConfig(
-            seed_urls=seed_urls,
-            include_path_patterns=channel.include_path_patterns if channel.include_path_patterns else [],
-            exclude_path_patterns=channel.exclude_path_patterns if channel.exclude_path_patterns else [],
-            max_parallel_requests=5,
-            use_headless_browser=False,
-            request_timeout_seconds=30,
-            crawl_delay_seconds=1,
-            follow_sitemap_links=channel.scraper_follow_sitemap_links,
-            follow_feed_links=channel.scraper_follow_feed_links,
-            follow_web_page_links=channel.scraper_follow_web_page_links,            
-            callback=ServiceScraperStore(on_web_page=on_web_page),
-        ),
+    await ScraperService().scrape_channel(
+        channel_normalized_url_hash=channel.normalized_url_hash,
+        channel_normalized_url=channel.normalized_url,
+        scraper_seeds=web_page_seed_from_dict(channel.scraper_seeds),
+        include_path_patterns=channel.include_path_patterns or [],
+        exclude_path_patterns=channel.exclude_path_patterns or [],
+        scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links,
+        scraper_follow_feed_links=channel.scraper_follow_feed_links,
+        scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
     )
-    await scraper.run()   
-    logger.info(f"Finished scraping channel {channel.normalized_url}")
+    
     
 async def scrape_channels()->None:
     async with Database.get_session() as session:

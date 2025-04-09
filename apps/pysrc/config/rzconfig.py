@@ -10,10 +10,13 @@ class RzConfig:
         cls._instance = RzConfig()
         
     @classmethod    
-    def instance(cls):
+    def instance(cls) -> 'RzConfig':
         if cls._instance is None:
             cls.initialize()
-        return cls._instance
+        instance = cls._instance
+        if instance is None:
+            raise Exception("RzConfig not initialized")
+        return instance
         
     def __init__(self):
         env_path = os.getenv('ENV_FILE', '.env')
@@ -27,10 +30,4 @@ class RzConfig:
         self.image_resource_dir = os.getenv('IMAGE_RESOURCE_DIR', 'unknown')
         
         self.ollama_model = os.getenv('OLLAMA_MODEL', 'unknown')
-
-        
-        self.minio_endpoint = os.getenv('MINIO_ENDPOINT', 'unknown')
-        self.minio_access_key = os.getenv('MINIO_ACCESS_KEY', 'unknown')
-        self.minio_secret_key = os.getenv('MINIO_SECRET_KEY', 'unknown')
-        self.minio_tenant = os.getenv('MINIO_TENANT', 'unknown')
-        self.minio_bucket = os.getenv('MINIO_BUCKET', 'unknown')
+        self.dfs_bucket_prefix = os.getenv('DFS_BUCKET_PREFIX', 'unknown')

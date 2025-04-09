@@ -1,6 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
-from .web_page import WebPage, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
+
+from pysrc.config.rzconfig import RzConfig
+from pysrc.dfs.dfs import WEB_PAGES_CONTENT, DFSClient
+from .web_page import WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
 from pyminiscraper.url import normalized_url_hash
@@ -11,6 +14,7 @@ from ..summarizer.texts import EmbeddingService
 from dataclasses import dataclass
 from sqlalchemy.orm import Mapped
 from datetime import datetime
+import pickle
 
 class WebPageChannelService:
     
@@ -57,11 +61,16 @@ class WebImageService:
     
 class WebPageService:
     
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession)->None:
         self.session = session
         self.logger = logging.getLogger("web_page_service")
 
-    async def upsert(self, web_page: WebPage) -> None:
+    async def upsert(self, web_page: WebPage, web_page_content: WebPageContent) -> None:
+        await DFSClient(RzConfig.instance()).upload_buffer(
+            WEB_PAGES_CONTENT, 
+            web_page.normalized_url_hash,
+            web_page_content.to_bytes(),
+        )
         await self.session.merge(web_page, load=True)
         
 
@@ -75,6 +84,23 @@ class WebPageService:
         stmt = select(WebPage.normalized_url).where(WebPage.channel_normalized_url_hash == channel_normalized_url_hash)    
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+    
+    async def get_content(self, web_page: WebPage) -> WebPageContent:
+        dfs_client = DFSClient(RzConfig.instance())
+        content = await dfs_client.download_buffer(
+            WEB_PAGES_CONTENT, 
+            web_page.normalized_url_hash)
+        return WebPageContent.from_bytes(content)
+    
+    async def set_content(self, web_page: WebPage, content: WebPageContent) -> None:
+        dfs_client = DFSClient(RzConfig.instance())
+        await dfs_client.upload_buffer(
+            WEB_PAGES_CONTENT, 
+            web_page.normalized_url_hash,
+            content.to_bytes(),
+        )
+
+
               
 class WebPageJobService:
     
@@ -147,25 +173,6 @@ class FrontendAudioService:
     async def get(self, normalized_url_hash: str) -> FrontendAudio|None:
         return await self.session.get(FrontendAudio, normalized_url_hash)
     
-    async def find_similar_for_text(self, text, limit: int = 10, probes: int = 10) -> list[FrontendAudioSearchResult]:
-        probes = 10
-        text_embeddings = EmbeddingService.calculate_embeddings(text)
-        if text_embeddings is None:
-            return []
-        await self.session.execute(sql_text(f"SET LOCAL ivfflat.probes = {probes}"))
-
-        title_similars = await self.select_with_similarity(FrontendAudio.title_embedding_mlml6v2, limit, text_embeddings)
-        description_similars = await self.select_with_similarity(FrontendAudio.description_embedding_mlml6v2, limit, text_embeddings)
-        audio_text_similars = await self.select_with_similarity(FrontendAudio.audio_text_embedding_mlml6v2, limit, text_embeddings)
-        combined = title_similars + description_similars + audio_text_similars
-        best_by_hash: dict[str, FrontendAudioSearchResult] = {}
-        for item in combined:
-            if item.normalized_url_hash not in best_by_hash or item.similarity_score < best_by_hash[item.normalized_url_hash].similarity_score:
-                best_by_hash[item.normalized_url_hash] = item
-
-        results = sorted(best_by_hash.values(), key=lambda x: x.similarity_score)
-        return results
-
     async def select_with_similarity(self, column: Mapped[Optional[list[float]]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
         similarity_expr = (
             func.cosine_distance(column, text_embeddings)

@@ -37,7 +37,7 @@
                 "8000"
             ],
             "jinja": true,
-            "justMyCode": true,
+            "justMyCode": false,
             "cwd": "${workspaceFolder}/apps",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/apps",

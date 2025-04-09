@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Dict
 
 class FAWebPage(BaseModel):
     normalized_url_hash: str
@@ -32,9 +31,9 @@ class FAWebPageChannel(BaseModel):
     description: str | None
     image_url: str | None
     enabled: bool | None
-    scraper_seeds: List[Dict[str, str]] | None
-    include_path_patterns: List[str] | None
-    exclude_path_patterns: List[str] | None
+    scraper_seeds: list[dict[str, str]] | None
+    include_path_patterns: list[str] | None
+    exclude_path_patterns: list[str] | None
     scraper_follow_web_page_links: bool | None
     scraper_follow_feed_links: bool | None
     scraper_follow_sitemap_links: bool | None
@@ -49,7 +48,7 @@ class FAScraperStats(BaseModel):
     success_urls_count: int
     error_urls_count: int
     skipped_urls_count: int
-    domain_stats: Dict[str, FADomainStats]
+    domain_stats: dict[str, FADomainStats]
     
 
 class FAFrontendAudio(BaseModel):

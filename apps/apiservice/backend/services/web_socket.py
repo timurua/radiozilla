@@ -1,6 +1,7 @@
 # backend/main.py
 from fastapi import WebSocket
 import logging
+from typing import Callable, Awaitable, Any
 
 logger = logging.getLogger("web_socket_connection")
 
@@ -22,7 +23,7 @@ class ConnectionManager:
             logger.error(f"Error closing websocket connection: {e}", exc_info=True)
         self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: str):
+    async def do_for_all_web_sockets(self, func: Callable[[WebSocket], Awaitable[None]]):
         disconnected = set()
         if len(self.active_connections) == 0:
             logger.info("WebSocket skipping broadcast, no active connections")
@@ -30,7 +31,7 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 logger.info(f"WebSocket sending message to connection: {connection}")
-                await connection.send_text(message)
+                await func(connection)
             except Exception as e:
                 logger.error(f"WebSocket error broadcasting message to connection: {connection}, exception {e}", exc_info=True)
                 disconnected.add(connection)
@@ -39,6 +40,19 @@ class ConnectionManager:
         for connection in disconnected:
             logger.info(f"WebSocket Disconnecting connection: {connection}")
             await self.disconnect(connection)
+
+    async def broadcast_text(self, message: str):
+        async def send_text(connection: WebSocket):
+            await connection.send_text(message)
+
+        await self.do_for_all_web_sockets(send_text)
+
+    async def broadcast_json(self, json: Any):
+        async def send_text(connection: WebSocket):
+            await connection.send_json(json)
+
+        await self.do_for_all_web_sockets(send_text)
+
 
 manager = ConnectionManager()
 

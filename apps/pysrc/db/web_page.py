@@ -1,3 +1,4 @@
+import pickle
 from sqlalchemy import Integer, DateTime, event,LargeBinary, Boolean, Any, Tuple
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
@@ -102,7 +103,39 @@ def web_image_set_content_hash(target: WebImage, value, oldvalue, initiator):
 def web_image_ensure_hash(mapper, connection, target: WebImage):
     if target.url:
         target.normalized_url = normalize_url(target.url)
-        target.normalized_url_hash = normalized_url_hash(target.normalized_url)    
+        target.normalized_url_hash = normalized_url_hash(target.normalized_url) 
+
+@dataclass
+class WebPageContent:
+    url: str
+    normalized_url_hash: str
+    normalized_url: str
+    status_code: int
+    headers: dict[str, str] | None
+    content: bytes | None
+    content_type: str | None
+    content_charset: str | None
+    requested_at: datetime | None
+    
+    metadata_title: Optional[str]
+    metadata_description: Optional[str]
+    metadata_image_url: Optional[str]
+    metadata_published_at: Optional[datetime]
+
+    canonical_url: str | None
+    outgoing_urls: List[str] | None 
+    visible_text: str | None
+    sitemap_urls: List[str] | None
+    feed_urls: List[str] | None
+    robots_content: List[str] | None
+    text_chunks: List[str] | None
+
+    def to_bytes(self) -> bytes:
+        return pickle.dumps(self)
+    
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "WebPageContent":
+        return pickle.loads(data)
 
 
 class WebPage(TimestampModel):
@@ -112,26 +145,8 @@ class WebPage(TimestampModel):
     normalized_url: Mapped[str] = mapped_column(String)
     url: Mapped[str] = mapped_column(String)
     status_code: Mapped[int] = mapped_column(Integer)
-    headers: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=True, default=None)
-    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=True, default=None)
-    content_type: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    content_charset: Mapped[str] = mapped_column(String, nullable=True, default=None)
     requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
-    channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))
-    
-    metadata_title: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
-    metadata_description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
-    metadata_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
-    metadata_published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=None)
-
-    canonical_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    outgoing_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    visible_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    sitemap_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    feed_urls: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    robots_content: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    text_chunks: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
-    
+    channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))    
     
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.url, 'set')

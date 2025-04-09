@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, WebSocket
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pysrc.scraper.service import ScraperService
+
 from ...services.health import HealthService
 from pysrc.db.database import Database
 from fastapi import HTTPException, status
@@ -9,32 +11,29 @@ from pysrc.db.service import WebPageService, FrontendAudioService, FrontendAudio
 import logging
 from pydantic import BaseModel
 from ...services.web_socket import get_connection_manager, ConnectionManager
-from ...services.scraper import ScraperService, ScraperCallback, ScraperUrl
-from pysrc.db.web_page import WebPageChannel, WebPageSeed
+from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageSeed
 from .models import FAWebPage, FAWebPageChannel, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
 from pysrc.db.frontend import FrontendAudioPlay
 from datetime import datetime
-from pyminiscraper.url import normalized_url_hash, normalize_url
-from pyminiscraper.scraper import Scraper, ScraperConfig                    
+from pyminiscraper.url import normalized_url_hash, normalize_url                    
+from pyminiscraper.config import ScraperCallback
 from typing import Optional
 from pysrc.scraper.utils import convert_seed_type
-from pysrc.scraper.text import extract_date_from_url
-from pysrc.db.web_page import web_page_seed_from_dict, web_page_seed_to_dict, WebPage
+from pysrc.db.web_page import web_page_seed_from_dict, WebPage
 from pysrc.scraper.store import ServiceScraperStore
-from pysrc.scraper.utils import ScraperUrlType
 
 router = APIRouter()
 
 async def get_health_service(db: AsyncSession = Depends(Database.get_session)) -> HealthService:
     return HealthService(db)
 
-_scraper_service: ScraperService|None = None
+_running_scraper: ScraperService| None = None
 
-def get_scraper_service() -> ScraperService:
-    global _scraper_service
-    if not _scraper_service:
-        _scraper_service = ScraperService()
-    return _scraper_service
+async def stop_scraper_if_running() -> None:
+    if _running_scraper is None:
+        return
+    await _running_scraper.stop()
+
 
 @router.get("/health")
 async def health_check(
@@ -65,25 +64,29 @@ async def read_web_pages(
     try:
         logging.info(f"Finding web page for url: {url}")
         web_page = await web_page_service.find_by_url(url)
+        if web_page is None:
+            logging.info(f"Web page not found for url: {url}")
+            return None
+        web_page_content = await web_page_service.get_content(web_page)
         return FAWebPage(
             normalized_url_hash=web_page.normalized_url_hash,
             normalized_url=web_page.normalized_url,
             url=web_page.url,
             status_code=web_page.status_code,
-            headers=web_page.headers,
-            content=web_page.content,
-            content_type=web_page.content_type,
-            content_charset=web_page.content_charset,
-            metadata_title=web_page.metadata_title,
-            metadata_description=web_page.metadata_description,
-            metadata_image_url=web_page.metadata_image_url,
-            metadata_published_at=web_page.metadata_published_at,
-            canonical_url=web_page.canonical_url,
-            outgoing_urls=web_page.outgoing_urls,
-            visible_text=web_page.visible_text,
-            sitemap_urls=web_page.sitemap_urls,
-            robots_content=web_page.robots_content,
-            text_chunks=web_page.text_chunks
+            headers=web_page_content.headers,
+            content=web_page_content.content,
+            content_type=web_page_content.content_type,
+            content_charset=web_page_content.content_charset,
+            metadata_title=web_page_content.metadata_title,
+            metadata_description=web_page_content.metadata_description,
+            metadata_image_url=web_page_content.metadata_image_url,
+            metadata_published_at=web_page_content.metadata_published_at,
+            canonical_url=web_page_content.canonical_url,
+            outgoing_urls=web_page_content.outgoing_urls,
+            visible_text=web_page_content.visible_text,
+            sitemap_urls=web_page_content.sitemap_urls,
+            robots_content=web_page_content.robots_content,
+            text_chunks=web_page_content.text_chunks
         ) if web_page else None 
     except Exception as e:
         logging.error(f"Error similar-embeddings: {str(e)}")
@@ -102,112 +105,38 @@ class Callback(ScraperCallback):
             self.connection_manager = connection_manager
 
         async def on_log(self, text: str) -> None:
-            await self.connection_manager.broadcast(text)
+            await self.connection_manager.broadcast_text(text)
 
 @router.post("/scraper-run")
 async def scraper_run(
     channel: FAWebPageChannel,
-    scraper_service: ScraperService  = Depends(get_scraper_service),
     connection_manager: ConnectionManager  = Depends(get_connection_manager)
 ) -> FAScraperStats | None:
-    callback = Callback(connection_manager)
+    
+    async def on_web_page(web_page: WebPage, web_page_content: WebPageContent) -> None:
+        await connection_manager.broadcast_json({
+            "type": "web_page",
+            "normalized_url_hash": web_page.normalized_url_hash,
+            "normalized_url": web_page.normalized_url,
+            "url": web_page.url,
+            "status_code": web_page.status_code,
+        })
 
-    logging.info(f"Scraping channel {channel.normalized_url}")
-    seed_urls = [ScraperUrl(
-            url=seed.url, 
-            type=convert_seed_type(seed.type),  # Convert enum to string value
-            max_depth=2
-        ) for seed in web_page_seed_from_dict(channel.scraper_seeds)]
-            
-    scraper = Scraper(
-        ScraperConfig(
-            seed_urls=seed_urls,
-            include_path_patterns=channel.include_path_patterns if channel.include_path_patterns else [],
-            exclude_path_patterns=channel.exclude_path_patterns if channel.exclude_path_patterns else [],
-            max_parallel_requests=5,
-            use_headless_browser=False,
-            request_timeout_seconds=30,
-            crawl_delay_seconds=1,
-            follow_sitemap_links=channel.scraper_follow_sitemap_links,
-            follow_feed_links=channel.scraper_follow_feed_links,
-            follow_web_page_links=channel.scraper_follow_web_page_links,            
-            callback=callback,
-        ),
+    await ScraperService().scrape_channel(
+        channel_normalized_url_hash=channel.normalized_url_hash,
+        channel_normalized_url=channel.normalized_url,
+        scraper_seeds=web_page_seed_from_dict(channel.scraper_seeds or []),
+        include_path_patterns=channel.include_path_patterns or [],
+        exclude_path_patterns=channel.exclude_path_patterns or [],
+        scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links or False,
+        scraper_follow_feed_links=channel.scraper_follow_feed_links or False,
+        scraper_follow_web_page_links=channel.scraper_follow_web_page_links or False,
+        on_web_page_callback=on_web_page
     )
-    try:
-        logging.info(f"Starting scraper for url: {channel.url}")
-        scraper_stats = await scraper.run()   
-        logging.info(f"Finished scraping for url {channel.url}")
-        return None if scraper_stats is None else FAScraperStats(
-            queued_urls_count = scraper_stats.queued_urls_count,
-            requested_urls_count = scraper_stats.requested_urls_count,
-            success_urls_count = scraper_stats.success_urls_count,
-            error_urls_count = scraper_stats.error_urls_count,
-            skipped_urls_count = scraper_stats.skipped_urls_count,
-            domain_stats={
-                domain: FADomainStats(
-                    domain=domain,
-                    frequent_subpaths=domain_stats.frequent_subpaths
-                ) for domain, domain_stats in scraper_stats.domain_stats.items()
-            }
-        )
-    except Exception as e:
-        logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-    
-class SummarizerRunRequest(BaseModel):
-    url: str
-    
-@router.post("/summarizer-run")
-async def summarizer_run(
-    request: SummarizerRunRequest,
-    scraper_service: ScraperService  = Depends(get_scraper_service),
-    connection_manager: ConnectionManager  = Depends(get_connection_manager)
-) -> FAScraperStats | None:
-    callback = Callback(connection_manager)
-    try:
-        logging.info(f"Starting scraper for url: {request.url}")
-        seed_urls = [ScraperUrl(url=request.url)]
-        scraper_stats = await scraper_service.run(seed_urls, callback)        
-        return None if scraper_stats is None else FAScraperStats(
-            queued_urls_count = scraper_stats.queued_urls_count,
-            requested_urls_count = scraper_stats.requested_urls_count,
-            success_urls_count = scraper_stats.success_urls_count,
-            error_urls_count = scraper_stats.error_urls_count,
-            skipped_urls_count = scraper_stats.skipped_urls_count,    
-            domain_stats={
-                domain: FADomainStats(
-                    domain=domain,
-                    frequent_subpaths=domain_stats.frequent_subpaths
-                ) for domain, domain_stats in scraper_stats.domain_stats.items()
-            }
-        )
-    except Exception as e:
-        logging.error(f"Error scraper-start: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
     
 @router.post("/scraper-stop")
-async def scraper_stop(
-    scraper_service: ScraperService  = Depends(get_scraper_service),
-    connection_manager: ConnectionManager  = Depends(get_connection_manager)
-):
-    try:
-        logging.info(f"Stopping scraper")
-        await scraper_service.stop(Callback(connection_manager))
-        return {"status": "success"}
-    except Exception as e:
-        logging.error(f"Error scraper-stop: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )    
+async def scraper_stop():
+    await stop_scraper_if_running()
     
 
 @router.websocket("/scraper-ws")
@@ -332,16 +261,16 @@ async def upsert_web_page_channel(
                 web_page_channel.normalized_url_hash = normalized_url_hash_var
                 web_page_channel.normalized_url = normalized_url
                 web_page_channel.url = request.url
-                web_page_channel.name = request.name
+                web_page_channel.name = request.name or ""
                 web_page_channel.description = request.description
                 web_page_channel.image_url = request.image_url
-                web_page_channel.enabled = request.enabled
-                web_page_channel.scraper_seeds = request.scraper_seeds
-                web_page_channel.include_path_patterns = request.include_path_patterns
-                web_page_channel.exclude_path_patterns = request.exclude_path_patterns
-                web_page_channel.scraper_follow_web_page_links = request.scraper_follow_web_page_links
-                web_page_channel.scraper_follow_feed_links = request.scraper_follow_feed_links
-                web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links
+                web_page_channel.enabled = request.enabled or False
+                web_page_channel.scraper_seeds = request.scraper_seeds or []
+                web_page_channel.include_path_patterns = request.include_path_patterns or []
+                web_page_channel.exclude_path_patterns = request.exclude_path_patterns or []
+                web_page_channel.scraper_follow_web_page_links = request.scraper_follow_web_page_links or False
+                web_page_channel.scraper_follow_feed_links = request.scraper_follow_feed_links or False
+                web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links or False
             else:
                 web_page_channel = WebPageChannel(
                     normalized_url_hash=normalized_url_hash_var,
@@ -359,7 +288,7 @@ async def upsert_web_page_channel(
                     scraper_follow_sitemap_links=request.scraper_follow_sitemap_links
                 )
             session.add(web_page_channel)
-            session.commit()
+            await session.commit()
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error upserting web page seed: {str(e)}", exc_info=True)
@@ -376,7 +305,8 @@ async def post_frontend_audios_similar_for_text(
     try:        
         logging.info(f"Finding similar front end audios for text: {text}")
         frontend_audio_service = FrontendAudioService(db)
-        return await frontend_audio_service.find_similar_for_text(text)
+        # return await frontend_audio_service.find_similar_for_text(text)
+        return []
     except Exception as e:
         logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -393,7 +323,7 @@ async def get_frontend_audios_similar_for_text(
     try:        
         logging.info(f"Finding similar front end audios for text: {text}")
         frontend_audio_service = FrontendAudioService(db)
-        frontend_audio_results = await frontend_audio_service.find_similar_for_text(text)
+        frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
         frontend_audios = []
         for frontend_audio_result in frontend_audio_results:
             frontend_audio = await frontend_audio_service.get(frontend_audio_result.normalized_url_hash)
@@ -432,7 +362,7 @@ async def frontend_audio_results_similar_for_text(
     try:        
         logging.info(f"Finding similar front end audio results for text: {text}")
         frontend_audio_service = FrontendAudioService(db)
-        frontend_audio_results = await frontend_audio_service.find_similar_for_text(text)
+        frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
         return [FAFrontendAudioSearchResult(
             normalized_url_hash=frontend_audio_result.normalized_url_hash,
             similarity_score=frontend_audio_result.similarity_score

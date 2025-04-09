@@ -17,6 +17,5 @@ google-cloud-logging>=3.11.3
 sqlalchemy>=2.0.37
 pgvector>=0.3.6
 ffmpeg-python
-minio
 soundfile
 sentence_transformers

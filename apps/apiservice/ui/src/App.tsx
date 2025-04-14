@@ -14,10 +14,10 @@ import WebPageSummary from './routes/WebPageSummary';
 
 const App: React.FC = () => {
   return (
-    <RecoilRoot>
-      <NotificationProvider>
-        <AuthProvider>
-          <div style={{ minHeight: '100vh', width: '100vw' }}>
+    <div style={{ minHeight: '100vh', width: '100vw' }}>
+      <RecoilRoot>
+        <NotificationProvider>
+          <AuthProvider>
             <BrowserRouter>
               <Root>
                 <Routes>
@@ -31,10 +31,10 @@ const App: React.FC = () => {
                 </Routes>
               </Root>
             </BrowserRouter>
-          </div>
-        </AuthProvider>
-      </NotificationProvider>
-    </RecoilRoot>
+          </AuthProvider>
+        </NotificationProvider>
+      </RecoilRoot>
+    </div>
   );
 };
 

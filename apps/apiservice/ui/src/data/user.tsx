@@ -7,7 +7,7 @@ export class ASUser {
         public name: string,
         public imageUrl: string,
         public email: string,
-        public isAnonymous: boolean,
+        public isAuthenticated: boolean,
     ) {
     }
 }

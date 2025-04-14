@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Card, Alert } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { useAuth } from '../providers/AuthProvider';
 
-interface SignInProps {
-    onSignIn?: (email: string, password: string) => Promise<void>;
-}
-
-const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
+const SignIn: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { signInWithEmail } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -18,9 +15,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
         setIsLoading(true);
 
         try {
-            if (onSignIn) {
-                await onSignIn(email, password);
-            }
+            await signInWithEmail(email, password);
         } catch (err) {
             setError('Invalid credentials. Please try again.');
         } finally {

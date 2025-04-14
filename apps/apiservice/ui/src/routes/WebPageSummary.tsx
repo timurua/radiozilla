@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
-import ListGroup from 'react-bootstrap/ListGroup';
-import { FAScraperStats } from '../api';
+// import ListGroup from 'react-bootstrap/ListGroup';
+// import { FAScraperStats } from '../api';
 import Client from '../client';
 
 const Scraper: React.FC = () => {
@@ -9,17 +9,16 @@ const Scraper: React.FC = () => {
     const [maxDepth, setMaxDepth] = useState(5);
     const [noCache, setNoCache] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [scraperStats, setScraperStats] = useState<FAScraperStats | null>(null);
+    // const [scraperStats, setScraperStats] = useState<FAScraperStats | null>(null);
 
     const handleStartScraping = async () => {
         try {
             setLoading(true);
-            const response = await Client.scraperRunApiV1ScraperRunPost({
-                url,
-                "max_depth": maxDepth,
-                "no_cache": noCache
-            });
-            setScraperStats(response.data);
+            // const response = await Client.scraperRunApiV1ScraperRunPost({
+            //     url,
+            //     "no_cache": noCache
+            // });
+            // setScraperStats(response.data);
 
         } catch (error) {
             console.error('Error searching similar:', error);
@@ -89,7 +88,7 @@ const Scraper: React.FC = () => {
                     </Button>
                 </Col>
             </Row>
-            {scraperStats && (
+            {/* {scraperStats && (
                 <Row className="my-4">
                     <Col>
                         <ListGroup>
@@ -108,7 +107,7 @@ const Scraper: React.FC = () => {
                         </ListGroup>
                     </Col>
                 </Row>
-            )}
+            )} */}
         </Container>
     );
 };

@@ -72,16 +72,28 @@ class SummarizerService:
             if web_page is None:
                 self.logger.error(f"Failed to find web page for normalized url: {normalized_url}")
                 return
-            if web_page.metadata_title is None:
+            
+            web_page_content = await web_page_service.get_content(web_page)
+            if web_page_content is None:
+                self.logger.error(f"Failed to find web page content for normalized url: {normalized_url}")
+                return
+            
+            if web_page_content.metadata_title is None:
                 self.logger.error(f"Web page has no title: {normalized_url}")
                 return
+            
+            if web_page_content.visible_text is None:
+                self.logger.error(f"Web page has no title: {normalized_url}")
+                return
+            
+
             self.logger.info(f"Summarizing web page: {web_page.url}")
             
-            summary = await self.summarize_text_v2(web_page.visible_text)
+            summary = await self.summarize_text_v2(web_page_content.visible_text)
 
             published_at = None            
             date_deduction_prompt = DateDeductionPrompt(
-                web_page.visible_text,
+                web_page_content.visible_text,
             )
             published_at_text = await OllamaClient(model=self.ollama_model).generate(date_deduction_prompt.get_prompt())
             try:
@@ -96,20 +108,20 @@ class SummarizerService:
                 self.logger.error(f"Failed to deduce published at date from text: {published_at_text}")
                 
             if published_at is None:
-                published_at = web_page.metadata_published_at
+                published_at = web_page_content.metadata_published_at
 
-            self.logger.info(f"Summarized text: {summary} from text: {web_page.visible_text}")
+            self.logger.info(f"Summarized text: {summary} from text: {web_page_content.visible_text}")
             
             async with Database.get_session() as session2:
                 web_page_summary_service = WebPageSummaryService(session2)
                 await web_page_summary_service.upsert(WebPageSummary(
                     normalized_url = web_page.normalized_url,
                     channel_normalized_url_hash = web_page.channel_normalized_url_hash,
-                    title = web_page.metadata_title,
-                    description = web_page.metadata_description,
-                    image_url = web_page.metadata_image_url,
+                    title = web_page_content.metadata_title,
+                    description = web_page_content.metadata_description,
+                    image_url = web_page_content.metadata_image_url,
                     published_at = published_at,
-                    text = web_page.visible_text,
+                    text = web_page_content.visible_text,
                     summarized_text = summary,
                     summarized_text_audio_url = None,
                 ))    

@@ -122,7 +122,7 @@ async def scraper_run(
             "status_code": web_page.status_code,
         })
 
-    await ScraperService().scrape_channel(
+    stats = await ScraperService().scrape_channel(
         channel_normalized_url_hash=channel.normalized_url_hash,
         channel_normalized_url=channel.normalized_url,
         scraper_seeds=web_page_seed_from_dict(channel.scraper_seeds or []),
@@ -133,6 +133,21 @@ async def scraper_run(
         scraper_follow_web_page_links=channel.scraper_follow_web_page_links or False,
         on_web_page_callback=on_web_page
     )
+    return FAScraperStats(
+        queued_urls_count=stats.queued_urls_count,
+        requested_urls_count=stats.requested_urls_count,
+        success_urls_count=stats.success_urls_count,
+        error_urls_count=stats.error_urls_count,
+        skipped_urls_count=stats.skipped_urls_count,
+
+        domain_stats={
+            domain: FADomainStats(
+                domain=domain,
+                frequent_subpaths=domain_stats.frequent_subpaths
+            ) for domain, domain_stats in stats.domain_stats.items()
+        }
+    )
+
     
 @router.post("/scraper-stop")
 async def scraper_stop():
@@ -315,64 +330,64 @@ async def post_frontend_audios_similar_for_text(
         )    
 
     
-@router.get("/frontend-audios-similar-for-text")
-async def get_frontend_audios_similar_for_text(
-    text: str,
-    db: AsyncSession = Depends(Database.get_session)
-) -> list[FAFrontendAudio]:
-    try:        
-        logging.info(f"Finding similar front end audios for text: {text}")
-        frontend_audio_service = FrontendAudioService(db)
-        frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
-        frontend_audios = []
-        for frontend_audio_result in frontend_audio_results:
-            frontend_audio = await frontend_audio_service.get(frontend_audio_result.normalized_url_hash)
-            if frontend_audio is None:
-                continue
-            frontend_audios.append(FAFrontendAudio(
-                normalized_url_hash=frontend_audio.normalized_url_hash,
-                normalized_url=frontend_audio.normalized_url,
-                title=frontend_audio.title,
-                description=frontend_audio.description,
-                audio_text=frontend_audio.audio_text,
-                image_url=frontend_audio.image_url,
-                audio_url=frontend_audio.audio_url,
-                author_id=frontend_audio.author_id,
-                channel_id=frontend_audio.channel_id,
-                published_at=frontend_audio.published_at,
-                uploaded_at=frontend_audio.uploaded_at,
-                duration=frontend_audio.duration,
-                topics=frontend_audio.topics,
-                similarity_score=frontend_audio_result.similarity_score
-            ))
-        return frontend_audios
+# @router.get("/frontend-audios-similar-for-text")
+# async def get_frontend_audios_similar_for_text(
+#     text: str,
+#     db: AsyncSession = Depends(Database.get_session)
+# ) -> list[FAFrontendAudio]:
+#     try:        
+#         logging.info(f"Finding similar front end audios for text: {text}")
+#         frontend_audio_service = FrontendAudioService(db)
+#         frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
+#         frontend_audios = []
+#         for frontend_audio_result in frontend_audio_results:
+#             frontend_audio = await frontend_audio_service.get(frontend_audio_result.normalized_url_hash)
+#             if frontend_audio is None:
+#                 continue
+#             frontend_audios.append(FAFrontendAudio(
+#                 normalized_url_hash=frontend_audio.normalized_url_hash,
+#                 normalized_url=frontend_audio.normalized_url,
+#                 title=frontend_audio.title,
+#                 description=frontend_audio.description,
+#                 audio_text=frontend_audio.audio_text,
+#                 image_url=frontend_audio.image_url,
+#                 audio_url=frontend_audio.audio_url,
+#                 author_id=frontend_audio.author_id,
+#                 channel_id=frontend_audio.channel_id,
+#                 published_at=frontend_audio.published_at,
+#                 uploaded_at=frontend_audio.uploaded_at,
+#                 duration=frontend_audio.duration,
+#                 topics=frontend_audio.topics,
+#                 similarity_score=frontend_audio_result.similarity_score
+#             ))
+#         return frontend_audios
 
-    except Exception as e:
-        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+#     except Exception as e:
+#         logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=str(e)
+#         )
     
-@router.get("/frontend-audio-results-similar-for-text")
-async def frontend_audio_results_similar_for_text(
-    text: str,
-    db: AsyncSession = Depends(Database.get_session)
-) -> list[FAFrontendAudioSearchResult]:
-    try:        
-        logging.info(f"Finding similar front end audio results for text: {text}")
-        frontend_audio_service = FrontendAudioService(db)
-        frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
-        return [FAFrontendAudioSearchResult(
-            normalized_url_hash=frontend_audio_result.normalized_url_hash,
-            similarity_score=frontend_audio_result.similarity_score
-        ) for frontend_audio_result in frontend_audio_results]
-    except Exception as e:
-        logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )    
+# @router.get("/frontend-audio-results-similar-for-text")
+# async def frontend_audio_results_similar_for_text(
+#     text: str,
+#     db: AsyncSession = Depends(Database.get_session)
+# ) -> list[FAFrontendAudioSearchResult]:
+#     try:        
+#         logging.info(f"Finding similar front end audio results for text: {text}")
+#         frontend_audio_service = FrontendAudioService(db)
+#         frontend_audio_results = [] # await frontend_audio_service.find_similar_for_text(text)
+#         return [FAFrontendAudioSearchResult(
+#             normalized_url_hash=frontend_audio_result.normalized_url_hash,
+#             similarity_score=frontend_audio_result.similarity_score
+#         ) for frontend_audio_result in frontend_audio_results]
+#     except Exception as e:
+#         logging.error(f"Error similar-embeddings: {str(e)}", exc_info=True)
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=str(e)
+#         )    
     
 @router.get("/frontend-audio-for-url")
 async def frontend_audio_for_url(

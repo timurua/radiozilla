@@ -1,5 +1,5 @@
 from pysrc.dfs.dfs import AUTHOR_IMAGES, CHANNEL_IMAGES, WEB_IMAGES
-from pysrc.fb.rzfb import Blob, Firebase
+from pysrc.fb.rzfb import Firebase
 from google.cloud import firestore # type: ignore
 
 
@@ -8,15 +8,14 @@ class PngImage:
         self.id = id
         self.png_buffer = png_buffer
         
-    def upload(self, firebase: Firebase) -> str:
+    async def upload(self, firebase: Firebase) -> str:
         mime_type = "image/png"        
-        self.url = firebase.upload_buffer(WEB_IMAGES, self.id, self.png_buffer, mime_type)
-        return self.url    
-        
+        self.url = await firebase.upload_buffer(WEB_IMAGES, self.id, self.png_buffer, mime_type)
+        return self.url
 
         
 class RzAuthor:
-    def __init__(self, id: str, name: str, description: str, image: Blob) -> None:
+    def __init__(self, id: str, name: str, description: str, image: PngImage) -> None:
         self.id = id
         self.name = name
         self.description = description
@@ -29,12 +28,12 @@ class RzAuthor:
             'imageUrl': self.image.url,
         })
         
-    def upload_and_save(self, firebase: Firebase) -> None:
-        self.image.upload(firebase, AUTHOR_IMAGES, self.id)
+    async def upload_and_save(self, firebase: Firebase) -> None:
+        await self.image.upload(firebase)
         self.save(firebase)
         
 class RzChannel:
-    def __init__(self, id: str, name: str, description: str, image_url: str, image: Blob | None = None, source_urls: list[str] = []) -> None:
+    def __init__(self, id: str, name: str, description: str, image_url: str, image: PngImage | None = None, source_urls: list[str] = []) -> None:
         self.id = id
         self.name = name
         self.description = description
@@ -50,9 +49,9 @@ class RzChannel:
             'sourceUrls': self.source_urls,
         })
         
-    def upload_and_save(self, firebase: Firebase) -> None:
+    async def upload_and_save(self, firebase: Firebase) -> None:
         if self.image:
-            self.image.upload(firebase, CHANNEL_IMAGES, self.id)
+            await self.image.upload(firebase)
         self.save(firebase)                
             
 class RzAudio:

@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth } from '../firebase';
 import { useAuth } from '../providers/AuthProvider';
 
 const SignUp: React.FC = () => {

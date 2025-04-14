@@ -48,106 +48,106 @@ const ViewWebPage: React.FC = () => {
 
             {pageData && (
 
-            <Table striped bordered hover className="mt-3">
-                <tbody>
-                    <tr>
-                        <td>URL</td>
-                        <td>{pageData.url}</td>
-                    </tr>
-                    <tr>
-                        <td>Normalized URL</td>
-                        <td>{pageData.normalized_url}</td>
-                    </tr>
-                    <tr>
-                        <td>Status Code</td>
-                        <td>{pageData.status_code}</td>
-                    </tr>
-                    <tr>
-                        <td>Content Type</td>
-                        <td>{pageData.content_type}</td>
-                    </tr>
-                    <tr>
-                        <td>Content Charset</td>
-                        <td>{pageData.content_charset}</td>
-                    </tr>                    
-                    <tr>
-                        <td>Metadata Title</td>
-                        <td>{pageData.metadata_title}</td>
-                    </tr>
-                    <tr>
-                        <td>Metadata Description</td>
-                        <td>{pageData.metadata_description}</td>
-                    </tr>
-                    
-                    <tr>
-                        <td>Metadata Published At</td>
-                        <td>{pageData.metadata_published_at && new Date(pageData.metadata_published_at).toLocaleDateString()}</td>
-                    </tr>
-                
-                    
-                    <tr>
-                        <td>Preview Image</td>
-                        <td>
-                            <img 
-                                src={pageData.metadata_image_url ?? undefined} 
-                                alt="Page preview" 
-                                style={{ maxWidth: '300px' }}
-                            />
-                        </td>
-                    </tr>
+                <Table striped bordered hover className="mt-3">
+                    <tbody>
+                        <tr>
+                            <td>URL</td>
+                            <td>{pageData.url}</td>
+                        </tr>
+                        <tr>
+                            <td>Normalized URL</td>
+                            <td>{pageData.normalized_url}</td>
+                        </tr>
+                        <tr>
+                            <td>Status Code</td>
+                            <td>{pageData.status_code}</td>
+                        </tr>
+                        <tr>
+                            <td>Content Type</td>
+                            <td>{pageData.content_type}</td>
+                        </tr>
+                        <tr>
+                            <td>Content Charset</td>
+                            <td>{pageData.content_charset}</td>
+                        </tr>
+                        <tr>
+                            <td>Metadata Title</td>
+                            <td>{pageData.metadata_title}</td>
+                        </tr>
+                        <tr>
+                            <td>Metadata Description</td>
+                            <td>{pageData.metadata_description}</td>
+                        </tr>
 
-                    <tr>
-                        <td>Canonical URL</td>
-                        <td>{pageData.canonical_url}</td>
-                    </tr>
+                        <tr>
+                            <td>Metadata Published At</td>
+                            <td>{pageData.metadata_published_at && new Date(pageData.metadata_published_at).toLocaleDateString()}</td>
+                        </tr>
 
-                    <tr>
-                        <td>Outgoing URLs</td>
-                        <td>
-                            <ul>
-                                {pageData.outgoing_urls?.map((url, index) => (
-                                    <li key={index}>
-                                        <a href={url} target="_blank" rel="noreferrer">{url}</a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </td>
-                    </tr>
 
-                    <tr>
-                        <td>Visible Text</td>
-                        <td>{pageData.visible_text}</td>
-                    </tr>
+                        <tr>
+                            <td>Preview Image</td>
+                            <td>
+                                <img
+                                    src={pageData.metadata_image_url ?? undefined}
+                                    alt="Page preview"
+                                    style={{ maxWidth: '300px' }}
+                                />
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td>Sitemap URL</td>
-                        <td>{pageData.sitemap_url}</td>
-                    </tr>
+                        <tr>
+                            <td>Canonical URL</td>
+                            <td>{pageData.canonical_url}</td>
+                        </tr>
 
-                    <tr>
-                        <td>Robots Content</td>
-                        <td>
-                            <ul>
-                                {pageData.robots_content?.map((content, index) => (
-                                    <li key={index}>{content}</li>
-                                ))}
-                            </ul>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>Outgoing URLs</td>
+                            <td>
+                                <ul>
+                                    {pageData.outgoing_urls?.map((url, index) => (
+                                        <li key={index}>
+                                            <a href={url} target="_blank" rel="noreferrer">{url}</a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td>Text Chunks</td>
-                        <td>
-                            <ul>
-                                {pageData.text_chunks?.map((chunk, index) => (
-                                    <li key={index}>{chunk}</li>
-                                ))}
-                            </ul>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>Visible Text</td>
+                            <td>{pageData.visible_text}</td>
+                        </tr>
 
-                </tbody>
-            </Table>
+                        <tr>
+                            <td>Sitemap URL</td>
+                            <td>{pageData.sitemap_urls}</td>
+                        </tr>
+
+                        <tr>
+                            <td>Robots Content</td>
+                            <td>
+                                <ul>
+                                    {pageData.robots_content?.map((content, index) => (
+                                        <li key={index}>{content}</li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Text Chunks</td>
+                            <td>
+                                <ul>
+                                    {pageData.text_chunks?.map((chunk, index) => (
+                                        <li key={index}>{chunk}</li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </Table>
             )}
         </Container>
     );

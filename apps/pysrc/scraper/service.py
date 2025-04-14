@@ -5,6 +5,7 @@ import logging
 from pyminiscraper.scraper import Scraper
 from pyminiscraper.model import ScraperUrl
 from pyminiscraper.config import ScraperConfig
+from pyminiscraper.stats import ScraperStats
 
 from pysrc.scraper.store import ServiceScraperStore
 from pysrc.scraper.text import extract_date_from_url
@@ -25,7 +26,7 @@ class ScraperService:
                             scraper_follow_sitemap_links: bool,
                             scraper_follow_feed_links: bool,
                             scraper_follow_web_page_links: bool,
-                            on_web_page_callback: Callable[[WebPage, WebPageContent], Awaitable[None]]|None = None):
+                            on_web_page_callback: Callable[[WebPage, WebPageContent], Awaitable[None]]|None = None) -> ScraperStats :
         logger.info(f"Scraping channel {channel_normalized_url}")
         seed_urls = [ScraperUrl(
                 url=seed.url, 
@@ -59,9 +60,11 @@ class ScraperService:
                 callback=ServiceScraperStore(on_web_page=on_web_page),
             ),
         )
-        await scraper.run()   
-        logger.info(f"Finished scraping channel {channel_normalized_url}")
         self.__scraper = scraper
+        stats = await scraper.run()   
+        logger.info(f"Finished scraping channel {channel_normalized_url}")
+        return stats
+        
 
     async def stop(self)-> None:
         logger.info("Stopping scraper service")

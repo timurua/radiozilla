@@ -15,6 +15,8 @@ class EmbeddingService:
     @staticmethod
     def initialize_model_if_needed()-> SentenceTransformer:
         if not EmbeddingService._model:
-            EmbeddingService._model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+            # pylint: disable=no-value-for-parameter
+            # type: ignore
+            EmbeddingService._model = SentenceTransformer('all-MiniLM-L6-v2').to('cpu')
         model = EmbeddingService._model
         return model

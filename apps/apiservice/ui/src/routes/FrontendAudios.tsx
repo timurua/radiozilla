@@ -1,6 +1,6 @@
-import React, {useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import Client from '../client';
+// import Client from '../client';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { FAFrontendAudio } from '../api';
 
@@ -13,11 +13,11 @@ const Scraper: React.FC = () => {
         try {
             setLoading(true);
             setFrontendAudios([]);
-            const response = await Client.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(urlOrText);
-            setFrontendAudios(response.data);
+            // const response = await Client.frontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextPost(urlOrText);
+            // setFrontendAudios(response.data);
 
         } catch (error) {
-            console.error('Error during search:', error);            
+            console.error('Error during search:', error);
         } finally {
             setLoading(false);
         }
@@ -27,11 +27,11 @@ const Scraper: React.FC = () => {
         try {
             setLoading(true);
             setFrontendAudios([]);
-            const response = await Client.frontendAudioForUrlApiV1FrontendAudioForUrlPost(urlOrText);
-            setFrontendAudios(response.data ? [response.data] : []);
+            // const response = await Client.frontendAudioForUrlApiV1FrontendAudioForUrlPost(urlOrText);
+            // setFrontendAudios(response.data ? [response.data] : []);
 
         } catch (error) {
-            console.error('Error during search:', error);            
+            console.error('Error during search:', error);
         } finally {
             setLoading(false);
         }
@@ -86,8 +86,8 @@ const Scraper: React.FC = () => {
                                     <div>{audio.normalized_url_hash}</div>
                                     <div>{audio.title}</div>
                                     <div>{audio.description}</div>
-                                    <div>{audio.duration}</div>                                    
-                                    <div>{audio.audio_text}</div>                                    
+                                    <div>{audio.duration}</div>
+                                    <div>{audio.audio_text}</div>
                                     {
                                         audio.similarity_score &&
                                         <div><strong>Similarity Score: </strong>{audio.similarity_score}</div>

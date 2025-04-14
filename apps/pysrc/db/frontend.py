@@ -3,13 +3,10 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash
-from pgvector.sqlalchemy import Vector # type: ignore
-from .database_utils import create_vector_index
-from sqlalchemy.ext.asyncio import AsyncConnection
 from pysrc.db.base import Base
 
 

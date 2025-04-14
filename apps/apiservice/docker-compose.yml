@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  pysrc:
+    build:
+      context: ../
+      dockerfile: pysrc/Dockerfile
+    image: gcr.io/radiozilla/radiozilla-pysrc:latest
+  apiservice:
+    build:
+      context: ../
+      dockerfile: apiservice/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:9470/db
+    restart: unless-stopped
+    networks:
+      - radiozilla-network
+    image: gcr.io/radiozilla/radiozilla-apiservice:latest
+    depends_on:
+      - pysrc
+
+networks:
+  radiozilla-network:
+    driver: bridge

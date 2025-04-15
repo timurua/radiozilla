@@ -1,4 +1,4 @@
-FROM gcr.io/radiozilla/radiozilla-pysrc:latest AS base
+FROM gcr.io/radiozilla-92c5f/radiozilla-pysrc:latest AS base
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY apiservice/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Add Node.js for building React app
-FROM node:lts-alpine AS ui-builder
+FROM node:20-slim AS ui-builder
 WORKDIR /app/ui
 COPY apiservice/ui/package*.json ./
 RUN npm ci

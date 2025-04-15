@@ -2,11 +2,13 @@ version: '3.8'
 
 services:
   pysrc:
+    platform: linux/amd64
     build:
       context: ../
       dockerfile: pysrc/Dockerfile
-    image: gcr.io/radiozilla/radiozilla-pysrc:latest
+    image: gcr.io/radiozilla-92c5f/radiozilla-pysrc:latest
   apiservice:
+    platform: linux/amd64
     build:
       context: ../
       dockerfile: apiservice/Dockerfile
@@ -18,7 +20,7 @@ services:
     restart: unless-stopped
     networks:
       - radiozilla-network
-    image: gcr.io/radiozilla/radiozilla-apiservice:latest
+    image: gcr.io/radiozilla-92c5f/radiozilla-apiservice:latest
     depends_on:
       - pysrc
 

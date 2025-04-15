@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from pysrc.config.rzconfig import RzConfig
+from pysrc.utils import asynchelper
 from .base import Base
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -27,15 +30,19 @@ class Database:
     _session_factory = None
     
     @classmethod
-    def initialize(cls, database_url: str):  
-        logging.info(f"Initializing database with url: {database_url}")
-        cls._engine = create_async_db_engine(database_url)
+    def __initialize(cls):  
+        logging.info(f"Initializing database with url: {RzConfig.instance().db_url}")
+        cls._engine = create_async_db_engine(RzConfig.instance().db_url)
         cls._session_factory = create_async_session_factory(cls._engine)
 
 
     @classmethod
     @asynccontextmanager
     async def get_session(cls) -> AsyncGenerator[AsyncSession, None]:        
+        if cls._engine is None:
+            await asynchelper.run_task_with_new_executor(
+                cls.__initialize
+            )
         if cls._session_factory is None:
             raise Exception("Database not initialized")
         

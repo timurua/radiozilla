@@ -24,6 +24,7 @@ const App: React.FC = () => {
                   <Route path="/" element={<Health />} />
                   <Route path="/health" element={<Health />} />
                   <Route path="/web-page-channel/:channelId" element={<WebPageChannel />} />
+                  <Route path="/web-page-channel/:channelId/:activeTab" element={<WebPageChannel />} />
                   <Route path="/web-page-channels" element={<WebPageChannels />} />
                   <Route path="/web-pages" element={<ViewWebPage />} />
                   <Route path="/web-page-summary" element={<WebPageSummary />} />

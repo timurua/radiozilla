@@ -11,11 +11,12 @@ interface DetailsProps {
 
 const Contents: React.FC<DetailsProps> = ({ channel }) => {
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [pages, setPages] = useState<Array<FAWebPage>>([]);
 
     useEffect(() => {
         const fetchChannel = async () => {
+            setLoading(true);
             const response = await Client.getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channel.normalized_url_hash);
             if (response.data) {
                 setPages(response.data);

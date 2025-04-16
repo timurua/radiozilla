@@ -57,7 +57,7 @@ async def get_web_page_service(db: AsyncSession = Depends(Database.get_session))
     return WebPageService(db)
 
 @router.get("/web-pages")
-async def read_web_pages(
+async def get_web_page_by_url(
     url: str,
     web_page_service: WebPageService = Depends(get_web_page_service)
 ) -> FAWebPage | None:
@@ -68,7 +68,41 @@ async def read_web_pages(
             logging.info(f"Web page not found for url: {url}")
             return None
         web_page_content = await web_page_service.get_content(web_page)
-        return FAWebPage(
+        return to_api_web_page(web_page, web_page_content) 
+    except Exception as e:
+        logging.error(f"Error similar-embeddings: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    return None
+
+@router.get("/get-web-pages-by-channel-id")
+async def get_web_pages_by_channel_id(
+    channel_id: str,
+    web_page_service: WebPageService = Depends(get_web_page_service)
+) -> list[FAWebPage]:
+    try:
+        logging.info(f"Finding web page for channel id: {channel_id}")
+        web_pages = await web_page_service.find_by_channel_id(channel_id)
+        result = []
+        for web_page in web_pages:
+            web_page_content = await web_page_service.get_content(web_page)
+            if web_page_content is None:
+                continue
+            result.append(to_api_web_page(web_page, web_page_content))
+        return result
+    except Exception as e:
+        logging.error(f"Error fetching web pages by channel id: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    return []
+
+
+def to_api_web_page(web_page: WebPage, web_page_content: WebPageContent) -> FAWebPage:
+    return FAWebPage(
             normalized_url_hash=web_page.normalized_url_hash,
             normalized_url=web_page.normalized_url,
             url=web_page.url,
@@ -87,14 +121,7 @@ async def read_web_pages(
             sitemap_urls=web_page_content.sitemap_urls,
             robots_content=web_page_content.robots_content,
             text_chunks=web_page_content.text_chunks
-        ) if web_page else None 
-    except Exception as e:
-        logging.error(f"Error similar-embeddings: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
         )
-    return None
     
 class ScraperRunRequest(BaseModel):
     url: str

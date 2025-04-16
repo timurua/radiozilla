@@ -7,7 +7,7 @@ interface SpinnerProps {
 
 const Spinner: React.FC<SpinnerProps> = ({ text }) => {
     return (
-        <Card className="bg-dark text-white" style={{ width: '18rem', textAlign: 'center', padding: '1rem' }}>
+        <Card style={{ width: '18rem', textAlign: 'center', padding: '1rem' }}>
             <Card.Body>
                 <BootstrapSpinner animation="border" role="status" />
                 <Card.Text>{text}</Card.Text>

@@ -93,17 +93,28 @@ class WebPageService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()    
     
+    async def find_by_channel_id(self, channel_id: str, page: int = 0, page_size: int = 20) -> list[WebPage]:
+        stmt = select(WebPage).execution_options(readonly=True) \
+            .where(WebPage.channel_normalized_url_hash == channel_id) \
+            .limit(page_size).offset(page * page_size)
+        result = await self.session.scalars(stmt)
+        return list(result.all())
+    
     async def find_normalized_urls_by_channel(self, channel_normalized_url_hash: str) -> list[str]:
         stmt = select(WebPage.normalized_url).where(WebPage.channel_normalized_url_hash == channel_normalized_url_hash)    
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_content(self, web_page: WebPage) -> WebPageContent:
-        dfs_client = DFSClient(RzConfig.instance())
-        content = await dfs_client.download_buffer(
-            WEB_PAGES_CONTENT, 
-            web_page.normalized_url_hash)
-        return WebPageContent.from_bytes(content)
+    async def get_content(self, web_page: WebPage) -> WebPageContent | None:
+        try:
+            dfs_client = DFSClient(RzConfig.instance())
+            content = await dfs_client.download_buffer(
+                WEB_PAGES_CONTENT, 
+                web_page.normalized_url_hash)
+            return WebPageContent.from_bytes(content)
+        except Exception as e:
+            self.logger.error(f"Failed to get content for {web_page.normalized_url}: {e}")
+            return None
     
     async def set_content(self, web_page: WebPage, content: WebPageContent) -> None:
         dfs_client = DFSClient(RzConfig.instance())

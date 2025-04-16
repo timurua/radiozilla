@@ -1,12 +1,13 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect } from 'react';
-import { Col, Container, Row, Spinner, Tab, Tabs } from 'react-bootstrap';
+import { Col, Container, Row, Tab, Tabs } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
+import { FAWebPageChannel } from '../api';
+import Client from '../client';
 import Details from '../components/channel/Details';
 import Pages from '../components/channel/Pages';
 import Scraping from '../components/channel/Scraping';
-import Client, { wsPath } from '../client';
-import { FAWebPageChannel } from '../api';
+import Spinner from '../components/Spinner';
 
 const WebPageChannel: React.FC = () => {
     let { channelId, activeTab } = useParams();
@@ -42,10 +43,8 @@ const WebPageChannel: React.FC = () => {
 
     return (
         loading ? (
-            <Spinner animation="border" role="status" className="mt-5">
-                <span className="visually-hidden">Loading...</span>
-            </Spinner>
-        ) : !loading && !channel ? (
+            <Spinner text='Loading channel...' />
+        ) : !channel ? (
             <div className="mt-5">
                 <h3>Channel not found</h3>
             </div>
@@ -72,7 +71,7 @@ const WebPageChannel: React.FC = () => {
                     </Col>
                 </Row>
             </Container>
-        );
+        ));
 };
 
 export default WebPageChannel;

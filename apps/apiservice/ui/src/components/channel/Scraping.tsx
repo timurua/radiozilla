@@ -1,25 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import ListGroup from 'react-bootstrap/ListGroup';
-import { useParams } from 'react-router-dom';
-import { FAScraperStats } from '../../api';
+import { FAScraperStats, FAWebPageChannel } from '../../api';
 import Client, { wsPath } from '../../client';
 
-const WebPageChannelContents: React.FC = () => {
-    const { channelId } = useParams();
-    const [url, setUrl] = useState<null | string>('');
-    const [normalizedUrl, setNormalizedUrl] = useState<null | string>('');
-    const [normalizedUrlHash, setNormalizedUrlHash] = useState<null | string>('');
-    const [name, setName] = useState<null | string>('');
-    const [description, setDescription] = useState<null | string>('');
-    const [imageUrl, setImageUrl] = useState<null | string>('');
-    const [enabled, setEnabled] = useState(false);
-    const [scraperSeeds, setScraperSeeds] = useState<Array<{ [key: string]: string; }> | null>([]);
-    const [includePathPatterns, setIncludePathPatterns] = useState<Array<string> | null>([]);
-    const [excludePathPatterns, setExcludePathPatterns] = useState<Array<string> | null>([]);
-    const [scraperFollowWebPageLinks, setScraperFollowWebPageLinks] = useState(false);
-    const [scraperFollowFeedLinks, setScraperFollowFeedLinks] = useState(true);
-    const [scraperFollowSitemapLinks, setScraperFollowSitemapLinks] = useState(true);
+interface DetailsProps {
+    channel: FAWebPageChannel;
+}
+
+
+const WebPageChannelContents: React.FC<DetailsProps> = ({ channel }) => {
 
     const [loading, setLoading] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
@@ -62,29 +52,8 @@ const WebPageChannelContents: React.FC = () => {
         };
     }, []);
 
-    const getChannel = () => {
-        return {
-            url: url ?? "",
-            normalized_url: normalizedUrl ?? "",
-            normalized_url_hash: normalizedUrlHash ?? "",
-            name: name ?? "",
-            description: description ?? "",
-            image_url: imageUrl,
-            enabled: enabled,
-            scraper_seeds: scraperSeeds,
-            include_path_patterns: includePathPatterns,
-            exclude_path_patterns: excludePathPatterns,
-            scraper_follow_web_page_links: scraperFollowWebPageLinks,
-            scraper_follow_feed_links: scraperFollowFeedLinks,
-            scraper_follow_sitemap_links: scraperFollowSitemapLinks,
-        };
-    };
 
     const handleStartScraping = async () => {
-        if (!url) {
-            return;
-        }
-        const channel = getChannel();
         try {
             setLoading(true);
             const response = await Client.scraperRunApiV1ScraperRunPost(channel);
@@ -128,22 +97,22 @@ const WebPageChannelContents: React.FC = () => {
                         <Form.Control
                             as="textarea"
                             rows={1}
-                            value={url ?? ""}
-                            onChange={(e) => setUrl(e.target.value)}
+                            value={channel.url ?? ""}
+                            readOnly
                         />
                         <Form.Label>Name</Form.Label>
                         <Form.Control
                             as="textarea"
                             rows={1}
-                            value={name ?? ""}
-                            onChange={(e) => setName(e.target.value)}
+                            value={channel.name ?? ""}
+                            readOnly
                         />
                         <Form.Label>Description</Form.Label>
                         <Form.Control
                             as="textarea"
                             rows={1}
-                            value={description ?? ""}
-                            onChange={(e) => setDescription(e.target.value)}
+                            value={channel.description ?? ""}
+                            readOnly
                         />
                         {showDetails && (
                             <>
@@ -151,64 +120,56 @@ const WebPageChannelContents: React.FC = () => {
                                 <Form.Control
                                     as="textarea"
                                     rows={1}
-                                    value={imageUrl ?? ""}
-                                    onChange={(e) => setImageUrl(e.target.value)}
+                                    value={channel.image_url ?? ""}
                                     readOnly
                                 />
                                 <Form.Check
                                     type="switch"
                                     id="enabled-switch"
                                     label="Enabled"
-                                    checked={enabled}
-                                    onChange={(e) => setEnabled(e.target.checked)}
+                                    checked={channel.enabled ?? false}
                                     readOnly
                                 />
                                 <Form.Label>Scraper Seeds</Form.Label>
                                 <Form.Control
                                     as="textarea"
                                     rows={3}
-                                    value={scraperSeeds?.map(seed => JSON.stringify(seed)).join('\n') ?? ""}
-                                    onChange={(e) => setScraperSeeds(e.target.value.split('\n').map(line => JSON.parse(line)))}
+                                    value={channel.scraper_seeds?.map(seed => JSON.stringify(seed)).join('\n') ?? ""}
                                     readOnly
                                 />
                                 <Form.Label>Include Path Patterns</Form.Label>
                                 <Form.Control
                                     as="textarea"
                                     rows={3}
-                                    value={includePathPatterns?.join('\n') ?? ""}
-                                    onChange={(e) => setIncludePathPatterns(e.target.value.split('\n'))}
+                                    value={channel.include_path_patterns?.join('\n') ?? ""}
                                     readOnly
                                 />
                                 <Form.Label>Exclude Path Patterns</Form.Label>
                                 <Form.Control
                                     as="textarea"
                                     rows={3}
-                                    value={excludePathPatterns?.join('\n') ?? ""}
-                                    onChange={(e) => setExcludePathPatterns(e.target.value.split('\n'))}
+                                    value={channel.exclude_path_patterns?.join('\n') ?? ""}
                                     readOnly
                                 />
                                 <Form.Check
                                     type="switch"
                                     id="scraper-follow-web-page-links-switch"
                                     label="Follow Web Page Links"
-                                    checked={scraperFollowWebPageLinks}
-                                    onChange={(e) => setScraperFollowWebPageLinks(e.target.checked)}
+                                    checked={channel.scraper_follow_web_page_links ?? false}
                                     readOnly
                                 />
                                 <Form.Check
                                     type="switch"
                                     id="scraper-follow-feed-links-switch"
                                     label="Follow Feed Links"
-                                    checked={scraperFollowFeedLinks}
-                                    onChange={(e) => setScraperFollowFeedLinks(e.target.checked)}
+                                    checked={channel.scraper_follow_feed_links ?? false}
                                     readOnly
                                 />
                                 <Form.Check
                                     type="switch"
                                     id="scraper-follow-sitemap-links-switch"
                                     label="Follow Sitemap Links"
-                                    checked={scraperFollowSitemapLinks}
-                                    onChange={(e) => setScraperFollowSitemapLinks(e.target.checked)}
+                                    checked={channel.scraper_follow_sitemap_links ?? false}
                                     readOnly
                                 />
                             </>)}

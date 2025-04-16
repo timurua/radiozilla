@@ -442,19 +442,6 @@ export interface HTTPValidationError {
 /**
  * 
  * @export
- * @interface SummarizerRunRequest
- */
-export interface SummarizerRunRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof SummarizerRunRequest
-     */
-    'url': string;
-}
-/**
- * 
- * @export
  * @interface UrlRequest
  */
 export interface UrlRequest {
@@ -661,43 +648,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Frontend Audio Results Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet: async (text: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'text' is not null or undefined
-            assertParamExists('frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet', 'text', text)
-            const localVarPath = `/api/v1/frontend-audio-results-similar-for-text`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (text !== undefined) {
-                localVarQueryParameter['text'] = text;
-            }
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get Channel By Id
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -771,43 +721,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Get Frontend Audios Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet: async (text: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'text' is not null or undefined
-            assertParamExists('getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet', 'text', text)
-            const localVarPath = `/api/v1/frontend-audios-similar-for-text`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (text !== undefined) {
-                localVarQueryParameter['text'] = text;
-            }
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get Web Page Channels
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -824,6 +737,43 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get Web Pages By Channel Id
+         * @param {string} channelId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet: async (channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet', 'channelId', channelId)
+            const localVarPath = `/api/v1/get-web-pages-by-channel-id`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (channelId !== undefined) {
+                localVarQueryParameter['channel_id'] = channelId;
+            }
 
 
     
@@ -1008,42 +958,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Summarizer Run
-         * @param {SummarizerRunRequest} summarizerRunRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        summarizerRunApiV1SummarizerRunPost: async (summarizerRunRequest: SummarizerRunRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'summarizerRunRequest' is not null or undefined
-            assertParamExists('summarizerRunApiV1SummarizerRunPost', 'summarizerRunRequest', summarizerRunRequest)
-            const localVarPath = `/api/v1/summarizer-run`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(summarizerRunRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Upsert Web Page Channel
          * @param {FAWebPageChannel} fAWebPageChannel 
          * @param {*} [options] Override http request option.
@@ -1143,19 +1057,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Frontend Audio Results Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudioSearchResult>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @summary Get Channel By Id
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -1182,19 +1083,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get Frontend Audios Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAFrontendAudio>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @summary Get Web Page Channels
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1203,6 +1091,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getWebPageChannelsApiV1WebPageChannelsGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.getWebPageChannelsApiV1WebPageChannelsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get Web Pages By Channel Id
+         * @param {string} channelId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FAWebPage>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1266,19 +1167,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.scraperStopApiV1ScraperStopPost(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.scraperStopApiV1ScraperStopPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Summarizer Run
-         * @param {SummarizerRunRequest} summarizerRunRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async summarizerRunApiV1SummarizerRunPost(summarizerRunRequest: SummarizerRunRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FAScraperStats>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.summarizerRunApiV1SummarizerRunPost(summarizerRunRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.summarizerRunApiV1SummarizerRunPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1347,16 +1235,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
-         * @summary Frontend Audio Results Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudioSearchResult>> {
-            return localVarFp.frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @summary Get Channel By Id
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -1377,22 +1255,22 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
-         * @summary Get Frontend Audios Similar For Text
-         * @param {string} text 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAFrontendAudio>> {
-            return localVarFp.getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @summary Get Web Page Channels
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getWebPageChannelsApiV1WebPageChannelsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FAWebPageChannel>> {
             return localVarFp.getWebPageChannelsApiV1WebPageChannelsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get Web Pages By Channel Id
+         * @param {string} channelId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<FAWebPage>> {
+            return localVarFp.getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId, options).then((request) => request(axios, basePath));
         },
         /**
          * Basic health check endpoint
@@ -1441,16 +1319,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         scraperStopApiV1ScraperStopPost(options?: RawAxiosRequestConfig): AxiosPromise<any> {
             return localVarFp.scraperStopApiV1ScraperStopPost(options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Summarizer Run
-         * @param {SummarizerRunRequest} summarizerRunRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        summarizerRunApiV1SummarizerRunPost(summarizerRunRequest: SummarizerRunRequest, options?: RawAxiosRequestConfig): AxiosPromise<FAScraperStats> {
-            return localVarFp.summarizerRunApiV1SummarizerRunPost(summarizerRunRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1523,18 +1391,6 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
-     * @summary Frontend Audio Results Similar For Text
-     * @param {string} text 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text: string, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).frontendAudioResultsSimilarForTextApiV1FrontendAudioResultsSimilarForTextGet(text, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
      * @summary Get Channel By Id
      * @param {string} id 
      * @param {*} [options] Override http request option.
@@ -1559,18 +1415,6 @@ export class DefaultApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get Frontend Audios Similar For Text
-     * @param {string} text 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text: string, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).getFrontendAudiosSimilarForTextApiV1FrontendAudiosSimilarForTextGet(text, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
      * @summary Get Web Page Channels
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1578,6 +1422,18 @@ export class DefaultApi extends BaseAPI {
      */
     public getWebPageChannelsApiV1WebPageChannelsGet(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getWebPageChannelsApiV1WebPageChannelsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get Web Pages By Channel Id
+     * @param {string} channelId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getWebPagesByChannelIdApiV1GetWebPagesByChannelIdGet(channelId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1636,18 +1492,6 @@ export class DefaultApi extends BaseAPI {
      */
     public scraperStopApiV1ScraperStopPost(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).scraperStopApiV1ScraperStopPost(options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Summarizer Run
-     * @param {SummarizerRunRequest} summarizerRunRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public summarizerRunApiV1SummarizerRunPost(summarizerRunRequest: SummarizerRunRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).summarizerRunApiV1SummarizerRunPost(summarizerRunRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

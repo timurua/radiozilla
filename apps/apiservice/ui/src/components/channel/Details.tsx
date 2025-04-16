@@ -7,7 +7,7 @@ interface DetailsProps {
     channel: FAWebPageChannel;
 }
 
-const Details: React.FC<DetailsProps> = ({ channel: initialChannel }) => {
+const Details: React.FC<DetailsProps> = ({ channel }) => {
     const [url, setUrl] = useState<null | string>('');
     const [normalizedUrl, setNormalizedUrl] = useState<null | string>('');
     const [normalizedUrlHash, setNormalizedUrlHash] = useState<null | string>('');
@@ -24,27 +24,26 @@ const Details: React.FC<DetailsProps> = ({ channel: initialChannel }) => {
     const [showDetails, setShowDetails] = useState(false);
 
     useEffect(() => {
-        // If initialChannel is provided, use it
-        if (initialChannel) {
-            setUrl(initialChannel.url);
-            setNormalizedUrl(initialChannel.normalized_url);
-            setNormalizedUrlHash(initialChannel.normalized_url_hash);
-            setName(initialChannel.name);
-            setDescription(initialChannel.description);
-            setImageUrl(initialChannel.image_url);
-            setEnabled(initialChannel.enabled ?? false);
-            setScraperSeeds(initialChannel.scraper_seeds ?? []);
-            setIncludePathPatterns(initialChannel.include_path_patterns);
-            setExcludePathPatterns(initialChannel.exclude_path_patterns);
-            setScraperFollowWebPageLinks(initialChannel.scraper_follow_web_page_links ?? false);
-            setScraperFollowFeedLinks(initialChannel.scraper_follow_feed_links ?? false);
-            setScraperFollowSitemapLinks(initialChannel.scraper_follow_sitemap_links ?? false);
-        }
-    }, [initialChannel]);
+
+        setUrl(channel.url);
+        setNormalizedUrl(channel.normalized_url);
+        setNormalizedUrlHash(channel.normalized_url_hash);
+        setName(channel.name);
+        setDescription(channel.description);
+        setImageUrl(channel.image_url);
+        setEnabled(channel.enabled ?? false);
+        setScraperSeeds(channel.scraper_seeds ?? []);
+        setIncludePathPatterns(channel.include_path_patterns);
+        setExcludePathPatterns(channel.exclude_path_patterns);
+        setScraperFollowWebPageLinks(channel.scraper_follow_web_page_links ?? false);
+        setScraperFollowFeedLinks(channel.scraper_follow_feed_links ?? false);
+        setScraperFollowSitemapLinks(channel.scraper_follow_sitemap_links ?? false);
+
+    }, [channel]);
 
     const getChannel = () => {
         return {
-            url: url ?? initialChannel?.url,
+            url: url ?? channel?.url,
             normalized_url: normalizedUrl ?? "",
             normalized_url_hash: normalizedUrlHash ?? "",
             name: name ?? "",

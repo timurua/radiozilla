@@ -46,8 +46,7 @@ class ServiceScraperStore(ScraperCallback):
 
     @override
     async def on_web_page(self, context: ScraperContext, request: ScraperUrl, response: ScraperWebPage) -> None:
-        async with Database.get_session() as session:            
-            
+        async for session in Database.get_session():
             existing_web_page_job = await WebPageJobService(session).find_by_url(response.normalized_url)
             if existing_web_page_job is not None and not is_state_good_for_publishing(existing_web_page_job.state):
                 return
@@ -163,7 +162,7 @@ class ServiceScraperStore(ScraperCallback):
 
     @override
     async def load_web_page_from_cache(self, normalized_url: str) -> Optional[ScraperWebPage]:        
-        async with Database.get_session() as session:
+        async for session in Database.get_session():
             web_page = await WebPageService(session).find_by_url(normalized_url)            
             if web_page is not None:
                 if web_page.requested_at and (datetime.now() - web_page.requested_at).total_seconds() > self.rerequest_after_hours * 60 * 60:

@@ -32,7 +32,7 @@ class SummarizerService:
         self.logger.info("Summarizing web pages")
         normalized_urls = []
     
-        async with Database.get_session() as session:        
+        async for session in Database.get_session():     
             normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SCRAPED_NEED_SUMMARIZING)
                 
         manager = ParallelTaskManager[str](max_concurrent_tasks=4)        
@@ -65,7 +65,7 @@ class SummarizerService:
 
         
     async def summarize_web_page(self, normalized_url: str) -> None: 
-        async with Database.get_session() as session:
+        async for session in Database.get_session():
             web_page_summary_service = WebPageSummaryService(session)
             web_page_service = WebPageService(session)
             web_page = await web_page_service.find_by_url(normalized_url)
@@ -112,21 +112,20 @@ class SummarizerService:
 
             self.logger.info(f"Summarized text: {summary} from text: {web_page_content.visible_text}")
             
-            async with Database.get_session() as session2:
-                web_page_summary_service = WebPageSummaryService(session2)
-                await web_page_summary_service.upsert(WebPageSummary(
-                    normalized_url = web_page.normalized_url,
-                    channel_normalized_url_hash = web_page.channel_normalized_url_hash,
-                    title = web_page_content.metadata_title,
-                    description = web_page_content.metadata_description,
-                    image_url = web_page_content.metadata_image_url,
-                    published_at = published_at,
-                    text = web_page_content.visible_text,
-                    summarized_text = summary,
-                    summarized_text_audio_url = None,
-                ))    
-                await WebPageJobService(session2).upsert(WebPageJob(
-                    normalized_url = web_page.normalized_url,
-                    state = WebPageJobState.SUMMARIZED_NEED_TTSING,                
-                ))   
-            
+            web_page_summary_service = WebPageSummaryService(session)
+            await web_page_summary_service.upsert(WebPageSummary(
+                normalized_url = web_page.normalized_url,
+                channel_normalized_url_hash = web_page.channel_normalized_url_hash,
+                title = web_page_content.metadata_title,
+                description = web_page_content.metadata_description,
+                image_url = web_page_content.metadata_image_url,
+                published_at = published_at,
+                text = web_page_content.visible_text,
+                summarized_text = summary,
+                summarized_text_audio_url = None,
+            ))    
+            await WebPageJobService(session).upsert(WebPageJob(
+                normalized_url = web_page.normalized_url,
+                state = WebPageJobState.SUMMARIZED_NEED_TTSING,                
+            ))   
+        

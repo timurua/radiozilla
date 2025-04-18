@@ -31,8 +31,22 @@
             "console": "integratedTerminal",
             "args": [
                 "-channel",
-                "https://cohere.com/",
+                "https://www.llamaindex.ai/",
             ],
+            "jinja": true,
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}/apps",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/apps",
+                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local.gcp"
+            }
+        },
+        {
+            "name": "Debug Summarizer Job",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/summarizerjob/main.py",
+            "console": "integratedTerminal",
             "jinja": true,
             "justMyCode": false,
             "cwd": "${workspaceFolder}/apps",

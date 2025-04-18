@@ -20,7 +20,25 @@
             "cwd": "${workspaceFolder}/backend",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/backend",
-                "ENV_FILE": "/home/timur/radiozilla/backend/config/.env.local"
+                "ENV_FILE": "${workspaceFolder}/backend/config/.env.local"
+            }
+        },
+        {
+            "name": "Debug Scraper Job",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/scraperjob/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-channel",
+                "https://cohere.com/",
+            ],
+            "jinja": true,
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}/apps",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/apps",
+                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local.gcp"
             }
         },
         {

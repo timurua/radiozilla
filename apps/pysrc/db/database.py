@@ -8,11 +8,18 @@ import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 
 def create_async_db_engine(db_url: str):
     """Create async SQLAlchemy engine"""
     return create_async_engine(
         db_url,
+        pool_size=20,         # Increase from default 5
+        max_overflow=30,      # Increase from default 10
+        pool_timeout=60,      # Increase timeout if needed (default 30)
+        pool_pre_ping=True,   # Optional: helps detect stale connections        
         isolation_level='AUTOCOMMIT',  # This is still valid at engine level
         echo=False  # Set to True for SQL query logging
     )
@@ -37,7 +44,6 @@ class Database:
 
 
     @classmethod
-    @asynccontextmanager
     async def get_session(cls) -> AsyncGenerator[AsyncSession, None]:        
         if cls._engine is None:
             await asynchelper.run_task_with_new_executor(

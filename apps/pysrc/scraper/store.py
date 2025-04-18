@@ -100,17 +100,18 @@ class ServiceScraperStore(ScraperCallback):
                     await self.request_and_store_image(session, context, response.metadata_image_url)                
                 return
             
-            existing_web_page_content = await WebPageService(session).get_content(existing_web_page)    
-            similarity = await asyncio.get_event_loop().run_in_executor(executor, compute_similarity, existing_web_page, existing_web_page_content, new_web_page, new_web_page_content)
+            existing_web_page_content = await WebPageService(session).get_content(existing_web_page) 
+            if existing_web_page_content is not None:   
+                similarity = await asyncio.get_event_loop().run_in_executor(executor, compute_similarity, existing_web_page, existing_web_page_content, new_web_page, new_web_page_content)
                 
-            if similarity < 0.8:
-                await WebPageService(session).upsert(new_web_page, new_web_page_content)                
-                await WebPageJobService(session).upsert(WebPageJob(
-                    normalized_url = response.normalized_url,
-                    state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
-                ))
-                if response.metadata_image_url:
-                    await self.request_and_store_image(session, context, response.metadata_image_url)
+                if similarity < 0.8:
+                    await WebPageService(session).upsert(new_web_page, new_web_page_content)                
+                    await WebPageJobService(session).upsert(WebPageJob(
+                        normalized_url = response.normalized_url,
+                        state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
+                    ))
+                    if response.metadata_image_url:
+                        await self.request_and_store_image(session, context, response.metadata_image_url)
                 
     async def request_and_store_image(self, session: AsyncSession, context: ScraperContext, url: str) -> None:
         try:            

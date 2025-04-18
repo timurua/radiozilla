@@ -3,7 +3,7 @@ from .service import WebPageChannelService
 from .database import Database
 
 async def create_channels()->None:
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         web_page_channel_service = WebPageChannelService(session)
         # await web_page_channel_service.upsert_web_page_channel(
         #     WebPageChannel(

@@ -22,12 +22,13 @@ from pysrc.db.default_data import create_channels
 logger = logging.getLogger("scraperjob")
 
 @click.command()
-async def main():
+@click.option("-channel", "--channel-url", help="Process only this specific channel URL")
+async def main(channel_url: str|None = None):
     await Jobs.initialize()
     await create_channels()    
-    await clean_channels()    
-    await scrape_channels()
-    await clean_channels()
+    await clean_channels(channel_url)    
+    await scrape_channels(channel_url)
+    await clean_channels(channel_url)
     
 async def scrape_channel(channel: WebPageChannel)->None:
     await ScraperService().scrape_channel(
@@ -42,18 +43,25 @@ async def scrape_channel(channel: WebPageChannel)->None:
     )
     
     
-async def scrape_channels()->None:
-    async with Database.get_session() as session:
+async def scrape_channels(channel_url: str|None = None)->None:
+    async for session in Database.get_session():
         web_page_channel_service = WebPageChannelService(session)
         task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
                  
-        for channel in await web_page_channel_service.find_all():
-            task_manager.submit_task(scrape_channel(channel))            
+        if channel_url:
+            channel = await web_page_channel_service.find_by_url(channel_url)
+            if channel:
+                task_manager.submit_task(scrape_channel(channel))
+            else:
+                logger.warning(f"Channel with URL {channel_url} not found")
+        else:
+            for channel in await web_page_channel_service.find_all():
+                task_manager.submit_task(scrape_channel(channel))            
                 
         await task_manager.wait_all()
 
 async def clean_channel_web_pages(channel: WebPageChannel)->None:
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         web_page_job_service = WebPageJobService(session)
         web_page_service = WebPageService(session)
         include_path_filter = PathFilter(channel.include_path_patterns if channel.include_path_patterns else [], True)
@@ -70,13 +78,20 @@ async def clean_channel_web_pages(channel: WebPageChannel)->None:
                     await web_page_job_service.upsert(job)
         
 
-async def clean_channels()->None:
-    async with Database.get_session() as session:
+async def clean_channels(channel_url: str|None = None)->None:
+    async for session in Database.get_session():
         web_page_channel_service = WebPageChannelService(session)
         task_manager = ParallelTaskManager[None](max_concurrent_tasks=5)
-                 
-        for channel in await web_page_channel_service.find_all():
-            task_manager.submit_task(clean_channel_web_pages(channel))            
+        
+        if channel_url:
+            channel = await web_page_channel_service.find_by_url(channel_url)
+            if channel:
+                task_manager.submit_task(clean_channel_web_pages(channel))
+            else:
+                logger.warning(f"Channel with URL {channel_url} not found")
+        else:
+            for channel in await web_page_channel_service.find_all():
+                task_manager.submit_task(clean_channel_web_pages(channel))            
                 
         await task_manager.wait_all()        
         

@@ -53,7 +53,6 @@ class WebImageService:
             web_image.normalized_url_hash,
             web_image_content.to_bytes(),
         )
-
         await self.session.merge(web_image, load=True)
         
 
@@ -94,12 +93,11 @@ class WebPageService:
         return result.scalar_one_or_none()    
     
     async def find_by_channel_id(self, channel_id: str, page: int = 0, page_size: int = 20) -> list[WebPage]:
-        async with self.session as session:
-            stmt = select(WebPage).execution_options(readonly=True) \
-                .where(WebPage.channel_normalized_url_hash == channel_id) \
-                .limit(page_size).offset(page * page_size)
-            result = await session.scalars(stmt)
-            return list(result.all())
+        stmt = select(WebPage).execution_options(readonly=True) \
+            .where(WebPage.channel_normalized_url_hash == channel_id) \
+            .limit(page_size).offset(page * page_size)
+        result = await self.session.scalars(stmt)
+        return list(result.all())
     
     async def find_normalized_urls_by_channel(self, channel_normalized_url_hash: str) -> list[str]:
         stmt = select(WebPage.normalized_url).where(WebPage.channel_normalized_url_hash == channel_normalized_url_hash)    

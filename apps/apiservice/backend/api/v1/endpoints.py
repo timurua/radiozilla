@@ -7,13 +7,13 @@ from pysrc.scraper.service import ScraperService
 from ...services.health import HealthService
 from pysrc.db.database import Database
 from fastapi import HTTPException, status
-from pysrc.db.service import WebPageService, FrontendAudioService, FrontendAudioPlayService
+from pysrc.db.service import WebPageChannelService, WebPageService, FrontendAudioService, FrontendAudioPlayService
 import logging
 from pydantic import BaseModel
 from ...services.web_socket import get_connection_manager, ConnectionManager
 from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageSeed
 from .models import FAWebPage, FAWebPageChannel, FADomainStats, FAScraperStats, FAFrontendAudioSearchResult, FAFrontendAudio, FAFrontendAudioPlay
-from pysrc.db.frontend import FrontendAudioPlay
+from pysrc.db.frontend import FrontendAudio, FrontendAudioPlay
 from datetime import datetime
 from pyminiscraper.url import normalized_url_hash, normalize_url                    
 from pyminiscraper.config import ScraperCallback
@@ -24,8 +24,20 @@ from pysrc.scraper.store import ServiceScraperStore
 
 router = APIRouter()
 
-async def get_health_service(db: AsyncSession = Depends(Database.get_session)) -> HealthService:
-    return HealthService(db)
+async def get_health_service(session: AsyncSession = Depends(Database.get_session)) -> HealthService:
+    return HealthService(session)
+
+async def get_frontend_audio_service(session: AsyncSession = Depends(Database.get_session)) -> FrontendAudioService:
+    return FrontendAudioService(session)
+
+async def get_frontend_audio_play_service(session: AsyncSession = Depends(Database.get_session)) -> FrontendAudioPlayService:
+    return FrontendAudioPlayService(session)
+
+async def get_web_page_service(db: AsyncSession = Depends(Database.get_session)) -> WebPageService:
+    return WebPageService(db)
+
+async def get_web_page_channel_service(db: AsyncSession = Depends(Database.get_session)) -> WebPageChannelService:
+    return WebPageChannelService(db)
 
 _running_scraper: ScraperService| None = None
 
@@ -36,12 +48,7 @@ async def stop_scraper_if_running() -> None:
 
 
 @router.get("/health")
-async def health_check(
-    health_service: HealthService = Depends(get_health_service)
-):
-    """
-    Basic health check endpoint
-    """
+async def health_check(health_service: HealthService = Depends(get_health_service)):
     return await health_service.get_basic_health()
 
 @router.get("/health/detailed")
@@ -52,9 +59,6 @@ async def detailed_health_check(
     Detailed health check endpoint
     """
     return await health_service.get_detailed_health()
-
-async def get_web_page_service(db: AsyncSession = Depends(Database.get_session)) -> WebPageService:
-    return WebPageService(db)
 
 @router.get("/web-pages")
 async def get_web_page_by_url(
@@ -68,6 +72,9 @@ async def get_web_page_by_url(
             logging.info(f"Web page not found for url: {url}")
             return None
         web_page_content = await web_page_service.get_content(web_page)
+        if web_page_content is None:
+            logging.info(f"Web page content not found for url: {url}")
+            return None
         return to_api_web_page(web_page, web_page_content) 
     except Exception as e:
         logging.error(f"Error similar-embeddings: {str(e)}")
@@ -198,29 +205,27 @@ async def scraper_websocket_endpoint(websocket: WebSocket, connection_manager: C
 
 
 @router.get("/web-page-channels")
-async def get_web_page_channels(db: AsyncSession = Depends(Database.get_session)) -> list[FAWebPageChannel]:
+async def get_web_page_channels(web_page_channel_service: WebPageChannelService = Depends(get_web_page_channel_service)) -> list[FAWebPageChannel]:
     try:
-        async with db as session:
-            result = await session.execute(select(WebPageChannel))
-            web_page_channels = result.scalars().all()
-            return [
-                FAWebPageChannel(
-                    normalized_url_hash=channel.normalized_url_hash,
-                    normalized_url=channel.normalized_url,
-                    url=channel.url,
-                    name=channel.name,
-                    description=channel.description,
-                    image_url=channel.image_url,
-                    enabled=channel.enabled,                
-                    scraper_seeds=channel.scraper_seeds,
-                    include_path_patterns=channel.include_path_patterns,
-                    exclude_path_patterns=channel.exclude_path_patterns,
-                    scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
-                    scraper_follow_feed_links=channel.scraper_follow_feed_links,
-                    scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
-                        
-                ) for channel in web_page_channels
-            ]
+        web_page_channels = await web_page_channel_service.find_all()
+        return [
+            FAWebPageChannel(
+                normalized_url_hash=channel.normalized_url_hash,
+                normalized_url=channel.normalized_url,
+                url=channel.url,
+                name=channel.name,
+                description=channel.description,
+                image_url=channel.image_url,
+                enabled=channel.enabled,                
+                scraper_seeds=channel.scraper_seeds,
+                include_path_patterns=channel.include_path_patterns,
+                exclude_path_patterns=channel.exclude_path_patterns,
+                scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
+                scraper_follow_feed_links=channel.scraper_follow_feed_links,
+                scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
+                    
+            ) for channel in web_page_channels
+        ]
     except Exception as e:
         logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -259,26 +264,25 @@ async def get_channel_by_url(request: UrlRequest, db: AsyncSession = Depends(Dat
         )
     
 @router.get("/web-page-channel-by-id")
-async def get_channel_by_id(id: str, db: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
+async def get_channel_by_id(id: str, session: AsyncSession = Depends(Database.get_session)) -> Optional[FAWebPageChannel]:
     try:
-        async with db as session:
-            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == id))
-            channel = result.scalar_one_or_none()
-            return None if channel is None else FAWebPageChannel(
-                    normalized_url_hash=channel.normalized_url_hash,
-                    normalized_url=channel.normalized_url,
-                    url=channel.url,
-                    name=channel.name,
-                    description=channel.description,
-                    image_url=channel.image_url,
-                    enabled=channel.enabled,                
-                    scraper_seeds=channel.scraper_seeds,
-                    include_path_patterns=channel.include_path_patterns,
-                    exclude_path_patterns=channel.exclude_path_patterns,
-                    scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
-                    scraper_follow_feed_links=channel.scraper_follow_feed_links,
-                    scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
-                )
+        result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == id))
+        channel = result.scalar_one_or_none()
+        return None if channel is None else FAWebPageChannel(
+                normalized_url_hash=channel.normalized_url_hash,
+                normalized_url=channel.normalized_url,
+                url=channel.url,
+                name=channel.name,
+                description=channel.description,
+                image_url=channel.image_url,
+                enabled=channel.enabled,                
+                scraper_seeds=channel.scraper_seeds,
+                include_path_patterns=channel.include_path_patterns,
+                exclude_path_patterns=channel.exclude_path_patterns,
+                scraper_follow_web_page_links=channel.scraper_follow_web_page_links,
+                scraper_follow_feed_links=channel.scraper_follow_feed_links,
+                scraper_follow_sitemap_links=channel.scraper_follow_sitemap_links
+            )
     except Exception as e:
         logging.error(f"Error reading web page seeds: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -290,47 +294,46 @@ async def get_channel_by_id(id: str, db: AsyncSession = Depends(Database.get_ses
 @router.post("/web-page-channel")
 async def upsert_web_page_channel(
     request: FAWebPageChannel,
-    db: AsyncSession = Depends(Database.get_session)
+    session: AsyncSession = Depends(Database.get_session)
 ) -> dict[str, str]:
     try:
-        async with db as session:
-            normalized_url = normalize_url(request.url)
-            normalized_url_hash_var = normalized_url_hash(normalized_url)
-            result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == normalized_url_hash_var))
-            web_page_channel = result.scalar_one_or_none()
+        normalized_url = normalize_url(request.url)
+        normalized_url_hash_var = normalized_url_hash(normalized_url)
+        result = await session.execute(select(WebPageChannel).where(WebPageChannel.normalized_url_hash == normalized_url_hash_var))
+        web_page_channel = result.scalar_one_or_none()
 
-            if web_page_channel:
-                web_page_channel.normalized_url_hash = normalized_url_hash_var
-                web_page_channel.normalized_url = normalized_url
-                web_page_channel.url = request.url
-                web_page_channel.name = request.name or ""
-                web_page_channel.description = request.description
-                web_page_channel.image_url = request.image_url
-                web_page_channel.enabled = request.enabled or False
-                web_page_channel.scraper_seeds = request.scraper_seeds or []
-                web_page_channel.include_path_patterns = request.include_path_patterns or []
-                web_page_channel.exclude_path_patterns = request.exclude_path_patterns or []
-                web_page_channel.scraper_follow_web_page_links = request.scraper_follow_web_page_links or False
-                web_page_channel.scraper_follow_feed_links = request.scraper_follow_feed_links or False
-                web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links or False
-            else:
-                web_page_channel = WebPageChannel(
-                    normalized_url_hash=normalized_url_hash_var,
-                    normalized_url=normalized_url,
-                    url=request.url,
-                    name=request.name,
-                    description=request.description,
-                    image_url=request.image_url,
-                    enabled=request.enabled,
-                    scraper_seeds=request.scraper_seeds,
-                    include_path_patterns=request.include_path_patterns,
-                    exclude_path_patterns=request.exclude_path_patterns,
-                    scraper_follow_web_page_links=request.scraper_follow_web_page_links,
-                    scraper_follow_feed_links=request.scraper_follow_feed_links,
-                    scraper_follow_sitemap_links=request.scraper_follow_sitemap_links
-                )
-            session.add(web_page_channel)
-            await session.commit()
+        if web_page_channel:
+            web_page_channel.normalized_url_hash = normalized_url_hash_var
+            web_page_channel.normalized_url = normalized_url
+            web_page_channel.url = request.url
+            web_page_channel.name = request.name or ""
+            web_page_channel.description = request.description
+            web_page_channel.image_url = request.image_url
+            web_page_channel.enabled = request.enabled or False
+            web_page_channel.scraper_seeds = request.scraper_seeds or []
+            web_page_channel.include_path_patterns = request.include_path_patterns or []
+            web_page_channel.exclude_path_patterns = request.exclude_path_patterns or []
+            web_page_channel.scraper_follow_web_page_links = request.scraper_follow_web_page_links or False
+            web_page_channel.scraper_follow_feed_links = request.scraper_follow_feed_links or False
+            web_page_channel.scraper_follow_sitemap_links = request.scraper_follow_sitemap_links or False
+        else:
+            web_page_channel = WebPageChannel(
+                normalized_url_hash=normalized_url_hash_var,
+                normalized_url=normalized_url,
+                url=request.url,
+                name=request.name,
+                description=request.description,
+                image_url=request.image_url,
+                enabled=request.enabled,
+                scraper_seeds=request.scraper_seeds,
+                include_path_patterns=request.include_path_patterns,
+                exclude_path_patterns=request.exclude_path_patterns,
+                scraper_follow_web_page_links=request.scraper_follow_web_page_links,
+                scraper_follow_feed_links=request.scraper_follow_feed_links,
+                scraper_follow_sitemap_links=request.scraper_follow_sitemap_links
+            )
+        session.add(web_page_channel)
+        await session.commit()
         return {"status": "success"}
     except Exception as e:
         logging.error(f"Error upserting web page seed: {str(e)}", exc_info=True)
@@ -342,11 +345,10 @@ async def upsert_web_page_channel(
 @router.post("/frontend-audio-results-similar-for-text")
 async def post_frontend_audios_similar_for_text(
     text: str,
-    db: AsyncSession = Depends(Database.get_session)
+    frontend_audio_service: FrontendAudioService = Depends(get_frontend_audio_service)
 ) -> list[FAFrontendAudioSearchResult]:
     try:        
         logging.info(f"Finding similar front end audios for text: {text}")
-        frontend_audio_service = FrontendAudioService(db)
         # return await frontend_audio_service.find_similar_for_text(text)
         return []
     except Exception as e:
@@ -419,11 +421,11 @@ async def post_frontend_audios_similar_for_text(
 @router.get("/frontend-audio-for-url")
 async def frontend_audio_for_url(
     url: str,
-    db: AsyncSession = Depends(Database.get_session)
+    frontend_audio_service: FrontendAudioService = Depends(get_frontend_audio_service),
 ) -> FAFrontendAudio | None:
     try:
         logging.info(f"Finding frontend audios for url: {url}")
-        frontend_audio = await FrontendAudioService(db).get_by_url(url)
+        frontend_audio = await frontend_audio_service.get_by_url(url)
         if not frontend_audio:
             return None
         
@@ -455,11 +457,10 @@ async def frontend_audio_play(
     user_id: str,
     audio_id: str,
     duration_seconds: int,
-    db: AsyncSession = Depends(Database.get_session)
+    frontend_audio_play_service: FrontendAudioPlayService = Depends(get_frontend_audio_play_service),
 ) -> None:
     try:
         logging.info(f"Upserting front end audio play for user: {user_id}, audio: {audio_id}")
-        frontend_audio_play_service = FrontendAudioPlayService(db)
         frontend_audio_play = FrontendAudioPlay(
             user_id=user_id,
             audio_id=audio_id,
@@ -479,11 +480,10 @@ async def frontend_audio_play(
 @router.get("/frontend-audio-plays-for-user")
 async def frontend_audio_plays_for_user(
     user_id: str,
-    db: AsyncSession = Depends(Database.get_session)
+    frontend_audio_play_service: FrontendAudioPlayService = Depends(get_frontend_audio_play_service),
 ) -> list[FAFrontendAudioPlay]:
     try:
         logging.info(f"Finding front end audio plays for user: {user_id}")
-        frontend_audio_play_service = FrontendAudioPlayService(db)
         return [FAFrontendAudioPlay(
             user_id=frontend_audio_play.user_id,
             audio_id=frontend_audio_play.audio_id,

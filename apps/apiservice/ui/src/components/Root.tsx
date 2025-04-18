@@ -16,7 +16,6 @@ const Root: React.FC<RootProps> = ({ children }) => {
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
                             <Nav.Link as={Link} to="/health">Health</Nav.Link>
-                            <Nav.Link as={Link} to="/web-page-channel">Channel</Nav.Link>
                             <Nav.Link as={Link} to="/web-page-channels">Channels</Nav.Link>
                             <Nav.Link as={Link} to="/web-pages">Pages</Nav.Link>
                             <Nav.Link as={Link} to="/web-page-summary">Summary</Nav.Link>
@@ -25,7 +24,7 @@ const Root: React.FC<RootProps> = ({ children }) => {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-            
+
             <Container>
                 {children}
             </Container>

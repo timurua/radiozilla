@@ -9,7 +9,6 @@ from pysrc.db.web_page import WebPageSummary, WebPageChannel, WebPageJobState, W
 from pysrc.db.frontend import FrontendAudio
 from pysrc.config.rzconfig import RzConfig
 import ffmpeg # type: ignore
-from pysrc.dfs.dfs import MinioClient
 import pysrc.fb.rzfb as rzfb
 from pyminiscraper.url import normalized_url_hash
 from urllib.parse import urlparse
@@ -37,7 +36,7 @@ async def publish_firebase_channels(firebase: rzfb.Firebase)-> PublisherContext:
     rz_author.upload_and_save(firebase)    
     channels: dict[str, rzfb.RzChannel] = {}
             
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         for channel in await WebPageChannelService(session).find_all():
             rz_channel = rzfb.RzChannel(
             id= channel.normalized_url_hash,
@@ -55,7 +54,7 @@ async def save_frontend_audio_to_db(
                                  web_page_summary: WebPageSummary, 
                                  publisher_context: PublisherContext) -> None:
     
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         frontend_audio_service = FrontendAudioService(session)
 
         title_embedding_mlml6v2 = EmbeddingService.calculate_embeddings(web_page_summary.title or "")
@@ -88,7 +87,7 @@ async def save_frontend_audio_to_db(
 async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_context: PublisherContext) -> None:
     web_page_summary = None
     web_image = None
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)
         web_image = await WebImageService(session).find_by_url(normalized_url, width=thumbnailed_image_width, height=thumbnailed_image_height)
         
@@ -104,7 +103,7 @@ async def publish(normalized_url: str, rz_firebase: rzfb.Firebase, publisher_con
 async def unpublish(normalized_url: str, rz_firebase: rzfb.Firebase) -> None:
     hash = normalized_url_hash(normalized_url)        
     rzfb.RzAudio.delete(rz_firebase, hash)    
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         await WebPageJobService(session).upsert(WebPageJob(
             normalized_url=normalized_url,
             state=WebPageJobState.UNPUBLISHED
@@ -113,13 +112,13 @@ async def unpublish(normalized_url: str, rz_firebase: rzfb.Firebase) -> None:
     
 
 @click.command()
-async def main():
+async def main() -> None:
     await Jobs.initialize()
-    rz_firebase = rzfb.Firebase(RzConfig.instance().google_account_file)    
+    rz_firebase = rzfb.Firebase(RzConfig.instance())
     
     normalized_urls_need_publishing = []
     normalized_urls_need_unpublishing = []
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         normalized_urls_need_publishing = await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING)
         normalized_urls_need_unpublishing = await WebPageJobService(session).find_with_state(WebPageJobState.NEED_UNPUBLISHING)      
     
@@ -133,21 +132,6 @@ async def main():
 
     await task_manager.wait_all()
                 
-def convert_wav_to_m4a(input_wav_path, output_m4a_path):
-    try:
-        (
-            ffmpeg
-            .input(input_wav_path)
-            .output(output_m4a_path, codec='aac', audio_bitrate='128k')
-            .overwrite_output()
-            .run()
-        )
-        logging.info(f"Conversion successful: {output_m4a_path}")
-    except ffmpeg.Error as e:
-        logging.error(f"An error occurred during conversion: {e.stderr.decode()}")
-    except FileNotFoundError:
-        logging.error("FFmpeg is not installed or not found in system PATH.")                
-                            
 
 async def publish_front_end_audio(rz_firebase: rzfb.Firebase, publisher_context: PublisherContext, web_page_summary: WebPageSummary, web_image: WebImage|None) -> None:    
     url = web_page_summary.summarized_text_audio_url
@@ -198,7 +182,7 @@ def initialize_logging():
 async def initialize_db(config: RzConfig) -> None:
     db = Database()
     db.initialize(config.db_url)
-    await db.create_tables()
+
     
 def cli():    
     return asyncio.run(main())

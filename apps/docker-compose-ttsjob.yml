@@ -4,7 +4,4 @@ services:
     build:
       context: .
       dockerfile: ttsjob/Dockerfile
-    image: localhost:32000/radiozilla-ttsjob:latest
-
-
-  
+    image: gcr.io/radiozilla-92c5f/radiozilla-ttsjob:latest

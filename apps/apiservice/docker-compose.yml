@@ -16,7 +16,7 @@ services:
       - "8000:8000"
     environment:
       - NODE_ENV=development
-      - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:9470/db
+      - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:5432/db
     restart: unless-stopped
     networks:
       - radiozilla-network

@@ -1,6 +1,5 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from threading import Thread
 import logging
 
 from .crewai_summarizer import CrewAISummarizer
@@ -10,7 +9,6 @@ from pyminiscraper.url import normalized_url_hash, normalize_url
 from .ollama import OllamaClient
 from .prompts import SummaryConfig, SummaryLength, SummaryTone, SummaryFocus, SummaryPrompt, DateDeductionPrompt
 from ..db.service import WebPageService, WebPageSummaryService, WebPageJobService
-from ..db.web_page import WebPage
 from ..utils.parallel import ParallelTaskManager
 from dateutil.parser import parse
 from datetime import datetime

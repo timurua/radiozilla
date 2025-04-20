@@ -59,6 +59,10 @@ class ServiceScraperStore(ScraperCallback):
                 normalized_url = response.normalized_url,
                 normalized_url_hash = response.normalized_url_hash,
                 requested_at = drop_time_zone(response.requested_at),
+                metadata_title = response.metadata_title,
+                metadata_description = response.metadata_description,
+                metadata_image_url = response.metadata_image_url,
+                metadata_published_at = drop_time_zone(response.metadata_published_at),                
             )
 
             new_web_page_content = WebPageContent(

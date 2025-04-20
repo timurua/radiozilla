@@ -167,6 +167,11 @@ class WebPage(TimestampModel):
     requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     channel_normalized_url_hash: Mapped[str] = mapped_column(String(32))    
     
+    metadata_title: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    metadata_published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=None)
+    
 # Automatically set hash when content is modified
 @event.listens_for(WebPage.url, 'set')
 def web_page_set_content_hash(target: WebPage, value, oldvalue, initiator):

@@ -6,9 +6,9 @@ from pysrc.db.database import Database
 from pysrc.db.service import WebPageSummaryService, WebPageJobService, WebPageChannelService
 from pysrc.db.web_page import WebPageSummary, WebPageJobState, WebPageChannel, WebPageJob
 import ffmpeg # type: ignore
-from pysrc.dfs.dfs import MinioClient
 from pysrc.config.rzconfig import RzConfig
 import soundfile as sf  # type: ignore
+from pysrc.dfs.dfs import AUDIO_FILES, WEB_PAGES_CONTENT, DFSClient
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.process.runner import ProcessRunner
 from pysrc.config.jobs import Jobs
@@ -17,33 +17,32 @@ from pysrc.utils.numberspeller import NumbersToTextPreprocessor
 from pysrc.utils.latexcleaner import LatexCleaner
 
 @click.command()
-async def main():
+async def main() -> None:
     await Jobs.initialize()
     
     normalized_urls = []
-    async with Database.get_session() as session:
+    async for session in Database.get_session():
         normalized_urls = await WebPageJobService(session).find_with_state(WebPageJobState.SUMMARIZED_NEED_TTSING)
 
     parallel = ParallelTaskManager(max_concurrent_tasks=3)
     
-    async def process_web_page_summary(normalized_url: str):
+    async def process_web_page_summary(normalized_url: str) -> None:
         web_page_summary = None
         web_page_channel = None
 
-        async with Database.get_session() as session:
+        async for session in Database.get_session():
             web_page_summary = await WebPageSummaryService(session).find_by_url(normalized_url)            
             if web_page_summary:
                 web_page_channel = await WebPageChannelService(session).find_by_hash(web_page_summary.channel_normalized_url_hash)
         logging.info(f"Processing summary for URL: {normalized_url}")
         if web_page_summary and web_page_channel:
-            updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)
-            async with Database.get_session() as session:
-                await WebPageSummaryService(session).upsert(updated_web_page_summary)
-                await WebPageJobService(session).upsert(WebPageJob(
-                    normalized_url = normalized_url,
-                    state = WebPageJobState.TTSED_NEED_PUBLISHING,                
-                ))   
-                
+            updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)            
+            await WebPageSummaryService(session).upsert(updated_web_page_summary)
+            await WebPageJobService(session).upsert(WebPageJob(
+                normalized_url = normalized_url,
+                state = WebPageJobState.TTSED_NEED_PUBLISHING,                
+            ))   
+            
             
             
     for normalized_url in normalized_urls:
@@ -168,10 +167,12 @@ async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel)
     
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, convert_wav_to_m4a, audio_file_wav, audio_file_m4a)
-
-    minio_client = MinioClient(RzConfig.instance().minio_endpoint, RzConfig.instance().minio_access_key, RzConfig.instance().minio_secret_key)
-    await minio_client.upload_file(RzConfig.instance().minio_bucket, audio_file_m4a, audio_filename_m4a)
-    summarized_text_audio_url = minio_client.get_presigned_url(RzConfig.instance().minio_bucket, audio_filename_m4a)
+    
+    summarized_text_audio_url = await DFSClient(RzConfig.instance()).upload_file(
+        AUDIO_FILES, 
+        audio_filename_m4a,
+        audio_file_m4a,
+    )    
     logging.info(f"Uploaded audio file to MinIO: {summarized_text_audio_url}")
     return WebPageSummary(
         normalized_url_hash = web_page_summary.normalized_url_hash,

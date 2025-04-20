@@ -1,4 +1,4 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from pysrc.config.rzconfig import RzConfig
@@ -9,10 +9,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
 
-def create_async_db_engine(db_url: str):
+def create_async_db_engine(db_url: str) -> AsyncEngine:
     """Create async SQLAlchemy engine"""
     return create_async_engine(
         db_url,

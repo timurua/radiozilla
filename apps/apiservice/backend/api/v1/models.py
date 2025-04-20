@@ -78,3 +78,32 @@ class FAFrontendAudioPlay(BaseModel):
     audio_id: str
     played_at: datetime
     duration_seconds: int
+    
+class RzAuthor(BaseModel):
+    id: str
+    name: str
+    description: str
+    image_url: str
+        
+class RzChannel(BaseModel):
+    id: str
+    name: str
+    description: str
+    image_url: str
+    source_urls: list[str]
+
+            
+class RzAudio(BaseModel):
+    id: str
+    author_id: str
+    channel_id: str
+    name: str
+    description: str
+    audio_text: str
+    audio_url: str
+    image_url: str
+    topics: list[str]
+    duration_seconds: int
+    web_url: str
+    published_at: datetime 
+    uploaded_at: datetime

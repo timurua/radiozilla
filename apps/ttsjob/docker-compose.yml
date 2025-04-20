@@ -1,0 +1,22 @@
+# docker-compose.yml
+services:
+  ttsjob:
+    platform: linux/amd64
+    build:
+      context: ../
+      dockerfile: ttsjob/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:5432/db
+      - NVIDIA_VISIBLE_DEVICES=all
+    restart: unless-stopped
+    networks:
+      - radiozilla-network
+    image: gcr.io/radiozilla-92c5f/radiozilla-ttsjob:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    runtime: nvidia
+
+networks:
+  radiozilla-network:
+    driver: bridge

@@ -4,13 +4,13 @@ services:
     build:
       context: .
       dockerfile: pysrc/Dockerfile
-    image: gcr.io/radiozilla-92c5f/radiozilla-pysrc:latest
+    image: localhost:32000/radiozilla-pysrc:latest
   
   scraperjob:
     build:
       context: .
       dockerfile: publisherjob/Dockerfile
-    image: gcr.io/radiozilla-92c5f/radiozilla-publisherjob:latest
+    image: localhost:32000/radiozilla-publisherjob:latest
     depends_on:
       - pysrc
 

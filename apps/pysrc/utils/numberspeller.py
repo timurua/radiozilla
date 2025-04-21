@@ -23,8 +23,11 @@ class NumberToWords:
             raise TypeError("Input must be an integer")
             
         if number < -999999999999 or number > 999999999999:
-            raise ValueError("Number out of supported range")
-
+            raise ValueError(f"Number out of supported range {number}")
+        
+        if len(str(number)) > 12:
+            raise ValueError(f"Too long: {number}")
+        
         if number == 0:
             return self.ones[0]
 
@@ -103,28 +106,36 @@ class NumbersToTextPreprocessor:
         self.number_matcher = NumberMatcher()
     
     def preprocess(self, text: str) -> str:
-        numbers = self.number_matcher.find_numbers_with_positions(text) 
-        
-        substitutes = []
-        for (original_number, start, end) in numbers:
-            number = original_number
-            words = []
-            if number.startswith('-'):
-                words.append('minus')
-                number = number[1:]
-            if '.' in number:
-                integer_part, decimal_part = number.split('.')
-                if integer_part:
-                    words.append(self.number_to_words.convert(int(integer_part)))
-                words.append('point')
-                words.append(' '.join(self.number_to_words.convert(int(d)) for d in decimal_part))
-            else:
-                words.append(self.number_to_words.convert(int(number)))
-
-            spelled_number = ' '.join(words)
-            substitutes.append((original_number, spelled_number, start, end))
-
-        for original, substitute, start, end in reversed(substitutes):
-            text = text[:start] + substitute + text[end:]
+        try:
+            numbers = self.number_matcher.find_numbers_with_positions(text) 
             
-        return text
+            substitutes = []
+            for (original_number, start, end) in numbers:
+                number = original_number
+                try:
+                    words = []
+                    if number.startswith('-'):
+                        words.append('minus')
+                        number = number[1:]
+                    if '.' in number:
+                        integer_part, decimal_part = number.split('.')
+                        if integer_part:
+                            words.append(self.number_to_words.convert(int(integer_part)))
+                        words.append('point')
+                        words.append(' '.join(self.number_to_words.convert(int(d)) for d in decimal_part))
+                    else:
+                        words.append(self.number_to_words.convert(int(number)))
+                    spelled_number = ' '.join(words)
+                except ValueError:
+                    # If conversion fails, keep the original number
+                    spelled_number = " "
+                substitutes.append((original_number, spelled_number, start, end))
+
+            for original, substitute, start, end in reversed(substitutes):
+                text = text[:start] + substitute + text[end:]
+                
+            return text
+        except Exception as e:
+            print(f"Error in NumbersToTextPreprocessor: {e} for text: {text}")
+            raise e
+             

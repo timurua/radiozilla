@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from pydoc_data import topics
 import asyncclick as click
 import asyncio
 import logging
@@ -184,6 +185,7 @@ async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel)
     return WebPageSummary(
         normalized_url_hash = web_page_summary.normalized_url_hash,
         normalized_url = web_page_summary.normalized_url,
+        channel_normalized_url_hash = web_page_summary.channel_normalized_url_hash,
         title = web_page_summary.title,
         description = web_page_summary.description,
         image_url = web_page_summary.image_url,
@@ -191,7 +193,9 @@ async def run_tts_job(web_page_summary: WebPageSummary, channel: WebPageChannel)
         text = web_page_summary.text,
         summarized_text = web_page_summary.summarized_text,
         summarized_text_audio_url = summarized_text_audio_url,
-        summarized_text_audio_duration_seconds = duration
+        summarized_text_audio_duration_seconds = duration,
+        topics = web_page_summary.topics,
+        uploaded_at = web_page_summary.uploaded_at,
     )
     
 def cli():

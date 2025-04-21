@@ -38,7 +38,7 @@ class Database:
     def __initialize(cls):  
         logging.info(f"Initializing database with url: {RzConfig.instance().db_url}")
         cls._engine = create_async_db_engine(RzConfig.instance().db_url)
-        cls._session_factory = create_async_session_factory(cls._engine)
+        cls._session_factory = create_async_session_factory(cls._engine)        
 
 
     @classmethod
@@ -47,6 +47,7 @@ class Database:
             await asynchelper.run_task_with_new_executor(
                 cls.__initialize
             )
+            await cls.create_tables()
         if cls._session_factory is None:
             raise Exception("Database not initialized")
         

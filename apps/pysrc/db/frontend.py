@@ -22,13 +22,13 @@ class FrontendAuthor(TimestampModel):
         
 # Automatically set hash when content is modified
 @event.listens_for(FrontendAuthor.normalized_url, 'set')
-def frontend_author_set_content_hash(target: FrontendAuthor, value, oldvalue, initiator):
+def frontend_author_set_content_hash(target: FrontendAuthor, value, oldvalue, initiator) -> None:
     target.normalized_url_hash = normalized_url_hash(value)
 
 # Set hash before insert/update
 @event.listens_for(FrontendAuthor, 'before_insert')
 @event.listens_for(FrontendAuthor, 'before_update')
-def frontend_author_ensure_hash(mapper, connection, target: FrontendAuthor):
+def frontend_author_ensure_hash(mapper, connection, target: FrontendAuthor) -> None:
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 

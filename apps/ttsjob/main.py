@@ -2,6 +2,7 @@
 import asyncclick as click
 import asyncio
 import logging
+from pysrc.db import web_page
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageSummaryService, WebPageJobService, WebPageChannelService
 from pysrc.db.web_page import WebPageSummary, WebPageJobState, WebPageChannel, WebPageJob
@@ -35,15 +36,21 @@ async def main() -> None:
             if web_page_summary:
                 web_page_channel = await WebPageChannelService(session).find_by_hash(web_page_summary.channel_normalized_url_hash)
         logging.info(f"Processing summary for URL: {normalized_url}")
+        if web_page_summary is None:
+            logging.info(f"Skipping (no summary) processing summary for URL: {normalized_url}")
+            return
+        if web_page_channel is None:
+            logging.info(f"Skipping (no channel) processing summary for URL: {normalized_url}")
+            return
+        
         if web_page_summary and web_page_channel:
-            updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)            
+            updated_web_page_summary = await run_tts_job(web_page_summary, web_page_channel)     
+            logging.info(f"Updated web page summary for URL: {normalized_url}")       
             await WebPageSummaryService(session).upsert(updated_web_page_summary)
             await WebPageJobService(session).upsert(WebPageJob(
                 normalized_url = normalized_url,
                 state = WebPageJobState.TTSED_NEED_PUBLISHING,                
-            ))   
-            
-            
+            ))
             
     for normalized_url in normalized_urls:
         parallel.submit_task(process_web_page_summary(normalized_url))

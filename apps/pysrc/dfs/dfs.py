@@ -3,6 +3,7 @@ from ..fb import rzfb
 from ..config.rzconfig import RzConfig
 
 WEB_IMAGES = "web_images"
+FRONTEND_IMAGES = "frontend_images"
 WEB_PAGES_CONTENT = "web_pages_content"
 AUTHOR_IMAGES = "author_images"
 CHANNEL_IMAGES = "channel_images"

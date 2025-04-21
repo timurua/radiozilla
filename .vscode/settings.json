@@ -21,5 +21,11 @@
     "python.linting.mypyEnabled": true,
     "python.analysis.typeCheckingMode": "basic",
     "editor.formatOnSave": true,
-    "python.languageServer": "Pylance"
+    "python.languageServer": "Pylance",
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    }
 }

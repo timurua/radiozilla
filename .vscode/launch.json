@@ -56,6 +56,20 @@
             }
         },
         {
+            "name": "Debug Publisher Job",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/publisherjob/main.py",
+            "console": "integratedTerminal",
+            "jinja": true,
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}/apps",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/apps",
+                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local.gcp"
+            }
+        },
+        {
             "name": "Debug apiservice (uvicorn)",
             "type": "debugpy",
             "request": "launch",

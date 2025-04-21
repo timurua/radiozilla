@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
 
+from pysrc.db.upserter import Upserter
 from pysrc.config.rzconfig import RzConfig
-from pysrc.dfs.dfs import WEB_IMAGES, WEB_PAGES_CONTENT, DFSClient
+from pysrc.dfs.dfs import FRONTEND_IMAGES, WEB_IMAGES, WEB_PAGES_CONTENT, DFSClient
 from .web_page import WebImageContent, WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
 from .frontend import FrontendAudio, FrontendAudioPlay
 import logging
@@ -15,6 +16,12 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Mapped
 from datetime import datetime
 import pickle
+import hashlib
+import base64
+
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+
 
 class WebPageChannelService:
     
@@ -23,7 +30,7 @@ class WebPageChannelService:
         self.logger = logging.getLogger("web_page_channel_service")
 
     async def upsert(self, web_page_channel: WebPageChannel) -> None:
-        await self.session.merge(web_page_channel, load=True)
+        await Upserter(self.session).upsert(web_page_channel)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
@@ -53,14 +60,12 @@ class WebImageService:
             web_image.normalized_url_hash,
             web_image_content.to_bytes(),
         )
-        await self.session.merge(web_image, load=True)
+        await Upserter(self.session).upsert(web_image)
         
-
-    async def find_by_url(self, normalized_url: str, *, width: int, height: int) -> WebImage|None:
+    async def find_by_url(self, normalized_url: str) -> WebImage|None:
         hash = normalized_url_hash(normalized_url)
         stmt = select(WebImage).execution_options(readonly=True) \
-            .where(WebImage.normalized_url_hash == hash) \
-            .where(WebImage.width == width).where(WebImage.height == height) 
+            .where(WebImage.normalized_url_hash == hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
@@ -69,7 +74,32 @@ class WebImageService:
         content = await dfs_client.download_buffer(
             WEB_IMAGES, 
             web_image.normalized_url_hash)
-        return WebImageContent.from_bytes(content)    
+        return WebImageContent.from_bytes(content)   
+    
+    
+class FrontendImageService:
+    def __init__(self) -> None:
+        self.logger = logging.getLogger("frontend_image_service")
+
+    async def upsert(self, web_image: WebImage, web_image_content: WebImageContent) -> None|str:
+        dfs_client = DFSClient(RzConfig.instance())                
+        if web_image_content.content is None:
+            self.logger.error(f"Web image content is None for {web_image.normalized_url}")
+            return None
+        sha256_hash = hashlib.sha256(web_image_content.content).digest()
+        content_hash_b64 = base64.urlsafe_b64encode(sha256_hash).decode('ascii').rstrip('=')
+        self.logger.info(f"Generated content hash: {content_hash_b64}")
+        
+        dfs_client = DFSClient(RzConfig.instance())
+        await dfs_client.upload_buffer(
+            FRONTEND_IMAGES,
+            content_hash_b64,
+            web_image_content.content,
+        )
+        return f"gs://{FRONTEND_IMAGES}/{content_hash_b64}"
+            
+        
+
     
 class WebPageService:
     
@@ -83,7 +113,7 @@ class WebPageService:
             web_page.normalized_url_hash,
             web_page_content.to_bytes(),
         )
-        await self.session.merge(web_page, load=True)
+        await Upserter(self.session).upsert(web_page)        
         
 
     async def find_by_url(self, normalized_url: str) -> WebPage|None:
@@ -127,12 +157,12 @@ class WebPageService:
               
 class WebPageJobService:
     
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.logger = logging.getLogger("web_page_job_service")
 
     async def upsert(self, entity: WebPageJob) -> None:  
-        await self.session.merge(entity, load=True)
+        await Upserter(self.session).upsert(entity)        
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
@@ -155,7 +185,7 @@ class WebPageSummaryService:
         self.logger = logging.getLogger("web_page_summary_service")
 
     async def upsert(self, web_page_summary: WebPageSummary) -> None:
-        await self.session.merge(web_page_summary)
+        await Upserter(self.session).upsert(web_page_summary)        
                 
     async def find_by_url(self, normalized_url: str) -> WebPageSummary|None:
         hash = normalized_url_hash(normalized_url)
@@ -177,8 +207,7 @@ class FrontendAudioService:
 
     async def upsert(self, frontend_audio: FrontendAudio) -> None:
         self.logger.info(f"Inserting frontend audio for url: {frontend_audio.normalized_url}")            
-        await self.session.merge(frontend_audio, load=True)
-        await self.session.commit()
+        await Upserter(self.session).upsert(frontend_audio)        
 
     async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
         self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")
@@ -227,8 +256,7 @@ class FrontendAudioPlayService:
 
     async def upsert(self, frontend_audio_play: FrontendAudioPlay) -> None:
         self.logger.info(f"Inserting frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
-        await self.session.merge(frontend_audio_play, load=True)
-        await self.session.commit()
+        await Upserter(self.session).upsert(frontend_audio_play)
 
     async def update(self, frontend_audio_play: FrontendAudioPlay) -> None:
         self.logger.info(f"Updating frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")

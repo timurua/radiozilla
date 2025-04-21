@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: summarizerjob/Dockerfile
-    image: localhost:32000/radiozilla-summarizerjob:latest
+    image: gcr.io/radiozilla-92c5f/radiozilla-summarizerjob:latest
 
 
   

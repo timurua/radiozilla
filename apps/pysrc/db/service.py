@@ -30,7 +30,7 @@ class WebPageChannelService:
         self.logger = logging.getLogger("web_page_channel_service")
 
     async def upsert(self, web_page_channel: WebPageChannel) -> None:
-        await Upserter(self.session).upsert(web_page_channel)
+        await Upserter[WebPageChannel](self.session).upsert(web_page_channel)
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
@@ -50,7 +50,7 @@ class WebPageChannelService:
 
 class WebImageService:
     
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.logger = logging.getLogger("web_page_service")
 
@@ -60,7 +60,7 @@ class WebImageService:
             web_image.normalized_url_hash,
             web_image_content.to_bytes(),
         )
-        await Upserter(self.session).upsert(web_image)
+        await Upserter[WebImage](self.session).upsert(web_image)
         
     async def find_by_url(self, normalized_url: str) -> WebImage|None:
         hash = normalized_url_hash(normalized_url)
@@ -113,7 +113,7 @@ class WebPageService:
             web_page.normalized_url_hash,
             web_page_content.to_bytes(),
         )
-        await Upserter(self.session).upsert(web_page)        
+        await Upserter[WebPage](self.session).upsert(web_page)        
         
 
     async def find_by_url(self, normalized_url: str) -> WebPage|None:
@@ -162,7 +162,7 @@ class WebPageJobService:
         self.logger = logging.getLogger("web_page_job_service")
 
     async def upsert(self, entity: WebPageJob) -> None:  
-        await Upserter(self.session).upsert(entity)        
+        await Upserter[WebPageJob](self.session).upsert(entity)        
         
 
     async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
@@ -185,7 +185,7 @@ class WebPageSummaryService:
         self.logger = logging.getLogger("web_page_summary_service")
 
     async def upsert(self, web_page_summary: WebPageSummary) -> None:
-        await Upserter(self.session).upsert(web_page_summary)        
+        await Upserter[WebPageSummary](self.session).upsert(web_page_summary)        
                 
     async def find_by_url(self, normalized_url: str) -> WebPageSummary|None:
         hash = normalized_url_hash(normalized_url)
@@ -207,7 +207,7 @@ class FrontendAudioService:
 
     async def upsert(self, frontend_audio: FrontendAudio) -> None:
         self.logger.info(f"Inserting frontend audio for url: {frontend_audio.normalized_url}")            
-        await Upserter(self.session).upsert(frontend_audio)        
+        await Upserter[FrontendAudio](self.session).upsert(frontend_audio)        
 
     async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
         self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")
@@ -256,7 +256,7 @@ class FrontendAudioPlayService:
 
     async def upsert(self, frontend_audio_play: FrontendAudioPlay) -> None:
         self.logger.info(f"Inserting frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
-        await Upserter(self.session).upsert(frontend_audio_play)
+        await Upserter[FrontendAudioPlay](self.session).upsert(frontend_audio_play)
 
     async def update(self, frontend_audio_play: FrontendAudioPlay) -> None:
         self.logger.info(f"Updating frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")

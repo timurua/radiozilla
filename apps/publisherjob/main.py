@@ -52,7 +52,7 @@ async def publish_audio( normalized_url: str ) -> None:
         if web_page is None:
             logging.info(f"Skipping (no web page) processing summary for URL: {web_page_summary.normalized_url}")
             return
-        web_page_content = web_page_service.get_content(web_page)
+        web_page_content = await web_page_service.get_content(web_page)
         if web_page_content is None:
             logging.info(f"Skipping (no content) processing summary for URL: {web_page_summary.normalized_url}")
             return
@@ -63,7 +63,7 @@ async def publish_audio( normalized_url: str ) -> None:
         if web_image is not None:
             web_image_content = await WebImageService(session).get_content(web_image)
             if web_image_content is not None:
-                image_url = FrontendImageService().upsert(web_image, web_image_content)
+                image_url = await FrontendImageService().upsert(web_image, web_image_content)
 
         frontend_audio = FrontendAudio(
             normalized_url=web_page_summary.normalized_url,

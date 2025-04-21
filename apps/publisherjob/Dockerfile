@@ -1,4 +1,4 @@
-FROM localhost:32000/radiozilla-pysrc:latest
+FROM gcr.io/radiozilla-92c5f/radiozilla-pysrc:latest
 
 WORKDIR /app
 

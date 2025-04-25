@@ -1,64 +1,60 @@
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
-WORKDIR /app
+# Base on Node.js LTS
+FROM node:20-alpine AS base
 
-# Install dependencies required for build
-RUN apk add --no-cache libc6-compat
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app/website
 
 # Copy package files
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY website/package.json website/package-lock.json* ./
+RUN npm install
 
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-WORKDIR /app
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app/website
+COPY --from=deps /app/website/node_modules ./node_modules
+COPY website/src ./src
+COPY website/public ./public
+COPY website/.env ./.env
+COPY website/components.json ./components.json
+COPY website/drizzle.config.ts ./drizzle.config.ts
+COPY website/eslint.config.mjs ./eslint.config.mjs
+COPY website/next.config.ts ./next.config.ts
+COPY website/next-env.d.ts ./next-env.d.ts
+COPY website/package.json ./package.json
+COPY website/postcss.config.mjs ./postcss.config.mjs
+COPY website/tsconfig.json ./tsconfig.json
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Disable Next.js telemetry
+# Next.js collects telemetry data by default - disable it
 ENV NEXT_TELEMETRY_DISABLED 1
 
 # Build the application
 RUN npm run build
 
-# Stage 3: Runner
-FROM node:20-alpine AS runner
-WORKDIR /app
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app/website
 
-# Set to production environment
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Add a non-root user to run the application
+# Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built assets from builder stage
-COPY --from=builder /app/public ./public
+# Copy necessary files
+COPY --from=builder /app/website/public ./public
+COPY --from=builder /app/website/.next/standalone ./
+COPY --from=builder /app/website/.next/static ./.next/static
 
-# Set the correct permissions
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Copy built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Set proper permissions
+RUN chown -R nextjs:nodejs /app
 
 # Switch to non-root user
 USER nextjs
 
-# Expose the port
+# Expose the listening port
 EXPOSE 3000
 
-# Set host to listen on all interfaces
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
-
-# Start the application
+# Set the correct command to run the app
 CMD ["node", "server.js"]

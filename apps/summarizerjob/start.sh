@@ -7,4 +7,4 @@ ollama serve &
 sleep 10
 
 # Start Python application and store its PID
-python3 main.py
+python3 summarizerjob/main.py

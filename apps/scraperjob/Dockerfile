@@ -11,6 +11,11 @@ COPY scraperjob/main.py .
 COPY config/google-account.json .
 COPY config/.env.k8s .env
 
+# Copy the backend and config files
+COPY scraperjob /app/scraperjob
+COPY config/google-account.json config/google-account.json
+COPY config/.env.prod.gcp .env
+
 # Command to run the script
 ENV PYTHONPATH=/:/app
-CMD ["python", "main.py"]
+CMD ["python", "-m", "scraperjob.main"]

@@ -7,22 +7,20 @@ services:
       context: ../
       dockerfile: pysrc/Dockerfile
     image: gcr.io/radiozilla-92c5f/radiozilla-pysrc:latest
-  apiservice:
+  scraperjob:
     platform: linux/amd64
     build:
       context: ../
-      dockerfile: apiservice/Dockerfile
-    ports:
-      - "8000:8000"
+      dockerfile: scraperjob/Dockerfile
     environment:
       - NODE_ENV=development
       - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:5432/db
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - radiozilla-network
-    image: gcr.io/radiozilla-92c5f/radiozilla-apiservice:latest
+    image: gcr.io/radiozilla-92c5f/radiozilla-scraperjob:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - pysrc
 

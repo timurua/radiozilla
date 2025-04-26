@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Image, ListGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { getChannel } from '../data/firebase';
+import { getChannel } from '../data/actions';
 import { RZChannel } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';

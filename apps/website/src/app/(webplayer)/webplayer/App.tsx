@@ -25,7 +25,7 @@ const stores = { userDataStore, authStore };
 const App: React.FC = () => {
   return (
     <Provider {...stores}>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <BrowserRouter>
         <NotificationProvider>
           <AuthProvider>
             <AudioProvider>
@@ -34,14 +34,14 @@ const App: React.FC = () => {
                   {/* Main Content */}
                   <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                     <Routes>
-                      <Route path="/" element={<Feed />} />
-                      <Route path="/audio/:audioId" element={<Audio />} />
-                      <Route path="/channel/:channelId" element={<Channel />} />
-                      <Route path="/feed" element={<Feed />} />
-                      <Route path="/search" element={<Search />} />
-                      <Route path="/playing" element={<Playing />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/company" element={<Company />} />
+                      <Route path="/webplayer" element={<Feed />} />
+                      <Route path="/webplayer/audio/:audioId" element={<Audio />} />
+                      <Route path="/webplayer/channel/:channelId" element={<Channel />} />
+                      <Route path="/webplayer/feed" element={<Feed />} />
+                      <Route path="/webplayer/search" element={<Search />} />
+                      <Route path="/webplayer/playing" element={<Playing />} />
+                      <Route path="/webplayer/profile" element={<Profile />} />
+                      <Route path="/webplayer/company" element={<Company />} />
                     </Routes>
                   </div>
                 </div>

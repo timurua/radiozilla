@@ -128,6 +128,54 @@ export type TeamDataWithMembers = Team & {
   })[];
 };
 
+export const frontendAuthors = pgTable('frontend_authors', {
+  normalizedUrlHash: varchar('normalized_url_hash', { length: 32 }).primaryKey(),
+  normalizedUrl: varchar('normalized_url').notNull(),
+  name: varchar('name'),
+  description: text('description'),
+  imageUrl: varchar('image_url'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type FrontendAuthor = typeof frontendAuthors.$inferSelect;
+export type NewFrontendAuthor = typeof frontendAuthors.$inferInsert;
+
+export const frontendChannels = pgTable('frontend_channels', {
+  normalizedUrlHash: varchar('normalized_url_hash', { length: 32 }).primaryKey(),
+  normalizedUrl: varchar('normalized_url').notNull(),
+  name: varchar('name'),
+  description: text('description'),
+  imageUrl: varchar('image_url'),
+  sourceUrls: text('source_urls'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type FrontendChannel = typeof frontendChannels.$inferSelect;
+export type NewFrontendChannel = typeof frontendChannels.$inferInsert;
+
+export const frontendAudios = pgTable('frontend_audios', {
+  normalizedUrlHash: varchar('normalized_url_hash', { length: 32 }).primaryKey(),
+  normalizedUrl: varchar('normalized_url').notNull(),
+  title: varchar('title'),
+  description: text('description'),
+  audioText: text('audio_text'),
+  imageUrl: varchar('image_url'),
+  audioUrl: varchar('audio_url'),
+  authorId: varchar('author_id'),
+  channelId: varchar('channel_id'),
+  publishedAt: timestamp('published_at'),
+  uploadedAt: timestamp('uploaded_at'),
+  duration: integer('duration'),
+  topics: text('topics'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type FrontendAudio = typeof frontendAudios.$inferSelect;
+export type NewFrontendAudio = typeof frontendAudios.$inferInsert;
+
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
   SIGN_IN = 'SIGN_IN',

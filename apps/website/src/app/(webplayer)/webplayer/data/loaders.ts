@@ -1,6 +1,6 @@
 import { collection, DocumentData, getDocs, limit, orderBy, query, startAfter } from 'firebase/firestore';
 import { db } from '../firebase';
-import { audioFromData, getAudioListByIds } from "./firebase";
+import { audioFromData, getAudioListByIds } from "./actions";
 import { PlayableFeedMode, RZAudio } from "./model";
 import AudioLoader, { Subscriber } from '../utils/AudioLoader';
 
@@ -145,7 +145,7 @@ export class MultiAudioLoader extends SubscriberAudioLoader implements AudioLoad
     async getNextAudioPage(): Promise<void> {
         return;
     }
-    
+
     getAudios(): RZAudio[] {
         return this.audios;
     }
@@ -188,7 +188,7 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
         if (index < 0) {
             index = 0;
         }
-        return await this.getAudioAtIndex(index+1);
+        return await this.getAudioAtIndex(index + 1);
     }
 
     async getNextAudioPage(): Promise<void> {

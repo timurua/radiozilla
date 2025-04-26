@@ -1,51 +1,75 @@
 import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp, orderBy, DocumentData } from 'firebase/firestore';
 import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "./model";
-import { db } from '../firebase';
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
 import { LRUCache } from 'lru-cache';
 
-// Add cache instances
-const audioCache = new LRUCache<string, RZAudio>({
-    max: 10000, // Maximum number of audios in cache
-    ttl: 5 * 60 * 1000 // 5 minute expiration
-});
+import { and, eq, sql } from 'drizzle-orm';
+import { db } from '@/lib/db/drizzle';
+import {
+    FrontendAudio,
+    FrontendAuthor,
+    FrontendChannel,
+    frontendAudios,
+    frontendAuthors,
+    frontendChannels,
+} from '@/lib/db/schema';
+import { FrontendAuthorDTO, FrontendChannelDTO } from './interfaces';
 
-const authorCache = new LRUCache<string, RZAuthor>({
-    max: 100, // Maximum number of authors in cache  
-    ttl: 15 * 60 * 1000 // 15 minute expiration
-});
 
-const channelCache = new LRUCache<string, RZChannel>({
-    max: 100, // Maximum number of channels in cache
-    ttl: 15 * 60 * 1000 // 15 minute expiration  
-});
+export const getAuthor = async (id: string): Promise<FrontendAuthorDTO> => {
+    const [dbAuthor] = await db
+        .select()
+        .from(frontendAuthors)
+        .where(
+            eq(frontendAuthors.normalizedUrlHash, id)
+        )
+        .limit(1);
 
-// Modify getAuthor to use cache
-export const getAuthor = async (id: string): Promise<RZAuthor> => {
-    const cached = authorCache.get(id);
-    if (cached) {
-        return cached;
-    }
 
-    const docRef = doc(db, `/authors/${id}`);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const authorData = {
-            name: data.name,
-            description: data.description,
-            imageUrl: data.imageUrl,
+    if (dbAuthor) {
+        return {
+            id: dbAuthor.normalizedUrlHash,
+            name: dbAuthor.name || '',
+            description: dbAuthor.description || '',
+            imageUrl: dbAuthor.imageUrl || '',
+            createdAt: dbAuthor.createdAt,
+            updatedAt: dbAuthor.updatedAt
         };
-        const author = RZAuthor.fromObject(authorData, docSnap.id);
-        authorCache.set(id, author);
-        return author;
     } else {
         logger.error(`No author found with ID: ${id}`);
         throw new Error(`No author found with ID: ${id}`);
     }
 }
+
+export const getChannel = async (id: string): Promise<FrontendChannelDTO> => {
+    const [dbChannel] = await db
+        .select()
+        .from(frontendChannels)
+        .where(
+            eq(frontendChannels.normalizedUrlHash, id)
+        )
+        .limit(1);
+
+
+
+    if (dbChannel) {
+        return {
+            id: dbChannel.normalizedUrlHash,
+            name: dbChannel.name || '',
+            description: dbChannel.description || '',
+            imageUrl: dbChannel.imageUrl || '',
+            sourceUrls: dbChannel.sourceUrls || [],
+            createdAt: dbChannel.createdAt,
+            updatedAt: dbChannel.updatedAt
+        };
+    } else {
+        logger.error(`No author found with ID: ${id}`);
+        throw new Error(`No author found with ID: ${id}`);
+    }
+}
+
 
 export const getUserData = async (id: string): Promise<RZUserData> => {
     const docRef = doc(db, `/users/${id}`);
@@ -95,6 +119,15 @@ export const getChannel = async (id: string): Promise<RZChannel> => {
     if (cached) {
         return cached;
     }
+
+    const [dbChannel] = await db
+        .select()
+        .from(frontendAuthors)
+        .where(
+            eq(frontendAuthors.normalizedUrlHash, id)
+        )
+        .limit(1);
+
 
     const docRef = doc(db, `/channels/${id}`);
     const docSnap = await getDoc(docRef);

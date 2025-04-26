@@ -91,3 +91,17 @@ class FrontendAudioPlay(Base):
     audio_id: Mapped[str] = mapped_column(String(32), primary_key=True)
     played_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    
+class FrontendUser(Base):
+    __tablename__ = "frontend_users"
+    
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    email: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    played_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
+    liked_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
+    search_history: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
+    subscribed_channel_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
+

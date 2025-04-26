@@ -1,20 +1,21 @@
+'use client';
+
 import {
     createContext,
-    type FC,
-    type ReactNode,
+    FC,
+    ReactNode,
     useCallback,
     useContext,
     useEffect,
     useMemo,
     useState
 } from 'react';
-
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
-import { useAuth } from '../providers/AuthProvider';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { userDataState } from '../state/userData';
+import { useAuth } from './AuthProvider';
+import { observer } from "mobx-react-lite";
+import { userDataStore } from "../state/userData";
 import AudioLoader from '../utils/AudioLoader';
 
 interface AudioContextProps {
@@ -62,7 +63,7 @@ const errorMessages: ErrorMessageMap = {
     UNKNOWN_ERROR: 'An unknown error occurred'
 };
 
-export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
+export const AudioProvider: FC<AudioProviderProps> = observer(({ children }) => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [isPaused, setIsPaused] = useState<boolean>(false);
     const [hasEnded, setHasEnded] = useState<boolean>(false);
@@ -70,8 +71,8 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
-    const userData = useRecoilValue(userDataState);
-    const setUserData = useSetRecoilState(userDataState);
+    const userData = userDataStore.userData;
+    const { user } = useAuth();
 
     const [reportedMinute, setReportedMinute] = useState<number>(-1);
 
@@ -82,17 +83,13 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
     const reportPlayback = async () => {
         const userId = user?.id;
         if (rzAudio && isPlaying && userId && reportedMinute >= 0) {
-            const newUserData = userData.clone();
-            newUserData.playedAudioIds = Array.from(new Set([...newUserData.playedAudioIds, rzAudio.id]));
-            setUserData(newUserData);
+            userDataStore.addPlayedAudioId(rzAudio.id);
         }
     }
 
     useEffect(() => {
         reportPlayback();
     }, [rzAudio, reportedMinute, isPlaying]);
-
-    const { user } = useAuth();
 
     useEffect(() => {
         // Cleanup function to remove the audio element on unmount
@@ -290,10 +287,9 @@ export const AudioProvider: FC<AudioProviderProps> = ({ children }) => {
             {children}
         </AudioContext.Provider>
     );
-};
+});
 
 export default AudioContext;
-
 
 export const useAudio = () => {
     const context = useContext(AudioContext);

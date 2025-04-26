@@ -1,3 +1,5 @@
+'use client';
+
 import { AudioPlayer } from '../components/AudioPlayer';
 import PlayerScreen from '../components/PlayerScreen';
 import { BootstrapBackButton } from '../components/BackButton';

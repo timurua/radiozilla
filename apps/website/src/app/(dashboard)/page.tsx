@@ -9,14 +9,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
-              <h1 className="text-4xl font-bold text-foreground dark:text-white tracking-tight sm:text-5xl md:text-6xl">
-                Build Your SaaS
-                <span className="block text-orange-500">Faster Than Ever</span>
+              <h1 className="text-4xl font-bold text-foreground tracking-tight sm:text-5xl md:text-6xl">
+                Radiozilla
+                <span className="block text-orange-500 dark:text-orange-400">Your AI-Powered Radio Station</span>
               </h1>
-              <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-                Launch your SaaS product in record time with our powerful,
-                ready-to-use template. Packed with modern technologies and
-                essential integrations.
+              <p className="mt-3 text-base text-gray-600 dark:text-gray-300 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
+                Stream AI powered content 24/7 with smart AI curation. Start station in seconds with content you pick.
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <a
@@ -28,7 +26,7 @@ export default function HomePage() {
                     variant="outline"
                     className="text-lg rounded-full"
                   >
-                    Deploy your own
+                    Launch your own
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </a>
@@ -41,11 +39,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-16 bg-white w-full">
+      <section className="py-16 bg-white dark:bg-gray-800 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
             <div>
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 dark:bg-orange-400 text-white">
                 <svg viewBox="0 0 24 24" className="h-6 w-6">
                   <path
                     fill="currentColor"
@@ -54,42 +52,39 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Next.js and React
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Smart Playlists
                 </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Leverage the power of modern web technologies for optimal
-                  performance and developer experience.
+                <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
+                  Pick from a selection of pre-crafted playlists or create your own.
                 </p>
               </div>
             </div>
 
             <div className="mt-10 lg:mt-0">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 dark:bg-orange-400 text-white">
                 <Database className="h-6 w-6" />
               </div>
               <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Postgres and Drizzle ORM
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Analytics Dashboards
                 </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Robust database solution with an intuitive ORM for efficient
-                  data management and scalability.
+                <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
+                  Track listener engagement and growth
                 </p>
               </div>
             </div>
 
             <div className="mt-10 lg:mt-0">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 dark:bg-orange-400 text-white">
                 <CreditCard className="h-6 w-6" />
               </div>
               <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Stripe Integration
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Flat rate pricing
                 </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Seamless payment processing and subscription management with
-                  industry-leading Stripe integration.
+                <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
+                  Pay fixed low monthly rate and stream unlimited content
                 </p>
               </div>
             </div>
@@ -97,14 +92,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
                 Ready to launch your SaaS?
               </h2>
-              <p className="mt-3 max-w-3xl text-lg text-gray-500">
+              <p className="mt-3 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
                 Our template provides everything you need to get your SaaS up
                 and running quickly. Don't waste time on boilerplate - focus on
                 what makes your product unique.

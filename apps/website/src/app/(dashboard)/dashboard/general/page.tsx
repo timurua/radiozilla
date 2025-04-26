@@ -38,7 +38,7 @@ export default function GeneralPage() {
 
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
+      <h1 className="text-lg lg:text-2xl font-medium text-foreground mb-6">
         General Settings
       </h1>
 
@@ -74,14 +74,14 @@ export default function GeneralPage() {
               />
             </div>
             {state.error && (
-              <p className="text-red-500 text-sm">{state.error}</p>
+              <p className="text-destructive text-sm">{state.error}</p>
             )}
             {state.success && (
-              <p className="text-green-500 text-sm">{state.success}</p>
+              <p className="text-primary text-sm">{state.success}</p>
             )}
             <Button
               type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="text-primary-foreground"
               disabled={isPending}
             >
               {isPending ? (

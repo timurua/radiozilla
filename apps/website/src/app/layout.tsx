@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.className}`}
     >
-      <body className="min-h-[100dvh] bg-background text-foreground">
+      <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
         <UserProvider userPromise={userPromise}>{children}</UserProvider>
         <CookieConsent />
       </body>

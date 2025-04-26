@@ -26,19 +26,19 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
 
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium mb-6">Team Settings</h1>
+      <h1 className="text-lg lg:text-2xl font-medium mb-6 text-black dark:text-white">Team Settings</h1>
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Team Subscription</CardTitle>
+          <CardTitle className="text-black dark:text-white">Team Subscription</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
               <div className="mb-4 sm:mb-0">
-                <p className="font-medium">
+                <p className="font-medium text-black dark:text-white">
                   Current Plan: {teamData.planName || 'Free'}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   {teamData.subscriptionStatus === 'active'
                     ? 'Billed monthly'
                     : teamData.subscriptionStatus === 'trialing'
@@ -47,7 +47,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
                 </p>
               </div>
               <form action={customerPortalAction}>
-                <Button type="submit" variant="outline">
+                <Button type="submit" variant="outline" className="border-gray-300 dark:border-gray-600 text-black dark:text-white">
                   Manage Subscription
                 </Button>
               </form>
@@ -57,7 +57,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
       </Card>
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
+          <CardTitle className="text-black dark:text-white">Team Members</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-4">
@@ -69,7 +69,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
                       src={`/placeholder.svg?height=32&width=32`}
                       alt={getUserDisplayName(member.user)}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
                       {getUserDisplayName(member.user)
                         .split(' ')
                         .map((n) => n[0])
@@ -77,10 +77,10 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">
+                    <p className="font-medium text-black dark:text-white">
                       {getUserDisplayName(member.user)}
                     </p>
-                    <p className="text-sm text-muted-foreground capitalize">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 capitalize">
                       {member.role}
                     </p>
                   </div>
@@ -92,6 +92,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
                       type="submit"
                       variant="outline"
                       size="sm"
+                      className="border-gray-300 dark:border-gray-600 text-black dark:text-white"
                       disabled={isRemovePending}
                     >
                       {isRemovePending ? 'Removing...' : 'Remove'}
@@ -102,7 +103,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
             ))}
           </ul>
           {removeState?.error && (
-            <p className="text-red-500 mt-4">{removeState.error}</p>
+            <p className="text-red-500 dark:text-red-400 mt-4">{removeState.error}</p>
           )}
         </CardContent>
       </Card>

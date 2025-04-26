@@ -20,6 +20,7 @@ import NoPlayerScreen from '../components/NoPlayerScreen';
 import Spinner from '../components/Spinner';
 import { RZUser, RZUserData } from '../data/model';
 import { getUserData } from '../data/firebase';
+import { CookieConsent } from '../components/CookieConsent';
 
 export interface AuthContextType {
   user: RZUser | null;

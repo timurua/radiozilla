@@ -27,10 +27,7 @@ class UserDataStore {
 
   addPlayedAudioId(audioId: string) {
     if (!this.userData.playedAudioIds.includes(audioId)) {
-      this.userData = {
-        ...this.userData,
-        playedAudioIds: [...this.userData.playedAudioIds, audioId]
-      };
+      this.userData.playedAudioIds.push(audioId);
       saveUserData(this.userData);
     }
   }

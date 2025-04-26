@@ -1,22 +1,21 @@
 import { Badge } from 'react-bootstrap';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { userDataStore } from '../state/userData';
+import { observer } from "mobx-react-lite";
 
-export function ChannelSubscribeButton({ channelId }: { channelId: string }) {
+export const ChannelSubscribeButton = observer(({ channelId }: { channelId: string }) => {
 
-    const userData = useRecoilValue(userDataStore);
-    const setUserData = useSetRecoilState(userDataStore);
-    const isSubscribed = userData.subscribedChannelIds.includes(channelId);
+    const isSubscribed = userDataStore.subscribedChannelIds.includes(channelId);
 
     const handleSubscribe = (e: React.MouseEvent<HTMLElement>) => {
-        const newUserData = userData.clone();
+        const newUserData = userDataStore.userData.clone();
         if (isSubscribed) {
-            newUserData.subscribedChannelIds = newUserData.subscribedChannelIds.filter(id => id !== channelId);            
+            newUserData.subscribedChannelIds = newUserData.subscribedChannelIds.filter(id => id !== channelId);
         } else {
-            newUserData.subscribedChannelIds = Array.from(new Set([...newUserData.subscribedChannelIds, channelId]));            
-        }        
-        setUserData(newUserData);
-        e.stopPropagation();        
+            newUserData.subscribedChannelIds = Array.from(new Set([...newUserData.subscribedChannelIds, channelId]));
+        }
+        userDataStore.setUserData(newUserData);
+        e.stopPropagation();
     }
 
     return (
@@ -24,4 +23,4 @@ export function ChannelSubscribeButton({ channelId }: { channelId: string }) {
             {isSubscribed ? "unsubscribe" : "subscribe"}
         </Badge>
     );
-}
+});

@@ -1,16 +1,16 @@
-import { useSetRecoilState } from 'recoil';
-import { cookieConsentState } from '../state/auth';
+import { authStore } from '../state/auth';
 import LocalStorage from '../utils/LocalStorage';
 import { Button, Card } from 'react-bootstrap';
+import { JSX } from 'react';
+import { observer } from 'mobx-react-lite';
 
-export function CookieConsent(): JSX.Element | null {
-    const setCookieConsent = useSetRecoilState(cookieConsentState);
+export const CookieConsent = observer((): JSX.Element | null => {
 
     const updateConsent = (
         value: boolean
     ): void => {
         LocalStorage.setCookieConsent(value);
-        setCookieConsent(value);
+        authStore.setCookieConsent(value)
     };
 
     const acceptAll = (): void => {
@@ -34,4 +34,4 @@ export function CookieConsent(): JSX.Element | null {
             </Card.Body>
         </Card>
     );
-}
+});

@@ -1,9 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { ArrowRight, CreditCard, Database } from 'lucide-react';
-import App from './App';
+import AppDynamic from './AppDynamic';
 
 export default function WebPlayerPage() {
     return (
-        <App />
+        <AppDynamic />
     );
 }

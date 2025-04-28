@@ -19,6 +19,7 @@ import { AuthProvider } from './providers/AuthProvider';
 import { NotificationProvider } from './providers/NotificationProvider';
 import { TfIdfProvider } from './tfidf/tf-idf-provider';
 import Playing from './pages/Playing';
+import dynamic from 'next/dynamic'
 
 const stores = { userDataStore, authStore };
 

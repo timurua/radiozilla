@@ -93,7 +93,7 @@ class FrontendAudioPlay(Base):
     played_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     
-class FrontendUser(Base):
+class FrontendUser(TimestampModel):
     __tablename__ = "frontend_users"
     
     user_id: Mapped[str] = mapped_column(String(32), primary_key=True)

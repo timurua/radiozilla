@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   integer,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -147,7 +148,7 @@ export const frontendChannels = pgTable('frontend_channels', {
   name: varchar('name'),
   description: text('description'),
   imageUrl: varchar('image_url'),
-  sourceUrls: text('source_urls'),
+  sourceUrls: text('source_urls').array(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -163,12 +164,13 @@ export const frontendAudios = pgTable('frontend_audios', {
   audioText: text('audio_text'),
   imageUrl: varchar('image_url'),
   audioUrl: varchar('audio_url'),
+  webUrl: varchar('web_url'),
   authorId: varchar('author_id'),
   channelId: varchar('channel_id'),
   publishedAt: timestamp('published_at'),
   uploadedAt: timestamp('uploaded_at'),
-  duration: integer('duration'),
-  topics: text('topics'),
+  durationSeconds: integer('duration_seconds'),
+  topics: text('topics').array(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -188,3 +190,19 @@ export enum ActivityType {
   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
 }
+
+export const frontendUsers = pgTable('frontend_users', {
+  userId: varchar('user_id', { length: 32 }).primaryKey(),
+  displayName: varchar('display_name'),
+  email: varchar('email'),
+  imageUrl: varchar('image_url'),
+  createdAt: timestamp('created_at'),
+  updatedAt: timestamp('updated_at'),
+  playedAudioIds: jsonb("played_audio_ids").default([]),
+  likedAudioIds: jsonb("liked_audio_ids").default([]),
+  searchHistory: jsonb("search_history").default([]),
+  subscribedChannelIds: jsonb("subscribed_channel_ids").default([]),
+});
+
+export type FrontendUser = typeof frontendUsers.$inferSelect;
+export type NewFrontendUser = typeof frontendUsers.$inferInsert;

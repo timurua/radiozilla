@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await Jobs.initialize()    
     logging.info(f"Starting apiservice for app: {app.title}")
     logging.info(f"Updating default channels")
-    # await create_channels()
+    await create_channels()
     yield 
     
 logger = logging.getLogger("apiservice.main")

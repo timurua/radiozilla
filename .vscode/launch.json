@@ -24,7 +24,7 @@
             }
         },
         {
-            "name": "Debug Scraper Job",
+            "name": "Scraper Job",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/apps/scraperjob/main.py",
@@ -42,7 +42,7 @@
             }
         },
         {
-            "name": "Debug Summarizer Job",
+            "name": "Summarizer Job",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/apps/summarizerjob/main.py",
@@ -56,7 +56,7 @@
             }
         },
         {
-            "name": "Debug Publisher Job",
+            "name": "Publisher Job",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/apps/publisherjob/main.py",
@@ -70,7 +70,21 @@
             }
         },
         {
-            "name": "Debug apiservice (uvicorn)",
+            "name": "DB Job",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/apps/dbjob/main.py",
+            "console": "integratedTerminal",
+            "jinja": true,
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}/apps",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/apps",
+                "ENV_FILE": "${workspaceFolder}/apps/config/.env.local.gcp"
+            }
+        },
+        {
+            "name": "apiservice (uvicorn)",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
@@ -91,7 +105,7 @@
             }
         },
         {
-            "name": "Next.js: debug full stack",
+            "name": "Website full stack",
             "type": "node-terminal",
             "request": "launch",
             "command": "npm run dev",
@@ -104,16 +118,14 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Next.js: debug server-side",
+            "name": "Website server-side",
             "type": "node-terminal",
             "request": "launch",
             "command": "npm run dev",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "cwd": "${workspaceFolder}/apps/website",
-            "serverReadyAction": {
-                "pattern": "started server on .+, url: (https?://.+)",
-                "uriFormat": "%s",
-                "action": "debugWithChrome"
-            }
-        },
+        }
     ]
 }

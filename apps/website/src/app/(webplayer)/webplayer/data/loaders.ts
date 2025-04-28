@@ -1,8 +1,9 @@
 import { collection, DocumentData, getDocs, limit, orderBy, query, startAfter } from 'firebase/firestore';
 import { db } from '../firebase';
-import { audioFromData, getAudioListByIds } from "./actions";
+import { audioFromDTO, getAudioListByIds } from "./client";
 import { PlayableFeedMode, RZAudio } from "./model";
 import AudioLoader, { Subscriber } from '../utils/AudioLoader';
+import { getAudioPageAction } from './actions';
 
 export class SubscriberAudioLoader {
     private subscribers: Set<Subscriber> = new Set();
@@ -161,7 +162,7 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
     private pageSize: number;
     private loadingPromise: Promise<void> | null = null;
     private loadIsComplete: boolean = false;
-    private lastFirebaseDoc: DocumentData | null = null;
+    private lastPublishedAt: Date | null = null;
     private mode = PlayableFeedMode.Latest;
     private subscribedChannelIds: Set<string>;
 
@@ -222,29 +223,16 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
     private async getNextAudioPageInternal(): Promise<void> {
         let resultAudios: RZAudio[] = [];
 
-        const audiosRef = collection(db, 'audios');
-        const audioQuery = this.lastFirebaseDoc
-            ? query(audiosRef,
-                orderBy('publishedAt', 'desc'),
-                orderBy('__name__', 'desc'),
-                startAfter(this.lastFirebaseDoc),
-                limit(this.pageSize))
-            : query(audiosRef,
-                orderBy('publishedAt', 'desc'),
-                orderBy('__name__', 'desc'),
-                limit(this.pageSize));
-
-        const querySnapshot = await getDocs(audioQuery);
-        if (querySnapshot.docs.length === 0) {
+        const audios = await getAudioPageAction(this.lastPublishedAt, this.pageSize);
+        if (audios.length === 0) {
             this.loadIsComplete = true;
             return;
         }
-        this.lastFirebaseDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-        this.loadIsComplete = querySnapshot.docs.length < this.pageSize;
+        this.lastPublishedAt = audios[audios.length - 1].publishedAt;
+        this.loadIsComplete = audios.length < this.pageSize;
 
-        const resultAudiosWithNulls = await Promise.all(querySnapshot.docs.map(async (doc) => {
-            const data = doc.data();
-            return await audioFromData(data, doc.id);
+        const resultAudiosWithNulls = await Promise.all(audios.map(async (audio) => {
+            return await audioFromDTO(audio);
         }));
 
         resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);

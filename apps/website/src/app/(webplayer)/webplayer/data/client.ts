@@ -1,12 +1,11 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp, orderBy, DocumentData } from 'firebase/firestore';
+'use client';
+
 import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "./model";
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
 import { LRUCache } from 'lru-cache';
-
-
-
-  
+import { getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, getUserDataAction, saveUserDataAction } from './actions';
+import { FrontendAudioDTO } from './interfaces';
 
 // Add cache instances
 const audioCache = new LRUCache<string, RZAudio>({
@@ -30,23 +29,14 @@ export const getAuthor = async (id: string): Promise<RZAuthor> => {
     if (cached) {
         return cached;
     }
+    const authorDTO = await getAuthorAction(id);
 
-    const [dbAuthor] = await db
-        .select()
-        .from(frontendAuthors)
-        .where(
-            eq(frontendAuthors.normalizedUrlHash, id)
-        )
-        .limit(1);
-
-
-
-    if (dbAuthor) {
+    if (authorDTO) {
         const author = new RZAuthor(
             id,
-            dbAuthor.name || '',
-            dbAuthor.description || '',
-            dbAuthor.imageUrl || ''
+            authorDTO.name || '',
+            authorDTO.description || '',
+            authorDTO.imageUrl || ''
         );
         authorCache.set(id, author);
         return author;
@@ -57,44 +47,35 @@ export const getAuthor = async (id: string): Promise<RZAuthor> => {
 }
 
 export const getUserData = async (id: string): Promise<RZUserData> => {
-    const docRef = doc(db, `/users/${id}`);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const displayName = data.displayName || null;
-        const email = data.email || null;
-        const imageURL = data.imageURL || null;
-        const createdAt = data.createdAt ? data.createdAt.toDate() : null;
-        const playedAudioIds = data.playedAudioIds || [];
-        const likedAudioIds = data.likedAudioIds || [];
-        const searchHistory = data.searchHistory || [];
-        const subscribedChannelIds = data.subscribedChannelIds || [];
-        return new RZUserData(id, displayName, email, imageURL, createdAt, subscribedChannelIds, likedAudioIds, playedAudioIds, searchHistory);
-    } else {
-        logger.error(`No user found with ID: ${id}`);
-        throw new Error(`No user found with ID: ${id}`);
+    const userDataDTO = await getUserDataAction(id);
+    if (!userDataDTO) {
+        logger.error(`No user data found with ID: ${id}`);
+        throw new Error(`No user data found with ID: ${id}`);
     }
+    return new RZUserData(
+        id,
+        userDataDTO.displayName || null,
+        userDataDTO.email || null,
+        userDataDTO.imageUrl || null,
+        userDataDTO.createdAt,
+        userDataDTO.subscribedChannelIds || [],
+        userDataDTO.likedAudioIds || [],
+        userDataDTO.playedAudioIds || [],
+        userDataDTO.searchHistory || []
+    );
 }
 
 export const saveUserData = async (userData: RZUserData) => {
-    const userDocRef = doc(db, `/users/${userData.id}`);
-    const playedAudioIds = new Set(userData.playedAudioIds || []);
-    const likedAudioIds = new Set(userData.likedAudioIds || []);
-    const searchHistory = userData.searchHistory || [];
-    const subscribedChannelIds = new Set(userData.subscribedChannelIds || []);
-
-    await setDoc(userDocRef, {
-        id: userData.id,
-        displayName: userData.displayName,
-        email: userData.email,
-        imageURL: userData.imageURL,
+    await saveUserDataAction({
+        userId: userData.id || '',
+        displayName: userData.displayName || null,
+        email: userData.email || null,
+        imageUrl: userData.imageURL || null,
         createdAt: userData.createdAt,
-        playedAudioIds: Array.from(playedAudioIds),
-        likedAudioIds: Array.from(likedAudioIds),
-        searchHistory,
-        subscribedChannelIds: Array.from(subscribedChannelIds),
-        lastActiveAt: serverTimestamp()
+        subscribedChannelIds: userData.subscribedChannelIds || [],
+        likedAudioIds: userData.likedAudioIds || [],
+        playedAudioIds: userData.playedAudioIds || [],
+        searchHistory: userData.searchHistory || []
     });
 }
 
@@ -105,32 +86,20 @@ export const getChannel = async (id: string): Promise<RZChannel> => {
         return cached;
     }
 
-    const [dbChannel] = await db
-        .select()
-        .from(frontendAuthors)
-        .where(
-            eq(frontendAuthors.normalizedUrlHash, id)
-        )
-        .limit(1);
-
-
-    const docRef = doc(db, `/channels/${id}`);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const channelData = {
-            name: data.name,
-            description: data.description,
-            imageUrl: data.imageUrl,
-        };
-        const channel = RZChannel.fromObject(channelData, docSnap.id);
-        channelCache.set(id, channel);
-        return channel;
-    } else {
+    const channelDTO = await getChannelAction(id);
+    if (!channelDTO) {
         logger.error(`No channel found with ID: ${id}`);
-        throw new Error(`No document found with ID: ${id}`);
+        throw new Error(`No channel found with ID: ${id}`);
     }
+
+    const channel = new RZChannel(
+        id,
+        channelDTO.name || '',
+        channelDTO.description || '',
+        channelDTO.imageUrl || ''
+    );
+    channelCache.set(id, channel);
+    return channel;
 }
 
 export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
@@ -141,39 +110,28 @@ export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
 }
 
 export const getAllChannelIds = async (): Promise<string[]> => {
-    const ref = collection(db, 'channels');
-    const querySnapshot = await getDocs(ref);
-    return querySnapshot.docs.map(doc => doc.id);
+    return await getAllChannelIdsAction();
 }
 
-export const audioFromData = async (data: DocumentData, id: string): Promise<RZAudio | null> => {
-    try {
-        const createdAt = data.createdAt.toDate();
-        const authorId = data.author;
-        const channelId = data.channel;
-        const audioText = data.audioText;
-        const durationSeconds = data.durationSeconds;
-        const webUrl = data.webUrl;
-        const publishedAt = data.publishedAt ? data.publishedAt.toDate() : null;
-        const author = await getAuthor(authorId);
-        const channel = await getChannel(channelId);
-        const audioData = {
-            name: data.name,
-            audioUrl: data.audioUrl,
-            imageUrl: data.imageUrl,
-            topics: data.topics,
-            audioText,
-            durationSeconds,
-            webUrl,
-            publishedAt
-        };
-        const audio = RZAudio.fromObject(audioData, id, createdAt, author, channel);
-        audioCache.set(id, audio);
-        return audio;
-    } catch (error) {
-        logger.error(`Error creating audio from data: ${error}`);
-        return null;
-    }
+export async function audioFromDTO(dto: FrontendAudioDTO): Promise<RZAudio | null> {
+
+    const author = await getAuthor(dto.authorId || '');
+    const channel = await getChannel(dto.channelId || '');
+
+    return new RZAudio(
+        dto.id,
+        dto.createdAt,
+        dto.title,
+        dto.imageUrl,
+        dto.audioUrl,
+        dto.topics,
+        author,
+        channel,
+        dto.audioText,
+        dto.durationSeconds,
+        dto.webUrl,
+        dto.publishedAt
+    );
 }
 
 // Modify getAudio with caching
@@ -183,46 +141,31 @@ export const getAudio = async (id: string): Promise<RZAudio | null> => {
         return cached;
     }
 
-    const docRef = doc(db, `/audios/${id}`);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const audio = await audioFromData(data, docSnap.id);
-        if (!audio) {
-            return null;
-        }
-        audioCache.set(id, audio);
-        return audio;
-    } else {
+    const audioDTO = await getAudioAction(id);
+    if (!audioDTO) {
         logger.error(`No audio found with ID: ${id}`);
         throw new Error(`No audio found with ID: ${id}`);
     }
+
+    const audio = await audioFromDTO(audioDTO);
+    if (!audio) {
+        return null;
+    }
+    audioCache.set(id, audio);
+    return audio;
 }
 
+
 export const getAudioListForChannel = async (channelId: string): Promise<RZAudio[]> => {
-
-    const audioRef = collection(db, 'audios');
-    const queryAudios = query(audioRef,
-        where('channel', '==', channelId),
-        orderBy('publishedAt', 'desc'),
-        orderBy('__name__', 'desc'));
-    const querySnapshot = await getDocs(queryAudios);
-
-    const resultAudiosWithNulls = await Promise.all(querySnapshot.docs.map(doc =>
-        audioFromData(doc.data(), doc.id)
-    ));
-    const audios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
-    return audios;
+    const audioDTOs = await getAudioListForChannelAction(channelId);
+    return (await Promise.all(audioDTOs.map(async (dto) => {
+        return await audioFromDTO(dto);
+    }))).filter((audio): audio is RZAudio => audio !== null);
 }
 
 export const getSearchDocuments = async (): Promise<TfIdfDocument[]> => {
-    const audioRef = collection(db, 'audios');
-    const querySnapshot = await getDocs(query(audioRef));
-    return querySnapshot.docs.map(doc => ({
-        docId: doc.id,
-        text: doc.data().name
-    }));
+    const docs = await getSearchDocumentsAction()
+    return docs;
 }
 
 export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
@@ -237,30 +180,10 @@ export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
 }
 
 export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedChannelIds: string[]): Promise<RZAudio[]> => {
-    let resultAudios: RZAudio[] = [];
-
-    const audiosRef = collection(db, 'audios');
-    const audioQuery = query(audiosRef,
-        orderBy('publishedAt', 'desc'),
-        orderBy('__name__', 'desc')
-    );
-    const querySnapshot = await getDocs(audioQuery);
-    //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
-    const filteredDocs = querySnapshot.docs;
-
-    const resultAudiosWithNulls = await Promise.all(filteredDocs.map(async (doc) => {
-        const data = doc.data();
-        return await audioFromData(data, doc.id);
-    }));
-
-    resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
-
-    if (feedMode == PlayableFeedMode.Subscribed) {
-        const subscribedChannelIdsSet = new Set(subscribedChannelIds);
-        resultAudios = resultAudios.filter(rzAudio => subscribedChannelIdsSet.has(rzAudio.channel.id));
-    }
-
-    return resultAudios;
+    const audiosDTOs = await getFeedAudioListAction(feedMode, subscribedChannelIds);
+    return (await Promise.all(audiosDTOs.map(async (dto) => {
+        return await audioFromDTO(dto);
+    }))).filter((audio): audio is RZAudio => audio !== null);
 }
 
 

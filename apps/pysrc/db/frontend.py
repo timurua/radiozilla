@@ -65,11 +65,12 @@ class FrontendAudio(TimestampModel):
     audio_text: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     audio_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    web_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     author_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     channel_id: Mapped[str] = mapped_column(String, nullable=True, default=None)
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
-    duration: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     topics: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=None)
 
 # Automatically set hash when content is modified
@@ -95,11 +96,10 @@ class FrontendAudioPlay(Base):
 class FrontendUser(Base):
     __tablename__ = "frontend_users"
     
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    display_name: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    email: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    display_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    email: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
     played_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
     liked_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
     search_history: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)

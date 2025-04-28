@@ -7,7 +7,7 @@ import { BootstrapBackButton } from '../components/BackButton';
 import { ChannelList } from '../components/ChannelList';
 import PlayerScreen from '../components/PlayerScreen';
 import { SuspenseLoading } from '../components/SuspenseLoading';
-import { getAudioListForChannel } from '../data/actions';
+import { getAudioListForChannel } from '../data/client';
 import { MultiAudioLoader } from '../data/loaders';
 import AudioLoader from '../utils/AudioLoader';
 

@@ -1,23 +1,24 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp, orderBy, DocumentData } from 'firebase/firestore';
-import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "./model";
+'use server';
+
+import { desc } from 'drizzle-orm';
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
-import { LRUCache } from 'lru-cache';
+import { PlayableFeedMode } from "./model";
 
-import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
     FrontendAudio,
-    FrontendAuthor,
-    FrontendChannel,
     frontendAudios,
     frontendAuthors,
     frontendChannels,
+    frontendUsers,
+    NewFrontendUser
 } from '@/lib/db/schema';
-import { FrontendAuthorDTO, FrontendChannelDTO } from './interfaces';
+import { eq, lte } from 'drizzle-orm';
+import { FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO } from './interfaces';
 
 
-export const getAuthor = async (id: string): Promise<FrontendAuthorDTO> => {
+export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
     const [dbAuthor] = await db
         .select()
         .from(frontendAuthors)
@@ -43,7 +44,15 @@ export const getAuthor = async (id: string): Promise<FrontendAuthorDTO> => {
     }
 }
 
-export const getChannel = async (id: string): Promise<FrontendChannelDTO> => {
+export const getAllChannelIdsAction = async (): Promise<string[]> => {
+    const dbChannelIds = await db.select({
+        id: frontendChannels.normalizedUrlHash,
+    })
+        .from(frontendChannels)
+    return dbChannelIds.map((dbChannelId) => dbChannelId.id)
+}
+
+export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> => {
     const [dbChannel] = await db
         .select()
         .from(frontendChannels)
@@ -51,8 +60,6 @@ export const getChannel = async (id: string): Promise<FrontendChannelDTO> => {
             eq(frontendChannels.normalizedUrlHash, id)
         )
         .limit(1);
-
-
 
     if (dbChannel) {
         return {
@@ -71,211 +78,185 @@ export const getChannel = async (id: string): Promise<FrontendChannelDTO> => {
 }
 
 
-export const getUserData = async (id: string): Promise<RZUserData> => {
-    const docRef = doc(db, `/users/${id}`);
-    const docSnap = await getDoc(docRef);
+export const getUserDataAction = async (id: string): Promise<FrontendUserDTO> => {
 
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const displayName = data.displayName || null;
-        const email = data.email || null;
-        const imageURL = data.imageURL || null;
-        const createdAt = data.createdAt ? data.createdAt.toDate() : null;
-        const playedAudioIds = data.playedAudioIds || [];
-        const likedAudioIds = data.likedAudioIds || [];
-        const searchHistory = data.searchHistory || [];
-        const subscribedChannelIds = data.subscribedChannelIds || [];
-        return new RZUserData(id, displayName, email, imageURL, createdAt, subscribedChannelIds, likedAudioIds, playedAudioIds, searchHistory);
+    if (!id) {
+        return {
+            userId: id,
+            displayName: null,
+            email: null,
+            imageUrl: null,
+            createdAt: null,
+            playedAudioIds: [],
+            likedAudioIds: [],
+            searchHistory: [],
+            subscribedChannelIds: []
+        };
+    }
+
+    const dbUsers = await db.select({
+        userId: frontendUsers.userId,
+        displayName: frontendUsers.displayName,
+        email: frontendUsers.email,
+        imageUrl: frontendUsers.imageUrl,
+        createdAt: frontendUsers.createdAt,
+        playedAudioIds: frontendUsers.playedAudioIds,
+        likedAudioIds: frontendUsers.likedAudioIds,
+        searchHistory: frontendUsers.searchHistory,
+        subscribedChannelIds: frontendUsers.subscribedChannelIds
+    }).from(frontendUsers).where(eq(frontendUsers.userId, id)).limit(1);
+
+
+    if (dbUsers.length > 0) {
+        return {
+            userId: id,
+            displayName: dbUsers[0].displayName || null,
+            email: dbUsers[0].email || null,
+            imageUrl: dbUsers[0].imageUrl || null,
+            createdAt: dbUsers[0].createdAt,
+            playedAudioIds: Array.isArray(dbUsers[0].playedAudioIds) ? dbUsers[0].playedAudioIds : [],
+            likedAudioIds: Array.isArray(dbUsers[0].likedAudioIds) ? dbUsers[0].likedAudioIds : [],
+            searchHistory: Array.isArray(dbUsers[0].searchHistory) ? dbUsers[0].searchHistory : [],
+            subscribedChannelIds: Array.isArray(dbUsers[0].subscribedChannelIds) ? dbUsers[0].subscribedChannelIds : []
+        };
     } else {
-        logger.error(`No user found with ID: ${id}`);
-        throw new Error(`No user found with ID: ${id}`);
+        logger.info(`No user found with ID: ${id}`);
+        return {
+            userId: id,
+            displayName: null,
+            email: null,
+            imageUrl: null,
+            createdAt: null,
+            playedAudioIds: [],
+            likedAudioIds: [],
+            searchHistory: [],
+            subscribedChannelIds: []
+        };
+
     }
 }
 
-export const saveUserData = async (userData: RZUserData) => {
-    const userDocRef = doc(db, `/users/${userData.id}`);
-    const playedAudioIds = new Set(userData.playedAudioIds || []);
-    const likedAudioIds = new Set(userData.likedAudioIds || []);
-    const searchHistory = userData.searchHistory || [];
-    const subscribedChannelIds = new Set(userData.subscribedChannelIds || []);
-
-    await setDoc(userDocRef, {
-        id: userData.id,
-        displayName: userData.displayName,
-        email: userData.email,
-        imageURL: userData.imageURL,
+export const saveUserDataAction = async (userData: FrontendUserDTO) => {
+    const newUser: NewFrontendUser = {
+        userId: userData.userId,
+        displayName: userData.displayName || null,
+        email: userData.email || null,
+        imageUrl: userData.imageUrl || null,
         createdAt: userData.createdAt,
-        playedAudioIds: Array.from(playedAudioIds),
-        likedAudioIds: Array.from(likedAudioIds),
-        searchHistory,
-        subscribedChannelIds: Array.from(subscribedChannelIds),
-        lastActiveAt: serverTimestamp()
-    });
+        playedAudioIds: userData.playedAudioIds || [],
+        likedAudioIds: userData.likedAudioIds || [],
+        searchHistory: userData.searchHistory || [],
+        subscribedChannelIds: userData.subscribedChannelIds || []
+    };
+    await db
+        .insert(frontendUsers)
+        .values(newUser)
+        .onConflictDoUpdate({
+            target: frontendUsers.userId,
+            set: {
+                displayName: userData.displayName || null,
+                email: userData.email || null,
+                imageUrl: userData.imageUrl || null,
+                createdAt: userData.createdAt,
+                playedAudioIds: userData.playedAudioIds || [],
+                likedAudioIds: userData.likedAudioIds || [],
+                searchHistory: userData.searchHistory || [],
+                subscribedChannelIds: userData.subscribedChannelIds || []
+            }
+        });
+
 }
 
-// Modify getChannel with caching
-export const getChannel = async (id: string): Promise<RZChannel> => {
-    const cached = channelCache.get(id);
-    if (cached) {
-        return cached;
-    }
-
-    const [dbChannel] = await db
-        .select()
-        .from(frontendAuthors)
-        .where(
-            eq(frontendAuthors.normalizedUrlHash, id)
-        )
-        .limit(1);
-
-
-    const docRef = doc(db, `/channels/${id}`);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const channelData = {
-            name: data.name,
-            description: data.description,
-            imageUrl: data.imageUrl,
-        };
-        const channel = RZChannel.fromObject(channelData, docSnap.id);
-        channelCache.set(id, channel);
-        return channel;
-    } else {
-        logger.error(`No channel found with ID: ${id}`);
-        throw new Error(`No document found with ID: ${id}`);
-    }
-}
-
-export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
-    const channels = await Promise.all(ids.map(async (id) => {
-        return getChannel(id);
-    }));
-    return channels;
-}
-
-export const getAllChannelIds = async (): Promise<string[]> => {
-    const ref = collection(db, 'channels');
-    const querySnapshot = await getDocs(ref);
-    return querySnapshot.docs.map(doc => doc.id);
-}
-
-export const audioFromData = async (data: DocumentData, id: string): Promise<RZAudio | null> => {
-    try {
-        const createdAt = data.createdAt.toDate();
-        const authorId = data.author;
-        const channelId = data.channel;
-        const audioText = data.audioText;
-        const durationSeconds = data.durationSeconds;
-        const webUrl = data.webUrl;
-        const publishedAt = data.publishedAt ? data.publishedAt.toDate() : null;
-        const author = await getAuthor(authorId);
-        const channel = await getChannel(channelId);
-        const audioData = {
-            name: data.name,
-            audioUrl: data.audioUrl,
-            imageUrl: data.imageUrl,
-            topics: data.topics,
-            audioText,
-            durationSeconds,
-            webUrl,
-            publishedAt
-        };
-        const audio = RZAudio.fromObject(audioData, id, createdAt, author, channel);
-        audioCache.set(id, audio);
-        return audio;
-    } catch (error) {
-        logger.error(`Error creating audio from data: ${error}`);
-        return null;
-    }
+function dbAudioToDTO(dbAudio: FrontendAudio): FrontendAudioDTO {
+    return {
+        id: dbAudio.normalizedUrlHash,
+        normalizedUrl: dbAudio.normalizedUrl,
+        title: dbAudio.title || '',
+        description: dbAudio.description || '',
+        imageUrl: dbAudio.imageUrl || '',
+        audioUrl: dbAudio.audioUrl || '',
+        webUrl: dbAudio.webUrl || '',
+        topics: dbAudio.topics || [],
+        audioText: dbAudio.audioText || '',
+        durationSeconds: dbAudio.durationSeconds || 0,
+        authorId: dbAudio.authorId || null,
+        channelId: dbAudio.channelId || null,
+        publishedAt: dbAudio.publishedAt || null,
+        createdAt: dbAudio.createdAt,
+        updatedAt: dbAudio.updatedAt
+    };
 }
 
 // Modify getAudio with caching
-export const getAudio = async (id: string): Promise<RZAudio | null> => {
-    const cached = audioCache.get(id);
-    if (cached) {
-        return cached;
-    }
+export const getAudioAction = async (id: string): Promise<FrontendAudioDTO> => {
+    const [dbAudio] = await db
+        .select()
+        .from(frontendAudios)
+        .where(
+            eq(frontendAudios.normalizedUrlHash, id)
+        )
+        .limit(1);
 
-    const docRef = doc(db, `/audios/${id}`);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        const audio = await audioFromData(data, docSnap.id);
-        if (!audio) {
-            return null;
-        }
-        audioCache.set(id, audio);
-        return audio;
+    if (dbAudio) {
+        return dbAudioToDTO(dbAudio);
     } else {
         logger.error(`No audio found with ID: ${id}`);
         throw new Error(`No audio found with ID: ${id}`);
     }
 }
 
-export const getAudioListForChannel = async (channelId: string): Promise<RZAudio[]> => {
+export const getAudioListForChannelAction = async (channelId: string): Promise<FrontendAudioDTO[]> => {
 
-    const audioRef = collection(db, 'audios');
-    const queryAudios = query(audioRef,
-        where('channel', '==', channelId),
-        orderBy('publishedAt', 'desc'),
-        orderBy('__name__', 'desc'));
-    const querySnapshot = await getDocs(queryAudios);
-
-    const resultAudiosWithNulls = await Promise.all(querySnapshot.docs.map(doc =>
-        audioFromData(doc.data(), doc.id)
-    ));
-    const audios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
-    return audios;
+    const dbAudios = await db
+        .select()
+        .from(frontendAudios)
+        .where(
+            eq(frontendAudios.channelId, channelId)
+        )
+    return dbAudios.map((dbAudio) => dbAudioToDTO(dbAudio))
 }
 
-export const getSearchDocuments = async (): Promise<TfIdfDocument[]> => {
-    const audioRef = collection(db, 'audios');
-    const querySnapshot = await getDocs(query(audioRef));
-    return querySnapshot.docs.map(doc => ({
-        docId: doc.id,
-        text: doc.data().name
+export const getAudioPageAction = async (startAfterPublishedAt: Date | null, pageSize: number): Promise<FrontendAudioDTO[]> => {
+
+    const dbAudios = await db
+        .select()
+        .from(frontendAudios)
+        .where(
+            lte(frontendAudios.publishedAt, startAfterPublishedAt!)
+        )
+        .orderBy(desc(frontendAudios.publishedAt))
+        .limit(pageSize);
+    return dbAudios.map((dbAudio) => dbAudioToDTO(dbAudio))
+}
+
+
+export const getSearchDocumentsAction = async (): Promise<TfIdfDocument[]> => {
+
+    const dbAudios = await db
+        .select({
+            normalizedUrlHash: frontendAudios.normalizedUrlHash,
+            title: frontendAudios.title
+        })
+        .from(frontendAudios)
+
+    return dbAudios.map(dbAudio => ({
+        docId: dbAudio.normalizedUrlHash,
+        text: dbAudio.title || ''
     }));
 }
 
-export const getAudioListByIds = async (ids: string[]): Promise<RZAudio[]> => {
-    const audios = await Promise.all(ids.map(async (id) => {
-        try {
-            return await getAudio(id);
-        } catch {
-            return null;
-        }
-    }));
-    return audios.filter((audio): audio is RZAudio => audio !== null);
-}
+export const getFeedAudioListAction = async (feedMode: PlayableFeedMode, subscribedChannelIds: string[]): Promise<FrontendAudioDTO[]> => {
 
-export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedChannelIds: string[]): Promise<RZAudio[]> => {
-    let resultAudios: RZAudio[] = [];
-
-    const audiosRef = collection(db, 'audios');
-    const audioQuery = query(audiosRef,
-        orderBy('publishedAt', 'desc'),
-        orderBy('__name__', 'desc')
-    );
-    const querySnapshot = await getDocs(audioQuery);
-    //const filteredDocs = querySnapshot.docs.filter(doc => !playedAudioIdsSet.has(doc.id));
-    const filteredDocs = querySnapshot.docs;
-
-    const resultAudiosWithNulls = await Promise.all(filteredDocs.map(async (doc) => {
-        const data = doc.data();
-        return await audioFromData(data, doc.id);
-    }));
-
-    resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
+    let dbAudios = await db.select()
+        .from(frontendAudios)
+        .orderBy(desc(frontendAudios.publishedAt))
 
     if (feedMode == PlayableFeedMode.Subscribed) {
         const subscribedChannelIdsSet = new Set(subscribedChannelIds);
-        resultAudios = resultAudios.filter(rzAudio => subscribedChannelIdsSet.has(rzAudio.channel.id));
+        dbAudios = dbAudios.filter(dbAudio => subscribedChannelIdsSet.has(dbAudio.channelId!));
     }
 
-    return resultAudios;
+    return dbAudios.map(dbAudio => dbAudioToDTO(dbAudio));
 }
 
 

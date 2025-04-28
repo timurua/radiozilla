@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useMemo, useCallback } fro
 import { TfIdf } from './tf-idf';
 import { TfIdfSearchResult, TfIdfDocument } from './types';
 import { useAuth } from '../providers/AuthProvider';
-import { getSearchDocuments } from '../data/actions';
+import { getSearchDocuments } from '../data/client';
 
 interface TfIdfContextType {
     addDocuments: (documents: TfIdfDocument[]) => Promise<void>;

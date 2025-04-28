@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { saveUserData } from '../data/actions';
+import { saveUserData } from '../data/client';
 import { RZUserData } from "../data/model";
 
 // MobX store for user data

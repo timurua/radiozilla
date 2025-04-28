@@ -13,6 +13,8 @@ from pyminiscraper.url import normalized_url_hash, normalize_url
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.config.jobs import Jobs
 
+logger = logging.getLogger("dbjob")
+
 radiozilla_author = FrontendAuthor(
     normalized_url= normalized_url_hash('https://www.radiozilla.com/'),
     normalized_url_hash= normalized_url_hash('https://www.radiozilla.com/'),
@@ -103,24 +105,11 @@ async def unpublish_audio(normalized_url: str) -> None:
 
 @click.command()
 async def main() -> None:
-    await Jobs.initialize()   
+    await Jobs.initialize()       
+    Database.initialize()
+    logger.info("Creating tables")
+    await Database.create_tables()
     
-    await publish_authors()
-    await publish_channels()    
-    
-    normalized_urls_need_publishing = []
-    normalized_urls_need_unpublishing = []
-    async for session in Database.get_session():
-        normalized_urls_need_publishing = await WebPageJobService(session).find_with_state(WebPageJobState.TTSED_NEED_PUBLISHING)
-        normalized_urls_need_unpublishing = await WebPageJobService(session).find_with_state(WebPageJobState.NEED_UNPUBLISHING)          
-    
-    task_manager: ParallelTaskManager = ParallelTaskManager(4)
-    for normalized_url in normalized_urls_need_publishing:
-        task_manager.submit_task(publish_audio(normalized_url))
-    for normalized_url in normalized_urls_need_unpublishing:
-        task_manager.submit_task(unpublish_audio(normalized_url))        
-
-    await task_manager.wait_all()
                 
     
 def cli() -> None:

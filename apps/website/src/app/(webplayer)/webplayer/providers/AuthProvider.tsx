@@ -19,7 +19,7 @@ import logger from '../utils/logger';
 import NoPlayerScreen from '../components/NoPlayerScreen';
 import Spinner from '../components/Spinner';
 import { RZUser, RZUserData } from '../data/model';
-import { getUserData } from '../data/actions';
+import { getUserData } from '../data/client';
 import { CookieConsent } from '../components/CookieConsent';
 
 export interface AuthContextType {
@@ -57,9 +57,13 @@ export const AuthProvider = observer(function AuthProvider({ children }: AppProv
         return;
       }
       const updateData = async () => {
-        userDataStore.setUserData(
-          await getUserData(user.uid)
-        );
+        const existingUserData = await getUserData(user.uid);
+        existingUserData.id = user.uid;
+        existingUserData.displayName = user.displayName || null;
+        existingUserData.email = user.email || null;
+        existingUserData.imageURL = user.photoURL || null;
+        existingUserData.createdAt = user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
+        userDataStore.setUserData(existingUserData);
       };
       updateData();
     });

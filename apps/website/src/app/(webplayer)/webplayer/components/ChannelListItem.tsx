@@ -14,7 +14,7 @@ export function ChannelListItem({ channelId }: { channelId: string }) {
     const navigate = useNavigate();
     const [channel, setChannel] = useState<RZChannel | null>(null);
     const handleClick = () => {
-        navigate(`/channel/${channelId}`);
+        navigate(`/webplayer/channel/${channelId}`);
         window.scrollTo({ top: 0, behavior: 'instant' });
 
     };

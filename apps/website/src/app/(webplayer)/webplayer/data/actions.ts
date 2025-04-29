@@ -218,14 +218,19 @@ export const getAudioListForChannelAction = async (channelId: string): Promise<F
 
 export const getAudioPageAction = async (startAfterPublishedAt: Date | null, pageSize: number): Promise<FrontendAudioDTO[]> => {
 
-    const dbAudios = await db
-        .select()
-        .from(frontendAudios)
-        .where(
-            lte(frontendAudios.publishedAt, startAfterPublishedAt!)
-        )
-        .orderBy(desc(frontendAudios.publishedAt))
-        .limit(pageSize);
+    const dbAudios = await (
+        startAfterPublishedAt
+            ? db.select()
+                .from(frontendAudios)
+                .where(
+                    lte(frontendAudios.publishedAt, startAfterPublishedAt!)
+                )
+                .orderBy(desc(frontendAudios.publishedAt))
+                .limit(pageSize)
+            : db.select()
+                .from(frontendAudios)
+                .orderBy(desc(frontendAudios.publishedAt))
+                .limit(pageSize));
     return dbAudios.map((dbAudio) => dbAudioToDTO(dbAudio))
 }
 

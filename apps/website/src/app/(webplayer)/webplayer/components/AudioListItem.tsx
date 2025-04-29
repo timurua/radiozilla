@@ -30,7 +30,7 @@ export const AudioListItem = observer(function AudioListItem({ rzAudio, onClick 
     }
 
     function openChannel(audio: RZAudio, e: React.MouseEvent) {
-        navigate(`/channel/${audio.channel.id}`);
+        navigate(`/webplayer/channel/${audio.channel.id}`);
         window.scrollTo({ top: 0, behavior: 'instant' });
         e.stopPropagation();
     }

@@ -78,7 +78,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
 
   function openChannel(audio: RZAudio | null, e: React.MouseEvent) {
     if (audio) {
-      navigate(`/channel/${audio.channel.id}`);
+      navigate(`/webplayer/channel/${audio.channel.id}`);
       window.scrollTo({ top: 0, behavior: 'instant' });
       e.stopPropagation();
     }

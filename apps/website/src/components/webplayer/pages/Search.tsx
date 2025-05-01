@@ -2,26 +2,28 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'next/navigation';
 import AudioList from '../components/AudioList';
 import PlayerScreen from '../components/PlayerScreen';
 import { IdsAudioLoader } from '../data/loaders';
 import { useTfIdf } from '../tfidf/tf-idf-provider';
 import AudioLoader from '../utils/AudioLoader';
+import { useRouter } from 'next/navigation';
 
 function Search() {
 
     const { search } = useTfIdf();
     const inputRef = useRef<HTMLInputElement>(null);
-    const [searchParams, setSearchParams] = useSearchParams();
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
 
     const searchValue = searchParams.get('query') || '';
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newParams = new URLSearchParams(searchParams)
+        const newParams = new URLSearchParams(searchParams.toString());
         newParams.set("query", event.target.value);
-        setSearchParams(newParams);
+        router.push(`/webplayer/search?${newParams.toString()}`);
     };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

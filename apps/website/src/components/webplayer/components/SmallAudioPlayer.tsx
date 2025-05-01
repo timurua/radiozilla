@@ -5,7 +5,7 @@ import { storageUtils } from '../firebase';
 
 import { Button, ButtonGroup, Image, ProgressBar } from 'react-bootstrap';
 import { BsList, BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
 
@@ -21,7 +21,7 @@ function SmallAudioPlayerImpl() {
     currentTime,
     duration } = useAudio();
 
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
@@ -54,8 +54,8 @@ function SmallAudioPlayerImpl() {
   }, [playNext]);
 
   const handlePlaying = useCallback(() => {
-    navigate('/playing');
-  }, [navigate]);
+    router.push('/webplayer/playing');
+  }, [router]);
 
   useEffect(() => {
     const fetchImage = async () => {

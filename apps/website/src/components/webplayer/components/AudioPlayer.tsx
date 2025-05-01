@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootstrap';
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import { useAudio } from '../providers/AudioProvider';
@@ -25,7 +25,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
     setCurrentTime
   } = useAudio();
 
-  const navigate = useNavigate();
+  const router = useRouter();
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const rzAudioToDisplay = displayRzAudio || rzAudio;
 
@@ -40,7 +40,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
   const onTextClick = () => {
     if (isPlaying) {
 
-      navigate(`/audio/${rzAudioToDisplay?.id}`);
+      router.push(`/webplayer/audio/${rzAudioToDisplay?.id}`);
     }
   };
 
@@ -78,7 +78,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
 
   function openChannel(audio: RZAudio | null, e: React.MouseEvent) {
     if (audio) {
-      navigate(`/webplayer/channel/${audio.channel.id}`);
+      router.push(`/webplayer/channel/${audio.channel.id}`);
       window.scrollTo({ top: 0, behavior: 'instant' });
       e.stopPropagation();
     }

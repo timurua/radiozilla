@@ -33,7 +33,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-              <Terminal />
+              <img src="player.png" alt="Player" className="h-[480px] w-auto object-contain" />
             </div>
           </div>
         </div>

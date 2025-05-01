@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Badge, Image, ListGroup } from "react-bootstrap";
 import { BsCheckCircleFill } from 'react-icons/bs';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { observer } from "mobx-react-lite";
 import { useAudio } from "../providers/AudioProvider";
 import { userDataStore } from "../state/userData";
@@ -14,7 +14,7 @@ import { storageUtils } from '../firebase';
 export const AudioListItem = observer(function AudioListItem({ rzAudio, onClick }: { rzAudio: RZAudio, onClick?: (audio: RZAudio) => void }) {
     const { rzAudio: currentPlayable } = useAudio();
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-    const navigate = useNavigate();
+    const router = useRouter();
     const userDataSubscribedChannelIds = userDataStore.subscribedChannelIds;
     const userDataPlayedAudioIds = userDataStore.playedAudioIds;
 
@@ -25,12 +25,12 @@ export const AudioListItem = observer(function AudioListItem({ rzAudio, onClick 
     }
 
     function openAudio(audio: RZAudio) {
-        navigate(`/audio/${audio.id}`);
+        router.push(`/webplayer/audio/${audio.id}`);
         window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     function openChannel(audio: RZAudio, e: React.MouseEvent) {
-        navigate(`/webplayer/channel/${audio.channel.id}`);
+        router.push(`/webplayer/channel/${audio.channel.id}`);
         window.scrollTo({ top: 0, behavior: 'instant' });
         e.stopPropagation();
     }

@@ -1,15 +1,16 @@
 import { Nav, Navbar } from "react-bootstrap";
 import { BsHouse, BsPerson, BsSearch } from 'react-icons/bs';
-import { Link, useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function BottomNavbar() {
 
-    const navigate = useNavigate();
+    const router = useRouter();
 
     function transitionTo(e: React.MouseEvent<HTMLElement>, path: string): void {
         e.preventDefault();
-        navigate(path);
-        window.scrollTo({ top: 0, behavior: 'instant' });        
+        router.push(path);
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     return (
@@ -18,7 +19,7 @@ export default function BottomNavbar() {
                 <Nav.Item>
                     <Nav.Link
                         as={Link}
-                        to="/feed"
+                        href="/webplayer/feed"
                         active={window.location.pathname.startsWith('/feed')}
                         className={`text-center text-light`} onClick={(e) => transitionTo(e, "/feed")}>
                         <BsHouse size={20} strokeWidth={window.location.pathname.startsWith('/feed') ? 1 : 0} />
@@ -27,7 +28,7 @@ export default function BottomNavbar() {
                 <Nav.Item>
                     <Nav.Link
                         as={Link}
-                        to="/search"
+                        href="/webplayer/search"
                         className={`text-center text-light`} onClick={(e) => transitionTo(e, "/search")}>
                         <BsSearch size={20} strokeWidth={window.location.pathname.startsWith('/search') ? 1 : 0} />
                     </Nav.Link>
@@ -35,7 +36,7 @@ export default function BottomNavbar() {
                 <Nav.Item>
                     <Nav.Link
                         as={Link}
-                        to="/profile"
+                        href="/webplayer/profile"
                         className={`text-center text-light`}
                         onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
 

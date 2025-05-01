@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'next/navigation';
 import AudioList from '../components/AudioList';
 import { BootstrapBackButton } from '../components/BackButton';
 import { ChannelList } from '../components/ChannelList';

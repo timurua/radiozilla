@@ -27,21 +27,21 @@ const App: React.FC = () => {
           <AuthProvider>
             <AudioProvider>
               <TfIdfProvider>
-              <div>
-                {/* Main Content */}
-                <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
+                <div>
+                  {/* Main Content */}
+                  <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                     <Routes>
-                    <Route path="/" element={<Feed />} />
-                    <Route path="/audio/:audioId" element={<Audio />} />
-                    <Route path="/channel/:channelId" element={<Channel />} />
-                    <Route path="/feed" element={<Feed />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/playing" element={<Playing />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/company" element={<Company />} />
+                      <Route path="/" element={<Feed />} />
+                      <Route path="/audio/:audioId" element={<Audio />} />
+                      <Route path="/channel/:channelId" element={<Channel />} />
+                      <Route path="/feed" element={<Feed />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/playing" element={<Playing />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/company" element={<Company />} />
                     </Routes>
+                  </div>
                 </div>
-              </div>
               </TfIdfProvider>
             </AudioProvider>
           </AuthProvider>

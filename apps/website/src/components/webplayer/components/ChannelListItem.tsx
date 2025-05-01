@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Image, ListGroup } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { getChannel } from '../data/client';
 import { RZChannel } from '../data/model';
 import { storageUtils } from '../firebase';
@@ -11,10 +11,10 @@ import logger from '../utils/logger';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';
 
 export function ChannelListItem({ channelId }: { channelId: string }) {
-    const navigate = useNavigate();
+    const router = useRouter();
     const [channel, setChannel] = useState<RZChannel | null>(null);
     const handleClick = () => {
-        navigate(`/webplayer/channel/${channelId}`);
+        router.push(`/webplayer/channel/${channelId}`);
         window.scrollTo({ top: 0, behavior: 'instant' });
 
     };

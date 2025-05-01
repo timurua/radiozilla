@@ -3,7 +3,7 @@
 import { AudioPlayer } from '../components/AudioPlayer';
 import PlayerScreen from '../components/PlayerScreen';
 import { BootstrapBackButton } from '../components/BackButton';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'next/navigation';
 import { getAudio } from '../data/client';
 import { useEffect, useState } from 'react';
 import { RZAudio } from '../data/model';

@@ -35,8 +35,7 @@ class Firebase:
             blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}")
             blob.upload_from_filename(local_file_path, content_type=content_type)
             blob.make_public()
-            gs_url = f'gs://{self._bucket.name}/{blob.name}'
-            return gs_url
+            return blob.public_url
         
         gs_url = await asyncio.get_event_loop().run_in_executor(executor, synchronous_worker)
         return gs_url
@@ -48,8 +47,8 @@ class Firebase:
             blob = self._bucket.blob(f"{remote_directory}/{remote_file_name}")
             blob.upload_from_string(buffer, content_type=content_type)
             blob.make_public()
-            gs_url = f'gs://{self._bucket.name}/{blob.name}'
-            return gs_url    
+            public_url = blob.public_url
+            return public_url    
     
         gs_url = await asyncio.get_event_loop().run_in_executor(executor, synchronous_worker)
         return gs_url

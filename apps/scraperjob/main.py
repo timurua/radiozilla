@@ -1,14 +1,10 @@
-from aiohttp import web
 import asyncclick as click
 import asyncio
-from pyminiscraper.scraper import Scraper
 from pysrc.db.database import Database
 from pysrc.db.service import WebPageChannelService, WebPageJobService, WebPageService
 from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageJobState, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
 from pysrc.observe.log import Logging
 from pysrc.scraper.service import ScraperService
-from pysrc.scraper.store import ServiceScraperStore
-from pysrc.config.rzconfig import RzConfig
 from pysrc.utils.parallel import ParallelTaskManager
 from pysrc.scraper.utils import convert_seed_type
 from pysrc.config.jobs import Jobs

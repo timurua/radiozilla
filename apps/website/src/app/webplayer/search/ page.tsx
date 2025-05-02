@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import AudioList from '@/components/webplayer/components/AudioList';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { IdsAudioLoader } from '@/components/webplayer/data/loaders';
@@ -11,9 +11,11 @@ import AudioLoader from '@/components/webplayer/utils/AudioLoader';
 
 function Search() {
 
+    const pathname = usePathname();
+    const router = useRouter();
     const { search } = useTfIdf();
     const inputRef = useRef<HTMLInputElement>(null);
-    const [searchParams, setSearchParams] = useSearchParams();
+    const searchParams = useSearchParams();
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
 
     const searchValue = searchParams.get('query') || '';
@@ -21,7 +23,7 @@ function Search() {
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newParams = new URLSearchParams(searchParams)
         newParams.set("query", event.target.value);
-        setSearchParams(newParams);
+        router.replace(`${pathname}?${newParams.toString()}`);
     };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

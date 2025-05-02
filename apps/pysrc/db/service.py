@@ -91,12 +91,12 @@ class FrontendImageService:
         self.logger.info(f"Generated content hash: {content_hash_b64}")
         
         dfs_client = DFSClient(RzConfig.instance())
-        await dfs_client.upload_buffer(
+        image_url =await dfs_client.upload_buffer(
             FRONTEND_IMAGES,
             content_hash_b64,
             web_image_content.content,
         )
-        return f"gs://{FRONTEND_IMAGES}/{content_hash_b64}"
+        return image_url
             
         
 

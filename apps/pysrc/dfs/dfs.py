@@ -25,12 +25,11 @@ class DFSClient:
         file_path: str,
     ) -> str:
         full_bucket_name = self.__get_bucket_name(bucket_name)
-        await rzfb.Firebase.instance().upload_file(
+        return await rzfb.Firebase.instance().upload_file(
             remote_directory=full_bucket_name,
             remote_file_name=object_name,
             local_file_path=file_path
         )
-        return f'gs://{full_bucket_name}/{object_name}'
     
     async def upload_buffer(
         self,
@@ -39,12 +38,11 @@ class DFSClient:
         buffer: bytes,
     ) -> str:
         full_bucket_name = self.__get_bucket_name(bucket_name)
-        await rzfb.Firebase.instance().upload_buffer(
+        return await rzfb.Firebase.instance().upload_buffer(
             remote_directory=full_bucket_name,
             remote_file_name=object_name,
             buffer=buffer
         )
-        return f'gs://{full_bucket_name}/{object_name}'
 
     
     async def download_file(

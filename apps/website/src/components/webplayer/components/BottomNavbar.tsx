@@ -1,11 +1,12 @@
 import { Nav, Navbar } from "react-bootstrap";
 import { BsHouse, BsPerson, BsSearch } from 'react-icons/bs';
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function BottomNavbar() {
 
     const router = useRouter();
+    const pathname = usePathname();
 
     function transitionTo(e: React.MouseEvent<HTMLElement>, path: string): void {
         e.preventDefault();
@@ -20,17 +21,17 @@ export default function BottomNavbar() {
                     <Nav.Link
                         as={Link}
                         href="/webplayer/feed"
-                        active={window.location.pathname.startsWith('/feed')}
-                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/feed")}>
-                        <BsHouse size={20} strokeWidth={window.location.pathname.startsWith('/feed') ? 1 : 0} />
+                        active={pathname.startsWith('/feed')}
+                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/webplayer/feed")}>
+                        <BsHouse size={20} strokeWidth={pathname.startsWith('/feed') ? 1 : 0} />
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
                     <Nav.Link
                         as={Link}
                         href="/webplayer/search"
-                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/search")}>
-                        <BsSearch size={20} strokeWidth={window.location.pathname.startsWith('/search') ? 1 : 0} />
+                        className={`text-center text-light`} onClick={(e) => transitionTo(e, "/webplayer/search")}>
+                        <BsSearch size={20} strokeWidth={pathname.startsWith('/search') ? 1 : 0} />
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
@@ -40,7 +41,7 @@ export default function BottomNavbar() {
                         className={`text-center text-light`}
                         onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
 
-                        <BsPerson size={20} strokeWidth={window.location.pathname.startsWith('/profile') ? 1 : 0} />
+                        <BsPerson size={20} strokeWidth={pathname.startsWith('/profile') ? 1 : 0} />
                     </Nav.Link>
                 </Nav.Item>
             </Nav>

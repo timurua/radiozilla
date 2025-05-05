@@ -6,7 +6,9 @@ export default function TopNavbar() {
     return (
         <Navbar bg="dark" variant="dark" className="w-100 d-flex justify-content-between px-3" fixed="top">
             <Navbar.Brand as={Link} href="/webplayer/company">
-                <img src="/radiozilla.svg" alt="Radiozilla Logo" height="30" className="mr-2" /> Radio
+                <div className="d-flex align-items-center">
+                    <img src="/radiozilla.svg" alt="Radiozilla Logo" width="30" height="30" className="mr-2" /> Radio
+                </div>
             </Navbar.Brand>
 
             <div>

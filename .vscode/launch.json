@@ -125,6 +125,9 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
+            "env": {
+                "NODE_ENV": "production",
+            },
             "cwd": "${workspaceFolder}/apps/website",
         }
     ]

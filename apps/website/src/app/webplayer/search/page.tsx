@@ -41,23 +41,19 @@ function Search() {
 
     return (
         <PlayerScreen>
-            <Row>
-                <Col md={5} className="mx-auto">
-                    <Form onSubmit={handleSubmit}>
-                        <InputGroup>
-                            <FormControl
-                                type="search"
-                                ref={inputRef}
-                                value={searchValue}
-                                onChange={handleInputChange}
-                                className="border rounded-start-pill rounded-end-pill bg-dark text-light"
-                                placeholder='Search'
-                                style={{ boxShadow: 'none' }}
-                            />
-                        </InputGroup>
-                    </Form>
-                </Col>
-            </Row>
+            <Form onSubmit={handleSubmit}>
+                <InputGroup>
+                    <FormControl
+                        type="search"
+                        ref={inputRef}
+                        value={searchValue}
+                        onChange={handleInputChange}
+                        className="border rounded-start-pill rounded-end-pill bg-dark text-light w-100"
+                        placeholder='Search'
+                        style={{ boxShadow: 'none' }}
+                    />
+                </InputGroup>
+            </Form>
             {audioLoader && <AudioList audioLoader={audioLoader} showDates={false} />}
         </PlayerScreen>
     );

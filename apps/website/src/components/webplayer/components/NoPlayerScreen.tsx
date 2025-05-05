@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { JSX, useRef } from 'react';
 import BottomNavbar from './BottomNavbar';
 import TopNavbar from './TopNavbar';
 

@@ -7,7 +7,7 @@ services:
       context: ../
       dockerfile: website/Dockerfile
     ports:
-      - "3000:3000"
+      - "8000:8000"
     environment:
       - NODE_ENV=development
       - DB_URL=postgresql+asyncpg://db_user:db_password@host.docker.internal:5432/db

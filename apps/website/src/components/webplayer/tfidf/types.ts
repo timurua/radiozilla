@@ -13,14 +13,19 @@ export interface TfIdfSearchResult {
     score: number;
 }
 
+export interface TfIdfSearchRequest {
+    query: string;
+    topK?: number;
+}
+
+export interface TfIdfAddDocumentsRequest {
+    documents: TfIdfDocument[];
+}
+
 export interface TfIdfWorkerMessage {
-    type: 'ADD_DOCUMENT' | 'ADD_DOCUMENTS' | 'SEARCH' | 'INDEX_UPDATED';
+    type: 'ADD_DOCUMENTS' | 'SEARCH' | 'INDEX_UPDATED';
     requestId: string;
-    payload: {
-        id?: string;
-        text?: string;
-        metadata?: Record<string, unknown>;
-    };
+    payload: TfIdfSearchRequest | TfIdfAddDocumentsRequest;
 }
 
 export interface TfIdfDocument {

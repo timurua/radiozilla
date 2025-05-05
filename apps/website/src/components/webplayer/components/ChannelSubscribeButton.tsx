@@ -1,5 +1,6 @@
+'use client';
+
 import { Badge } from 'react-bootstrap';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { userDataStore } from '../state/userData';
 import { observer } from "mobx-react-lite";
 

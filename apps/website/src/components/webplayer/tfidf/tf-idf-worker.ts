@@ -1,4 +1,4 @@
-import { DocumentIndex, IdfIndex, TfIdfSearchResult, TfIdfWorkerMessage, TfIdfDocument } from './types';
+import { DocumentIndex, IdfIndex, TfIdfSearchResult, TfIdfWorkerMessage, TfIdfDocument, TfIdfSearchRequest, TfIdfAddDocumentsRequest } from './types';
 import { LevenshteinSearchIndex } from './tf-idf-levenstein';
 
 class TfIdfWorker {
@@ -9,7 +9,7 @@ class TfIdfWorker {
 
     constructor() {
         this.documents = new Map();
-        this.documentIndex = {};        
+        this.documentIndex = {};
         this.idfIndex = {};
         this.levensteinSearchIndex = new LevenshteinSearchIndex([]);
     }
@@ -69,7 +69,7 @@ class TfIdfWorker {
 
     search(query: string, topK: number = 5): TfIdfSearchResult[] {
         const queryTermsBeforeLevenstein = this.tokenize(query);
-        const queryTerms: string[] = []        
+        const queryTerms: string[] = []
         for (const term of queryTermsBeforeLevenstein) {
             if (this.idfIndex[term]) {
                 queryTerms.push(term);
@@ -113,12 +113,14 @@ self.addEventListener('message', (event: MessageEvent<TfIdfWorkerMessage>) => {
 
     switch (type) {
         case 'ADD_DOCUMENTS':
-            worker.addDocuments(payload.documents);
-            self.postMessage({ type: 'ADD_DOCUMENTS', requestId, payload: null });
+            const addDocumentsRequest = payload as TfIdfAddDocumentsRequest;
+            worker.addDocuments(addDocumentsRequest.documents);
+            self.postMessage({ type: 'ADD_DOCUMENTS', requestId, payload: undefined });
             break;
         case 'SEARCH':
+            const searchRequest = payload as TfIdfSearchRequest;
             {
-                const results = worker.search(payload.query, payload.topK);
+                const results = worker.search(searchRequest.query, searchRequest.topK);
                 self.postMessage({ type: 'SEARCH', requestId, payload: results });
             }
             break;

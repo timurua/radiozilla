@@ -6,18 +6,11 @@ import { BootstrapBackButton } from '@/components/webplayer/components/BackButto
 import { getAudio } from '@/components/webplayer/data/client';
 import { useEffect, useState } from 'react';
 import { RZAudio } from '@/components/webplayer/data/model';
-import { FC } from 'react';
+import { useParams } from 'next/navigation';
 
-type AudioPageParams = {
-  params: {
-    id: string
-  }
-}
-
-const Audio: FC<AudioPageParams> = ({ params }) => {
-
-  const { id } = params;
-
+export default function Audio() {
+  const params = useParams();
+  const id = params.id as string;
   const [rzAudio, setRZAudio] = useState<RZAudio | null>(null);
 
   useEffect(() => {
@@ -44,5 +37,3 @@ const Audio: FC<AudioPageParams> = ({ params }) => {
     </PlayerScreen>
   );
 }
-
-export default Audio;

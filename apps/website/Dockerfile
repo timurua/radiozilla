@@ -15,7 +15,7 @@ WORKDIR /app/website
 COPY --from=deps /app/website/node_modules ./node_modules
 COPY website/src ./src
 COPY website/public ./public
-COPY website/.env ./.env
+COPY website/.env.production ./.env
 COPY website/components.json ./components.json
 COPY website/drizzle.config.ts ./drizzle.config.ts
 COPY website/eslint.config.mjs ./eslint.config.mjs
@@ -37,6 +37,7 @@ WORKDIR /app/website
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV PORT 8000
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -54,7 +55,7 @@ RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 # Expose the listening port
-EXPOSE 3000
+EXPOSE 8000
 
 # Set the correct command to run the app
 CMD ["node", "server.js"]

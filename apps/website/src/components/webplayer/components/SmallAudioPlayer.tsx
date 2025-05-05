@@ -75,7 +75,7 @@ function SmallAudioPlayerImpl() {
   }, [rzAudio, rzAudio?.imageUrl, setImageUrl]);
 
   const onTextClick = () => {
-    navigate(`/audio/${rzAudio?.id}`);
+    router.push(`/audio/${rzAudio?.id}`);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
@@ -85,24 +85,24 @@ function SmallAudioPlayerImpl() {
     <div className='bg-dark pt-2 pb-1 w-100'>
       <div className="d-flex justify-content-between align-items-center w-100">
         {rzAudio ? (
-          <div className="d-flex align-items-center text-light bg-dark flex-grow-1 w-100" style={{maxWidth: "calc(100% - 200px)",}} onClick={onTextClick}>
+          <div className="d-flex align-items-center text-light bg-dark flex-grow-1 w-100" style={{ maxWidth: "calc(100% - 200px)", }} onClick={onTextClick}>
             <Image src={imageUrl} rounded className="me-3" width={30} height={30} />
             <div className='flex-shrink-1 w-100 pb-2'>
-                <div className='w-100'>
-                  <div
-                    style={{                      
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    }}
-                    className='small'
-                  >
-                    {rzAudio.name}
-                  </div>
+              <div className='w-100'>
+                <div
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}
+                  className='small'
+                >
+                  {rzAudio.name}
                 </div>
-                <div>
-                    <small>{rzAudio.channel.name}</small>
-                </div>
+              </div>
+              <div>
+                <small>{rzAudio.channel.name}</small>
+              </div>
             </div>
           </div>
         ) : null}

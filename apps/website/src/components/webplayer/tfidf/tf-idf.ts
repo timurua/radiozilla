@@ -1,4 +1,4 @@
-import { TfIdfSearchResult, TfIdfDocument } from './types';
+import { TfIdfSearchResult, TfIdfDocument, TfIdfAddDocumentsRequest, TfIdfSearchRequest } from './types';
 // import TfIdfWorker from './tf-idf-worker?worker';
 
 // Use the standard Worker instantiation method for compatibility
@@ -37,7 +37,7 @@ export class TfIdf {
     }
 
     private async addBatch(documents: TfIdfDocument[]): Promise<void> {
-        return await this.sendReceive('ADD_DOCUMENTS', { documents });
+        return await this.sendReceive('ADD_DOCUMENTS', { documents } as TfIdfAddDocumentsRequest);
     }
 
     async addDocuments(documents: TfIdfDocument[]) {
@@ -50,7 +50,7 @@ export class TfIdf {
     }
 
     async search(query: string, topK: number = 5): Promise<TfIdfSearchResult[]> {
-        return this.sendReceive('SEARCH', { query, topK });
+        return this.sendReceive('SEARCH', { query, topK } as TfIdfSearchRequest);
     }
 
     dispose(): void {

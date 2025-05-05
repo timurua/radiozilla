@@ -11,16 +11,12 @@ import { getAudioListForChannel } from '@/components/webplayer/data/client';
 import { MultiAudioLoader } from '@/components/webplayer/data/loaders';
 import AudioLoader from '@/components/webplayer/utils/AudioLoader';
 
-type ChannelPageParams = {
-  params: {
-    id: string
-  }
-}
 
 
-function Channel({ params }: ChannelPageParams) {
+function Channel() {
 
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
   const [loader, setLoader] = useState<AudioLoader | null>(null);
 
 

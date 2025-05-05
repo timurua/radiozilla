@@ -10,11 +10,7 @@ import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { SuspenseLoading } from '@/components/webplayer/components/SuspenseLoading';
 import { FeedAudioLoader } from '@/components/webplayer/data/loaders';
 import { AllChannelList } from '@/components/webplayer/components/ChannelList';
-
-export enum PlayableFeedMode {
-  Latest = "Latest",
-  Subscribed = "Subscribed",
-}
+import { PlayableFeedMode } from '@/components/webplayer/utils/PlayableFeedMode';
 
 const InnerFeed = observer(function InnerFeed() {
 

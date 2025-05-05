@@ -32,8 +32,10 @@ export default function HomePage() {
                 </a>
               </div>
             </div>
-            <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-              <img src="player.png" alt="Player" className="h-[480px] w-auto object-contain" />
+            <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center lg:justify-end">
+              <a href="/webplayer" className="block">
+                <img src="player.jpeg" alt="Player" className="h-[480px] w-auto object-contain" />
+              </a>
             </div>
           </div>
         </div>

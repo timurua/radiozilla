@@ -19,7 +19,7 @@ export default function App({ children }: { children: React.ReactNode }): JSX.El
                 <AuthProvider>
                     <AudioProvider>
                         <TfIdfProvider>
-                            <div>
+                            <div className='bg-dark text-white'>
                                 {/* Main Content */}
                                 <div className="mt-5 mr-5 ml-5 bg-dark w-100 page_container bg-dark text-white">
                                     {children}

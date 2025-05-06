@@ -13,7 +13,7 @@ import {
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../firebase';
 import logger from '../utils/logger';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../../../lib/auth/AuthProvider';
 import { observer } from "mobx-react-lite";
 import { userDataStore } from "../state/userData";
 import AudioLoader from '../utils/AudioLoader';

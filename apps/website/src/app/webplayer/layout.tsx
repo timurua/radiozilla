@@ -6,7 +6,7 @@ import { Provider } from 'mobx-react';
 import { userDataStore } from '@/components/webplayer/state/userData';
 import { authStore } from '@/components/webplayer/state/auth';
 import { AudioProvider } from '@/components/webplayer/providers/AudioProvider';
-import { AuthProvider } from '@/components/webplayer/providers/AuthProvider';
+import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { NotificationProvider } from '@/components/webplayer/providers/NotificationProvider';
 import { TfIdfProvider } from '@/components/webplayer/tfidf/tf-idf-provider';
 const stores = { userDataStore, authStore };

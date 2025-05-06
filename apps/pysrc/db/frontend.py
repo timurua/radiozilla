@@ -85,23 +85,3 @@ def frontend_audio_ensure_hash(mapper, connection, target: FrontendAudio):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
 
-class FrontendAudioPlay(Base):
-    __tablename__ = "frontend_audio_plays"
-    
-    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    audio_id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    played_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
-    
-class FrontendUser(TimestampModel):
-    __tablename__ = "frontend_users"
-    
-    user_id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    display_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
-    email: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
-    played_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
-    liked_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
-    search_history: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
-    subscribed_channel_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=True, default=list)
-

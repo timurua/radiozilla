@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
 import { TfIdf } from './tf-idf';
 import { TfIdfSearchResult, TfIdfDocument } from './types';
-import { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../../../lib/auth/AuthProvider';
 import { getSearchDocuments } from '../data/client';
 
 interface TfIdfContextType {

@@ -1,5 +1,5 @@
 import React, { JSX, useState } from 'react';
-import { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../../../lib/auth/AuthProvider';
 
 export function AuthForm(): JSX.Element {
   const [email, setEmail] = useState('');
@@ -45,7 +45,7 @@ export function AuthForm(): JSX.Element {
               placeholder="Password"
               className="border p-2 mr-2"
             />
-            <button 
+            <button
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
@@ -53,7 +53,7 @@ export function AuthForm(): JSX.Element {
             </button>
           </form>
         )}
-        <button 
+        <button
           onClick={logout}
           className="bg-red-500 text-white px-4 py-2 rounded mt-4"
         >

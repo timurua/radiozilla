@@ -9,7 +9,7 @@ import AudioList from '@/components/webplayer/components/AudioList';
 import ChannelListItem from '@/components/webplayer/components/ChannelListItem';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { IdsAudioLoader } from '@/components/webplayer/data/loaders';
-import { useAuth } from '@/components/webplayer/providers/AuthProvider';
+import { useAuth } from '@/lib/auth/AuthProvider';
 
 const UserProfile = observer(function UserProfile() {
 

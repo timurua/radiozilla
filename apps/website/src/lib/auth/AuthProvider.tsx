@@ -12,14 +12,14 @@ import {
   EmailAuthProvider,
   User
 } from 'firebase/auth';
-import { auth } from '../firebase';
-import { authStore } from '../state/auth';
-import { userDataStore } from '../state/userData';
-import logger from '../utils/logger';
-import NoPlayerScreen from '../components/NoPlayerScreen';
-import Spinner from '../components/Spinner';
-import { RZUser, RZUserData } from '../data/model';
-import { getUserData } from '../data/client';
+import { auth } from '../../components/webplayer/firebase';
+import { authStore } from '../../components/webplayer/state/auth';
+import { userDataStore } from '../../components/webplayer/state/userData';
+import logger from '../../components/webplayer/utils/logger';
+import NoPlayerScreen from '../../components/webplayer/components/NoPlayerScreen';
+import Spinner from '../../components/webplayer/components/Spinner';
+import { RZUser, RZUserData } from '../../components/webplayer/data/model';
+import { getUserData } from '../../components/webplayer/data/client';
 import { CookieConsent } from '../components/CookieConsent';
 
 export interface AuthContextType {

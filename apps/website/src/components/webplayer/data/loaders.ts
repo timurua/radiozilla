@@ -1,4 +1,4 @@
-import { audioFromDTO, getAudioListByIds } from "./client";
+import { audioFromDTO, getAudioListByIds, getNextAudioPageAction } from "./client";
 import { PlayableFeedMode, RZAudio } from "./model";
 import AudioLoader, { Subscriber } from '../utils/AudioLoader';
 import { getAudioPageAction } from './actions';
@@ -219,21 +219,10 @@ export class FeedAudioLoader extends SubscriberAudioLoader implements AudioLoade
     }
 
     private async getNextAudioPageInternal(): Promise<void> {
-        let resultAudios: RZAudio[] = [];
-
-        const audios = await getAudioPageAction(this.lastPublishedAt, this.pageSize);
-        if (audios.length === 0) {
-            this.loadIsComplete = true;
-            return;
-        }
-        this.lastPublishedAt = audios[audios.length - 1].publishedAt;
-        this.loadIsComplete = audios.length < this.pageSize;
-
-        const resultAudiosWithNulls = await Promise.all(audios.map(async (audio) => {
-            return await audioFromDTO(audio);
-        }));
-
-        resultAudios = resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null);
+        const result = await getNextAudioPageAction(this.lastPublishedAt, this.pageSize);
+        let resultAudios = result.audios
+        this.lastPublishedAt = result.lastPublishedAt;
+        this.loadIsComplete = result.loadIsComplete;
 
         if (this.mode == PlayableFeedMode.Subscribed) {
             resultAudios = resultAudios.filter(rzAudio => this.subscribedChannelIds.has(rzAudio.channel.id));

@@ -4,31 +4,53 @@ import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "./m
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, getUserDataAction, saveUserDataAction } from './actions';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, getUserDataAction, saveUserDataAction } from './actions';
 import { FrontendAudioDTO } from './interfaces';
 
-// Add cache instances
-const audioCache = new LRUCache<string, RZAudio>({
-    max: 10000, // Maximum number of audios in cache
-    ttl: 5 * 60 * 1000 // 5 minute expiration
-});
+class AsyncCache<T extends {}> {
+    private cache: LRUCache<string, T>;
+    private pendingRequests: Map<string, Promise<T>> = new Map();
 
-const authorCache = new LRUCache<string, RZAuthor>({
-    max: 100, // Maximum number of authors in cache  
-    ttl: 15 * 60 * 1000 // 15 minute expiration
-});
+    constructor(
+        private fetchCallback: (key: string) => Promise<T>,
+        options: { max: number; ttl: number }
+    ) {
+        this.cache = new LRUCache<string, T>(options);
+    }
 
-const channelCache = new LRUCache<string, RZChannel>({
-    max: 100, // Maximum number of channels in cache
-    ttl: 15 * 60 * 1000 // 15 minute expiration  
-});
+    async get(key: string): Promise<T> {
+        // Check if item is in cache
+        const cachedItem = this.cache.get(key);
+        if (cachedItem !== undefined) {
+            return cachedItem;
+        }
+
+        // Check if there's already a pending request for this key
+        const pendingRequest = this.pendingRequests.get(key);
+        if (pendingRequest) {
+            return pendingRequest;
+        }
+
+        const request = this.fetchCallback(key).then(value => {
+            this.cache.set(key, value);
+            this.pendingRequests.delete(key);
+            return value;
+        }).catch(error => {
+            this.pendingRequests.delete(key);
+            throw error;
+        });
+
+        this.pendingRequests.set(key, request);
+        return request;
+    }
+
+    invalidate(key: string): void {
+        this.cache.delete(key);
+    }
+}
 
 // Modify getAuthor to use cache
 export const getAuthor = async (id: string): Promise<RZAuthor> => {
-    const cached = authorCache.get(id);
-    if (cached) {
-        return cached;
-    }
     const authorDTO = await getAuthorAction(id);
 
     if (authorDTO) {
@@ -38,13 +60,74 @@ export const getAuthor = async (id: string): Promise<RZAuthor> => {
             authorDTO.description || '',
             authorDTO.imageUrl || ''
         );
-        authorCache.set(id, author);
         return author;
     } else {
         logger.error(`No author found with ID: ${id}`);
         throw new Error(`No author found with ID: ${id}`);
     }
 }
+
+const authorCache = new AsyncCache<RZAuthor>(getAuthor, {
+    max: 100, // Maximum number of authors in cache  
+    ttl: 15 * 60 * 1000 // 15 minute expiration
+});
+
+// Modify getChannel with caching
+export const getChannel = async (id: string): Promise<RZChannel> => {
+    const channelDTO = await getChannelAction(id);
+    if (!channelDTO) {
+        logger.error(`No channel found with ID: ${id}`);
+        throw new Error(`No channel found with ID: ${id}`);
+    }
+
+    const channel = new RZChannel(
+        id,
+        channelDTO.name || '',
+        channelDTO.description || '',
+        channelDTO.imageUrl || ''
+    );
+    return channel;
+}
+
+const channelCache = new AsyncCache<RZChannel>(
+    getChannel, {
+    max: 100, // Maximum number of channels in cache
+    ttl: 15 * 60 * 1000 // 15 minute expiration  
+});
+
+
+// Add cache instances
+const audioCache = new LRUCache<string, RZAudio>({
+    max: 10000, // Maximum number of audios in cache
+    ttl: 5 * 60 * 1000 // 5 minute expiration
+});
+
+export const getNextAudioPageAction = async (lastPublishedAt: Date | null, pageSize: number): Promise<{
+    lastPublishedAt: Date | null;
+    loadIsComplete: boolean;
+    audios: RZAudio[]
+}> => {
+    const audios = await getAudioPageAction(lastPublishedAt, pageSize);
+    if (audios.length === 0) {
+        return {
+            lastPublishedAt: null,
+            loadIsComplete: true,
+            audios: []
+        };
+    }
+    const newLastPublishedAt = audios[audios.length - 1].publishedAt;
+    const loadIsComplete = audios.length < pageSize;
+    const resultAudiosWithNulls = await Promise.all(audios.map(async (audio) => {
+        return await audioFromDTO(audio);
+    }));
+
+    return {
+        lastPublishedAt: newLastPublishedAt,
+        loadIsComplete,
+        audios: resultAudiosWithNulls.filter((audio): audio is RZAudio => audio !== null)
+    }
+}
+
 
 export const getUserData = async (id: string): Promise<RZUserData> => {
     const userDataDTO = await getUserDataAction(id);
@@ -79,32 +162,9 @@ export const saveUserData = async (userData: RZUserData) => {
     });
 }
 
-// Modify getChannel with caching
-export const getChannel = async (id: string): Promise<RZChannel> => {
-    const cached = channelCache.get(id);
-    if (cached) {
-        return cached;
-    }
-
-    const channelDTO = await getChannelAction(id);
-    if (!channelDTO) {
-        logger.error(`No channel found with ID: ${id}`);
-        throw new Error(`No channel found with ID: ${id}`);
-    }
-
-    const channel = new RZChannel(
-        id,
-        channelDTO.name || '',
-        channelDTO.description || '',
-        channelDTO.imageUrl || ''
-    );
-    channelCache.set(id, channel);
-    return channel;
-}
-
 export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
     const channels = await Promise.all(ids.map(async (id) => {
-        return getChannel(id);
+        return channelCache.get(id);
     }));
     return channels;
 }
@@ -115,8 +175,8 @@ export const getAllChannelIds = async (): Promise<string[]> => {
 
 export async function audioFromDTO(dto: FrontendAudioDTO): Promise<RZAudio | null> {
 
-    const author = await getAuthor(dto.authorId || '');
-    const channel = await getChannel(dto.channelId || '');
+    const author = await authorCache.get(dto.authorId || '');
+    const channel = await channelCache.get(dto.channelId || '');
 
     return new RZAudio(
         dto.id,

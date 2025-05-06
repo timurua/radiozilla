@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 def create_async_db_engine(db_url: str) -> AsyncEngine:
     """Create async SQLAlchemy engine"""
+    logging.info(f"Creating async database engine with url: {db_url}")
     return create_async_engine(
         db_url,
         pool_size=20,         # Increase from default 5
@@ -24,6 +25,7 @@ def create_async_db_engine(db_url: str) -> AsyncEngine:
 
 def create_async_session_factory(engine) -> async_sessionmaker[AsyncSession]:
     """Create an async session factory"""
+    logging.info(f"Creating async session factory")
     return async_sessionmaker(
         bind=engine,
         expire_on_commit=False,

@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY pysrc/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-    
+
 COPY pysrc /app/pysrc
 
 # Copy requirements first to leverage Docker cache
@@ -32,7 +32,7 @@ COPY summarizerjob/main.py .
 COPY summarizerjob/start.sh .
 RUN chmod +x start.sh
 COPY config/google-account.json .
-COPY config/.env.k8s .env
+COPY config/.env.local.gcp .env
 
 # Command to run the script
 ENV PYTHONPATH=/:/app

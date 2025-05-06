@@ -76,3 +76,4 @@ node_modules/
 .dataconnect
 
 apps/config/google-account.json
+apps/.venv/

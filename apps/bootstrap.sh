@@ -8,4 +8,8 @@ else
     echo "Virtual environment already exists"
 fi
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r pysrc/requirements.txt
+pip install -r scraperjob/requirements.txt
+pip install -r summarizerjob/requirements.txt
+
+

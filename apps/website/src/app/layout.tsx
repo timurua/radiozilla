@@ -6,8 +6,8 @@ import { getUser } from '@/lib/db/queries';
 import CookieConsent from '@/components/CookieConsent';
 
 export const metadata: Metadata = {
-  title: 'Next.js SaaS Starter',
-  description: 'Get started quickly with Next.js, Postgres, and Stripe.',
+  title: 'Radiozilla - AI Radio',
+  description: 'Create and listen to your own AI-powered radio station',
 };
 
 export const viewport: Viewport = {
@@ -28,6 +28,10 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.className}`}
     >
+      <head>
+        <meta charSet="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/radiozilla.svg" />
+      </head>
       <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
         <UserProvider userPromise={userPromise}>{children}</UserProvider>
         <CookieConsent />

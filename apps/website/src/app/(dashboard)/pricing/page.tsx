@@ -20,16 +20,39 @@ export default async function PricingPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
+      <div className="flex flex-col items-center mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Simple, Transparent Pricing</h1>
+        <p className="text-muted-foreground mt-3 text-center max-w-xl">
+          Choose the plan that works best for your team. All plans include a free trial.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <PricingCard
+          name={basePlan?.name || 'Free'}
+          price={basePrice?.unitAmount || 0}
+          interval={basePrice?.interval || 'month'}
+          trialDays={basePrice?.trialPeriodDays || 365}
+          features={[
+            'Unlimited Usage',
+            'One Workspace Member',
+            'Web Scraping',
+            'Wiki Integration',
+          ]}
+          priceId={basePrice?.id}
+        />
         <PricingCard
           name={basePlan?.name || 'Base'}
           price={basePrice?.unitAmount || 800}
           interval={basePrice?.interval || 'month'}
           trialDays={basePrice?.trialPeriodDays || 7}
           features={[
-            'Unlimited Usage',
+            'Everything in Free',
             'Unlimited Workspace Members',
-            'Email Support',
+            'Web Scraping',
+            'Slack Integration',
+            'GitHub Integration',
+            'Wiki Integration',
           ]}
           priceId={basePrice?.id}
         />
@@ -39,9 +62,8 @@ export default async function PricingPage() {
           interval={plusPrice?.interval || 'month'}
           trialDays={plusPrice?.trialPeriodDays || 7}
           features={[
-            'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
+            'Everything in Base',
+            'Voice Drill Down Agent',
           ]}
           priceId={plusPrice?.id}
         />
@@ -77,18 +99,20 @@ function PricingCard({
           per user / {interval}
         </span>
       </p>
-      <ul className="space-y-4 border-t border-b border-muted-border mb-8">
+      <p className="text-4xl font-medium text-primary mb-6">
+        <form action={checkoutAction}>
+          <input type="hidden" name="priceId" value={priceId} />
+          <SubmitButton />
+        </form>
+      </p>
+      <ul className="space-y-4 mb-8">
         {features.map((feature, index) => (
-          <li key={index} className="flex items-start py-4 border-t border-muted-border">
+          <li key={index} className="flex items-center py-4">
             <Check className="h-5 w-5 text-success mr-2 mt-0.5 flex-shrink-0" />
             <span className="text-muted-foreground">{feature}</span>
           </li>
         ))}
       </ul>
-      <form action={checkoutAction}>
-        <input type="hidden" name="priceId" value={priceId} />
-        <SubmitButton />
-      </form>
     </div>
   );
 }

@@ -31,6 +31,12 @@ function UserMenu() {
     return (
       <>
         <Link
+          href="/webplayer"
+          className="text-sm font-medium text-foreground hover:text-accent-foreground"
+        >
+          Player
+        </Link>
+        <Link
           href="/pricing"
           className="text-sm font-medium text-foreground hover:text-accent-foreground"
         >

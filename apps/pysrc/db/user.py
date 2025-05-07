@@ -1,13 +1,12 @@
-from sqlalchemy import Integer, DateTime, event
+from sqlalchemy import Boolean, Integer, DateTime, event
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
 from typing import List
 from datetime import datetime
-from .base import TimestampModel
-from pyminiscraper.url import normalized_url_hash
-from pysrc.db.base import Base
+from .base import Base, TimestampModel
+from .web_page import WebPageChannel
 
 
 class User(TimestampModel):
@@ -53,7 +52,7 @@ class Channel(TimestampModel):
     description: Mapped[str] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     web_page_channel_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
-    web_page_channel: Mapped["WebPageChannel"] = relationship("WebPageChannel", back_populates="channels")        
+    web_page_channel: Mapped[WebPageChannel] = relationship("WebPageChannel", back_populates="channels")        
    
 class Station(TimestampModel):
     __tablename__ = "stations"
@@ -71,6 +70,16 @@ class Station(TimestampModel):
     admin_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[admin_user_group_id])
     listener_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[listener_user_group_id])
     channels: Mapped[List[Channel]] = relationship("Channel", back_populates="stations")
+    
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    action: Mapped[str] = mapped_column(String, not_null=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, not_null=True, default=func.now())
+    
     
     
     

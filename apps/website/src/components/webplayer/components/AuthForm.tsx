@@ -1,5 +1,5 @@
 import React, { JSX, useState } from 'react';
-import { useAuth } from '../../../lib/auth/AuthProvider';
+import { useAuth } from '../../../lib/auth/provider';
 
 export function AuthForm(): JSX.Element {
   const [email, setEmail] = useState('');

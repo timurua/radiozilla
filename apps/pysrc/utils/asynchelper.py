@@ -18,7 +18,7 @@ async def run_task_with_new_executor(func: Callable[..., T], *args: Any) -> T:
         
     return result
 
-async def run_async_in_executor(coro_func: Callable[..., Coroutine[Any, Any, T]], *args: Any, **kwargs: Any) -> [T]:
+async def run_async_in_executor(coro_func: Callable[..., Coroutine[Any, Any, T]], *args: Any, **kwargs: Any) -> T:
     """
     Run a coroutine in a ThreadPoolExecutor and return an awaitable.
     This allows the function to be used in both sync and async contexts.

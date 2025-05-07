@@ -6,9 +6,7 @@ from pysrc.utils import asynchelper
 from .base import Base
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 def create_async_db_engine(db_url: str) -> AsyncEngine:
     """Create async SQLAlchemy engine"""

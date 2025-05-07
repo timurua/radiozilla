@@ -5,7 +5,7 @@ from pysrc.db.upserter import Upserter
 from pysrc.config.rzconfig import RzConfig
 from pysrc.dfs.dfs import FRONTEND_IMAGES, WEB_IMAGES, WEB_PAGES_CONTENT, DFSClient
 from .web_page import WebImageContent, WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
-from .frontend import FrontendAudio, FrontendAudioPlay
+from .frontend import FrontendAudio
 import logging
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -246,35 +246,7 @@ class FrontendAudioService:
         ]
         return similarity_results
     
-    
-class FrontendAudioPlayService:
-    _model = None
-    
-    def __init__(self, session: AsyncSession):
-        self.session = session
-        self.logger = logging.getLogger("frontend_audio_plays_service")
 
-    async def upsert(self, frontend_audio_play: FrontendAudioPlay) -> None:
-        self.logger.info(f"Inserting frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
-        await Upserter[FrontendAudioPlay](self.session).upsert(frontend_audio_play)
-
-    async def update(self, frontend_audio_play: FrontendAudioPlay) -> None:
-        self.logger.info(f"Updating frontend audio play {(frontend_audio_play.user_id, frontend_audio_play.audio_id)}")
-        existing = await self.session.get(FrontendAudioPlay, (frontend_audio_play.user_id, frontend_audio_play.audio_id))
-        if existing is None:
-            raise ValueError(f"Frontend Audio not found for url: {normalized_url_hash}")
-        
-        existing.user_id = frontend_audio_play.user_id
-        existing.audio_id = frontend_audio_play.audio_id
-        existing.played_at = datetime.now()
-        existing.duration_seconds = max(frontend_audio_play.duration_seconds, existing.duration_seconds)        
-        await self.session.commit()
-
-    async def find_all_by_user_id(self, user_id: str) -> list[FrontendAudioPlay]:
-        stmt = select(FrontendAudioPlay).where(FrontendAudioPlay.user_id == user_id)
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
-    
     
 
 

@@ -1,10 +1,11 @@
 import React, { JSX, useState } from 'react';
-import { useAuth } from '../../../lib/auth/AuthProvider';
+import { useAuth } from '../../../lib/auth/provider';
+import { RZUserType } from '../data/model';
 
 export function AuthForm(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { user, signUpWithEmail, signInWithEmail, convertAnonToEmail, logout, isAnonymous } = useAuth();
+  const { user, signUpWithEmail, signInWithEmail, convertAnonToEmail, logout } = useAuth();
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -28,7 +29,7 @@ export function AuthForm(): JSX.Element {
     return (
       <div>
         <p>Welcome, {user.email || 'Anonymous User'}</p>
-        {isAnonymous && (
+        {user.userType === RZUserType.ANONYMOUS && (
           <form onSubmit={(e) => handleSubmit(e, 'convert')}>
             <h3>Convert to Email Account</h3>
             <input

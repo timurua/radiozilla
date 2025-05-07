@@ -1,9 +1,9 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
-import { UserProvider } from '@/lib/auth';
-import { getUser } from '@/lib/db/queries';
+import { AuthProvider } from '@/lib/auth/provider';
 import CookieConsent from '@/components/CookieConsent';
+import MobxProvider from '@/components/webplayer/state/provider';
 
 export const metadata: Metadata = {
   title: 'Radiozilla - AI Radio',
@@ -21,7 +21,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let userPromise = getUser();
 
   return (
     <html
@@ -33,7 +32,11 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/radiozilla.svg" />
       </head>
       <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
-        <UserProvider userPromise={userPromise}>{children}</UserProvider>
+        <MobxProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </MobxProvider>
         <CookieConsent />
       </body>
     </html>

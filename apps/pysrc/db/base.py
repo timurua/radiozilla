@@ -1,7 +1,6 @@
 from sqlalchemy import Column, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.dialects.postgresql import JSONB
 
 class Base(DeclarativeBase):
     pass

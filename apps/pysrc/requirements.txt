@@ -21,3 +21,4 @@ python-dateutil
 sentence_transformers
 crewai
 langchain_community
+datasketch

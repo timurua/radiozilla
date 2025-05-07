@@ -116,7 +116,7 @@ export function AuthProvider({ children }: AppProviderProps): JSX.Element {
         <SignInOrUp />
       ) : (
         children
-      )}
+      )}      
     </AuthContext.Provider>
   );
 }

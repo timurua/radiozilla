@@ -202,3 +202,4 @@ class ServiceScraperStore(ScraperCallback):
                 robots_content = web_page_content.robots_content,
                 text_chunks = web_page_content.text_chunks
             )
+        return None

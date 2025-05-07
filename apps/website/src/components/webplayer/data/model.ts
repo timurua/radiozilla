@@ -7,7 +7,7 @@ export class RZChannel {
     public imageUrl: string,
   ) {
   }
-  
+
 
   static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZChannel {
     return new RZChannel(
@@ -24,30 +24,46 @@ export enum PlayableFeedMode {
   Subscribed = "Subscribed",
 }
 
+export enum RZUserType {
+  NOBODY = "Nobody",
+  ANONYMOUS = "Anonymous",
+  USER = "User",
+}
+
 export class RZUser {
   constructor(
     public id: string,
     public name: string,
     public imageUrl: string,
     public email: string,
-    public isAnonymous: boolean,    
+    public userType: RZUserType,
   ) {
+  }
+
+  static nobody(): RZUser {
+    return new RZUser(
+      '',
+      '',
+      '',
+      '',
+      RZUserType.NOBODY,
+    );
   }
 }
 
 export class RZUserData {
   constructor(
-    public id: string|null,    
-    public displayName: string|null,
-    public email: string|null,
-    public imageURL: string|null,
-    public createdAt: Date|null,
-    public subscribedChannelIds: string[],    
+    public id: string | null,
+    public displayName: string | null,
+    public email: string | null,
+    public imageURL: string | null,
+    public createdAt: Date | null,
+    public subscribedChannelIds: string[],
     public likedAudioIds: string[],
     public playedAudioIds: string[],
     public searchHistory: string[],
-    public lastActiveAt: Date|null = null,
-  ) {    
+    public lastActiveAt: Date | null = null,
+  ) {
   }
 
   static empty(): RZUserData {
@@ -78,7 +94,7 @@ export class RZUserData {
       this.searchHistory,
       this.lastActiveAt,
     );
-  }    
+  }
 }
 
 export class RZAuthor {
@@ -90,7 +106,7 @@ export class RZAuthor {
   ) {
   }
 
-  static fromObject(obj: {name: string, description: string, imageUrl: string}, id: string): RZAuthor {
+  static fromObject(obj: { name: string, description: string, imageUrl: string }, id: string): RZAuthor {
     return new RZAuthor(
       id,
       obj.name,
@@ -110,7 +126,7 @@ export class RZSummarization {
   ) {
   }
 
-  static fromObject(obj: { length: string, tone: string, focus: string, detaileLevel: string}, id: string): RZSummarization {
+  static fromObject(obj: { length: string, tone: string, focus: string, detaileLevel: string }, id: string): RZSummarization {
     return new RZSummarization(
       id,
       obj.length,
@@ -127,7 +143,7 @@ export class RZAudio {
     public createdAt: Date,
     public name: string,
     public imageUrl: string,
-    public audioUrl: string,    
+    public audioUrl: string,
     public topics: string[],
     public author: RZAuthor,
     public channel: RZChannel,
@@ -138,7 +154,7 @@ export class RZAudio {
   ) {
   }
 
-  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string, publishedAt: Date| null }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
+  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string, publishedAt: Date | null }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object

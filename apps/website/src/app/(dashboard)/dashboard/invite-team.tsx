@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { use, useActionState } from 'react';
 import { inviteTeamMember } from '@/app/(login)/actions';
-import { useUser } from '@/lib/auth';
+import { useAuth } from '@/lib/auth/provider';
 
 type ActionState = {
   error?: string;
@@ -22,9 +22,8 @@ type ActionState = {
 };
 
 export function InviteTeamMember() {
-  const { userPromise } = useUser();
+  const { userPromise } = useAuth();
   const user = use(userPromise);
-  const isOwner = user?.role === 'owner';
   const [inviteState, inviteAction, isInvitePending] = useActionState<
     ActionState,
     FormData
@@ -47,7 +46,7 @@ export function InviteTeamMember() {
               type="email"
               placeholder="Enter email"
               required
-              disabled={!isOwner}
+              disabled={!user}
             />
           </div>
           <div>
@@ -56,7 +55,7 @@ export function InviteTeamMember() {
               defaultValue="member"
               name="role"
               className="flex space-x-4"
-              disabled={!isOwner}
+              disabled={!user}
             >
               <div className="flex items-center space-x-2 mt-2">
                 <RadioGroupItem value="member" id="member" />
@@ -77,7 +76,7 @@ export function InviteTeamMember() {
           <Button
             type="submit"
             className="bg-orange-500 hover:bg-orange-600 text-white"
-            disabled={isInvitePending || !isOwner}
+            disabled={isInvitePending || !user}
           >
             {isInvitePending ? (
               <>
@@ -93,7 +92,7 @@ export function InviteTeamMember() {
           </Button>
         </form>
       </CardContent>
-      {!isOwner && (
+      {!user && (
         <CardFooter>
           <p className="text-sm text-muted-foreground">
             You must be a team owner to invite new members.

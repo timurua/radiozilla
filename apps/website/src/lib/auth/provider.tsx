@@ -13,26 +13,32 @@ import {
   User
 } from 'firebase/auth';
 import { auth } from '../../components/webplayer/firebase';
-import { authStore } from '../../components/webplayer/state/auth';
 import { userDataStore } from '../../components/webplayer/state/userData';
 import logger from '../../components/webplayer/utils/logger';
-import NoPlayerScreen from '../../components/webplayer/components/NoPlayerScreen';
 import Spinner from '../../components/webplayer/components/Spinner';
-import { RZUser, RZUserData } from '../../components/webplayer/data/model';
+import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
 import { getUserData } from '../../components/webplayer/data/client';
-import { CookieConsent } from '../components/CookieConsent';
+import CookieConsent from '@/components/CookieConsent';
+import LocalStorage from '@/components/webplayer/utils/LocalStorage';
+
+export interface SignIn {
+  success: boolean;
+  error?: string;
+}
+
+export interface SignUp {
+  success: boolean;
+  error?: string;
+}
 
 export interface AuthContextType {
   user: RZUser | null;
-  error: string | null;
-  loading: boolean;
-  signInAnon: () => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
+  userPromise: Promise<RZUser>;
+  signInAnon: () => Promise<SignIn>;
+  signUpWithEmail: (email: string, password: string) => Promise<SignUp>;
+  signInWithEmail: (email: string, password: string) => Promise<SignIn>;
   convertAnonToEmail: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  isAnonymous: boolean;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,21 +47,46 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider = observer(function AuthProvider({ children }: AppProviderProps): JSX.Element {
-  const [error, setError] = useState<string | null>(null);
-  const user = authStore.user;
-  const userLoading = authStore.userLoading;
-  const cookieConsent = authStore.cookieConsent;
-  const isOnline = authStore.isOnline;
+export const AuthProvider = async ({ children }: AppProviderProps): Promise<JSX.Element> => {
+  const [user, setUser] = useState<RZUser | null>(null);
+  const [cookieConsent, setCookieConsent] = useState<boolean>(
+    LocalStorage.getCookieConsent()
+  );
+  const [userPromise, setUserPromise] = useState<Promise<RZUser>>(
+    Promise.reject(new Error('User promise not initialized'))
+  );
+  const [userPromiseResolve, setUserPromiseResolve] = useState<(user: RZUser) => void>(
+    () => {
+      throw new Error('User promise not initialized');
+    }
+  );
+
+  function startNewUserPromise(): Promise<RZUser> {
+    const newPromise = new Promise<RZUser>((resolve) => {
+      setUserPromiseResolve(resolve);
+    });
+    setUserPromise(newPromise);
+    return newPromise;
+  }
 
   useEffect(() => {
+    startNewUserPromise();
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      authStore.setUser(user as any);
-      authStore.setUserLoading(false);
       if (user === null) {
+        userPromiseResolve(RZUser.nobody());
+        setUser(RZUser.nobody());
         userDataStore.setUserData(RZUserData.empty());
         return;
       }
+      setUser(
+        new RZUser(
+          user.uid,
+          user.displayName || '',
+          user.photoURL || '',
+          user.email || '',
+          RZUserType.USER)
+      );
+
       const updateData = async () => {
         const existingUserData = await getUserData(user.uid);
         existingUserData.id = user.uid;
@@ -72,111 +103,93 @@ export const AuthProvider = observer(function AuthProvider({ children }: AppProv
   }, []);
 
   const checkCookieConsent = (): void => {
+    const cookieConsent = LocalStorage.getCookieConsent();
     logger.debug(`Checking cookie consent, value: ${cookieConsent}`);
     if (!cookieConsent) {
       throw new Error('Please accept necessary cookies to continue');
     }
   };
 
-  const signInAnon = async (): Promise<void> => {
+  const signInAnon = async (): Promise<SignIn> => {
     try {
       checkCookieConsent();
-      setError(null);
-      await signInAnonymously(auth);
+      startNewUserPromise();
+      const result = await signInAnonymously(auth);
+      return {
+        success: true
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string): Promise<void> => {
+  const signUpWithEmail = async (email: string, password: string): Promise<SignUp> => {
     try {
       checkCookieConsent();
-      setError(null);
-      await createUserWithEmailAndPassword(auth, email, password);
+      startNewUserPromise();
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      return {
+        success: true
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
-  const signInWithEmail = async (email: string, password: string): Promise<void> => {
+  const signInWithEmail = async (email: string, password: string): Promise<SignIn> => {
     try {
       checkCookieConsent();
-      setError(null);
-      await signInWithEmailAndPassword(auth, email, password);
+      startNewUserPromise();
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return {
+        success: true
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
   const convertAnonToEmail = async (email: string, password: string): Promise<void> => {
     try {
       checkCookieConsent();
-      setError(null);
       const credential = EmailAuthProvider.credential(email, password);
       if (auth.currentUser) {
         await linkWithCredential(auth.currentUser, credential);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      setError(null);
+      startNewUserPromise();
       await signOut(auth);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
-  useEffect(() => {
-    if (!cookieConsent) {
-      return;
-    }
-    if (userLoading) {
-      return;
-    }
-    if (!isOnline) {
-      return;
-    }
-    if (user === null) {
-      logger.debug('No user found, signing in anonymously');
-      signInAnon();
-      return;
-    }
-
-  }, [userLoading, user, cookieConsent, isOnline, signInAnon]);
-
   const value: AuthContextType = {
     user,
-    error,
-    loading: userLoading,
+    userPromise,
     signInAnon,
     signUpWithEmail,
     signInWithEmail,
     convertAnonToEmail,
     logout,
-    isAnonymous: user?.isAnonymous ?? false,
-    isAuthenticated: !!user,
   };
 
   return (
     <AuthContext.Provider value={value}>
       {!cookieConsent ? (
-        <NoPlayerScreen>
-          <CookieConsent />
-        </NoPlayerScreen>
-      ) : userLoading ? (
-        <NoPlayerScreen>
-          <Spinner text="Loading User" />
-        </NoPlayerScreen>
+        <CookieConsent />
       ) : (
         children
       )}
     </AuthContext.Provider>
   );
-});
+};
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);

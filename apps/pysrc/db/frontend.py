@@ -84,4 +84,18 @@ def frontend_audio_set_content_hash(target: FrontendAudio, value, oldvalue, init
 def frontend_audio_ensure_hash(mapper, connection, target: FrontendAudio):
     if target.normalized_url:
         target.normalized_url_hash = normalized_url_hash(target.normalized_url)
+        
 
+
+class FrontendUser(TimestampModel):
+    __tablename__ = "frontend_users"
+    
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    email: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    played_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
+    liked_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
+    search_history: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
+    subscribed_channel_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
+    last_active_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)

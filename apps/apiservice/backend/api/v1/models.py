@@ -63,7 +63,7 @@ class FAFrontendAudio(BaseModel):
     channel_id: str|None
     published_at: datetime|None
     uploaded_at: datetime|None
-    duration: int|None
+    duration_seconds: int|None
     topics: list[str]|None
     similarity_score: float|None = None
 
@@ -72,12 +72,6 @@ class FAFrontendAudio(BaseModel):
 class FAFrontendAudioSearchResult(BaseModel):
     normalized_url_hash: str
     similarity_score: float
-
-class FAFrontendAudioPlay(BaseModel):
-    user_id: str
-    audio_id: str
-    played_at: datetime
-    duration_seconds: int
     
 class RzAuthor(BaseModel):
     id: str

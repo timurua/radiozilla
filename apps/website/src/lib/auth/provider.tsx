@@ -47,33 +47,44 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider = async ({ children }: AppProviderProps): Promise<JSX.Element> => {
+type UserPromiseState = {
+  userPromise: Promise<RZUser>;
+  userPromiseResolve: (user: RZUser) => void;
+}
+
+export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
   const [user, setUser] = useState<RZUser | null>(null);
   const [cookieConsent, setCookieConsent] = useState<boolean>(
     LocalStorage.getCookieConsent()
   );
-  const [userPromise, setUserPromise] = useState<Promise<RZUser>>(
-    Promise.reject(new Error('User promise not initialized'))
-  );
-  const [userPromiseResolve, setUserPromiseResolve] = useState<(user: RZUser) => void>(
-    () => {
-      throw new Error('User promise not initialized');
-    }
-  );
 
-  function startNewUserPromise(): Promise<RZUser> {
-    const newPromise = new Promise<RZUser>((resolve) => {
-      setUserPromiseResolve(resolve);
+  function createNewUserPromise(): UserPromiseState {
+    let userPromiseResolve: (user: RZUser) => void = () => { };
+    const userPromise = new Promise<RZUser>((resolve) => {
+      userPromiseResolve = resolve;
     });
-    setUserPromise(newPromise);
-    return newPromise;
+
+    return {
+      userPromise,
+      userPromiseResolve
+    }
+  }
+
+  const [userPromiseState, setUserPromiseState] = useState<UserPromiseState>(() => {
+    return {
+      userPromise: Promise.resolve(RZUser.nobody()),
+      userPromiseResolve: () => { }
+    };
+  });
+
+  function startNewUserPromise(): void {
+    setUserPromiseState(createNewUserPromise());
   }
 
   useEffect(() => {
-    startNewUserPromise();
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
       if (user === null) {
-        userPromiseResolve(RZUser.nobody());
+        userPromiseState.userPromiseResolve(RZUser.nobody());
         setUser(RZUser.nobody());
         userDataStore.setUserData(RZUserData.empty());
         return;
@@ -172,7 +183,7 @@ export const AuthProvider = async ({ children }: AppProviderProps): Promise<JSX.
 
   const value: AuthContextType = {
     user,
-    userPromise,
+    userPromise: userPromiseState.userPromise,
     signInAnon,
     signUpWithEmail,
     signInWithEmail,

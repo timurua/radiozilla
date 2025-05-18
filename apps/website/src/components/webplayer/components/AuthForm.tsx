@@ -5,7 +5,7 @@ import { RZUserType } from '../data/model';
 export function AuthForm(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { user, signUpWithEmail, signInWithEmail, convertAnonToEmail, logout } = useAuth();
+  const { user, signUpWithEmail, signInWithEmail, convertAnonToEmail, signOut: logout } = useAuth();
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -29,7 +29,7 @@ export function AuthForm(): JSX.Element {
     return (
       <div>
         <p>Welcome, {user.email || 'Anonymous User'}</p>
-        {user.userType === RZUserType.ANONYMOUS && (
+        {user.userType === RZUserType.AUTH_ANONYMOUS && (
           <form onSubmit={(e) => handleSubmit(e, 'convert')}>
             <h3>Convert to Email Account</h3>
             <input

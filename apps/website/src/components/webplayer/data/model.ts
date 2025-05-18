@@ -25,39 +25,48 @@ export enum PlayableFeedMode {
 }
 
 export enum RZUserType {
-  NOBODY = "Nobody",
-  ANONYMOUS = "Anonymous",
-  USER = "User",
+  NONE = "None",
+  AUTH_ANONYMOUS = "AuthAnonymous",
+  AUTH_USER = "AuthUser",
+  WAITING_EMAIL_VERIFICATION = "WaitingEmailVerification",
 }
 
 export class RZUser {
   constructor(
-    public id: string,
-    public name: string,
-    public imageUrl: string,
-    public email: string,
+    public id: number,
+    public firebaseUserId: string,
+    public name: string | null,
+    public description: string | null,
+    public imageUrl: string | null,
+    public email: string | null,
+    public is_enabled: boolean,
+    public createdAt: Date,
+    public updatedAt: Date,
     public userType: RZUserType,
   ) {
   }
 
   static nobody(): RZUser {
     return new RZUser(
+      0,
       '',
       '',
       '',
       '',
-      RZUserType.NOBODY,
+      '',
+      true,
+      new Date(),
+      new Date(),
+      RZUserType.NONE,
     );
   }
 }
 
 export class RZUserData {
   constructor(
-    public id: string | null,
-    public displayName: string | null,
-    public email: string | null,
-    public imageURL: string | null,
-    public createdAt: Date | null,
+    public id: number,
+    public createdAt: Date,
+    public updatedAt: Date,
     public subscribedChannelIds: string[],
     public likedAudioIds: string[],
     public playedAudioIds: string[],

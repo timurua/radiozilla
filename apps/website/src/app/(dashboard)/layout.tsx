@@ -11,14 +11,16 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/lib/auth/provider';
-import { signOut } from '@/app/(login)/actions';
 import { useRouter } from 'next/navigation';
+import { RZUserType } from '@/components/webplayer/data/model';
+import { useAuth } from '@/lib/auth/provider';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+
+  const { signOut } = useAuth();
 
   async function handleSignOut() {
     await signOut();
@@ -26,7 +28,7 @@ function UserMenu() {
     router.push('/');
   }
 
-  if (!user) {
+  if (user.userType !== RZUserType.AUTH_USER) {
     return (
       <>
         <Link

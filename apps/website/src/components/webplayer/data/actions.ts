@@ -12,10 +12,11 @@ import {
     frontendAuthors,
     frontendChannels,
     frontendUsers,
-    NewFrontendUser
+    NewFrontendUser,
+    users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
-import { FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO } from './interfaces';
+import { FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -77,93 +78,90 @@ export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> 
     }
 }
 
+export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
+    user.userId = user.userId || 0;
+    const dbUsers = await db.select({
+        userId: users.id,
+        firebaseUserId: users.firebaseUserId,
+        name: users.name,
+        description: users.description,
+        email: users.email,
+        imageUrl: users.imageUrl,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        is_enabled: users.is_enabled
+    }).from(users).where(eq(users.firebaseUserId, user.firebaseUserId)).limit(1);
 
-export const getUserDataAction = async (id: string): Promise<FrontendUserDTO> => {
-
-    if (!id) {
-        return {
-            userId: id,
-            displayName: null,
-            email: null,
-            imageUrl: null,
-            createdAt: null,
-            playedAudioIds: [],
-            likedAudioIds: [],
-            searchHistory: [],
-            subscribedChannelIds: []
-        };
+    if (dbUsers.length > 0) {
+        return dbUsers[0];
     }
 
-    const dbUsers = await db.select({
+    const insertResult = await db.insert(users).values({
+        firebaseUserId: user.firebaseUserId,
+        name: user.name,
+        description: user.description,
+        email: user.email,
+        imageUrl: user.imageUrl,
+        is_enabled: user.is_enabled,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    }).returning({
+        userId: users.id,
+        firebaseUserId: users.firebaseUserId,
+        name: users.name,
+        description: users.description,
+        email: users.email,
+        imageUrl: users.imageUrl,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        is_enabled: users.is_enabled
+    });
+    return insertResult[0];
+}
+
+
+export const upsertFrontendUserAction = async (userData: FrontendUserDTO): Promise<FrontendUserDTO> => {
+
+    const dbFrontendUsers = await db.select({
         userId: frontendUsers.userId,
-        displayName: frontendUsers.displayName,
-        email: frontendUsers.email,
-        imageUrl: frontendUsers.imageUrl,
         createdAt: frontendUsers.createdAt,
+        updatedAt: frontendUsers.updatedAt,
         playedAudioIds: frontendUsers.playedAudioIds,
         likedAudioIds: frontendUsers.likedAudioIds,
         searchHistory: frontendUsers.searchHistory,
         subscribedChannelIds: frontendUsers.subscribedChannelIds
-    }).from(frontendUsers).where(eq(frontendUsers.userId, id)).limit(1);
+    }).from(frontendUsers).where(eq(frontendUsers.userId, userData.userId)).limit(1);
 
 
-    if (dbUsers.length > 0) {
+    if (dbFrontendUsers.length > 0) {
         return {
-            userId: id,
-            displayName: dbUsers[0].displayName || null,
-            email: dbUsers[0].email || null,
-            imageUrl: dbUsers[0].imageUrl || null,
-            createdAt: dbUsers[0].createdAt,
-            playedAudioIds: Array.isArray(dbUsers[0].playedAudioIds) ? dbUsers[0].playedAudioIds : [],
-            likedAudioIds: Array.isArray(dbUsers[0].likedAudioIds) ? dbUsers[0].likedAudioIds : [],
-            searchHistory: Array.isArray(dbUsers[0].searchHistory) ? dbUsers[0].searchHistory : [],
-            subscribedChannelIds: Array.isArray(dbUsers[0].subscribedChannelIds) ? dbUsers[0].subscribedChannelIds : []
+            userId: dbFrontendUsers[0].userId,
+            createdAt: dbFrontendUsers[0].createdAt,
+            updatedAt: dbFrontendUsers[0].updatedAt,
+            playedAudioIds: dbFrontendUsers[0].playedAudioIds,
+            likedAudioIds: dbFrontendUsers[0].likedAudioIds,
+            searchHistory: dbFrontendUsers[0].searchHistory,
+            subscribedChannelIds: dbFrontendUsers[0].subscribedChannelIds
         };
-    } else {
-        logger.info(`No user found with ID: ${id}`);
-        return {
-            userId: id,
-            displayName: null,
-            email: null,
-            imageUrl: null,
-            createdAt: null,
-            playedAudioIds: [],
-            likedAudioIds: [],
-            searchHistory: [],
-            subscribedChannelIds: []
-        };
-
     }
-}
-
-export const saveUserDataAction = async (userData: FrontendUserDTO) => {
-    const newUser: NewFrontendUser = {
+    const insertResult = await db.insert(frontendUsers).values({
         userId: userData.userId,
-        displayName: userData.displayName || null,
-        email: userData.email || null,
-        imageUrl: userData.imageUrl || null,
+        playedAudioIds: userData.playedAudioIds,
+        likedAudioIds: userData.likedAudioIds,
+        searchHistory: userData.searchHistory,
+        subscribedChannelIds: userData.subscribedChannelIds,
         createdAt: userData.createdAt,
-        playedAudioIds: userData.playedAudioIds || [],
-        likedAudioIds: userData.likedAudioIds || [],
-        searchHistory: userData.searchHistory || [],
-        subscribedChannelIds: userData.subscribedChannelIds || []
-    };
-    await db
-        .insert(frontendUsers)
-        .values(newUser)
-        .onConflictDoUpdate({
-            target: frontendUsers.userId,
-            set: {
-                displayName: userData.displayName || null,
-                email: userData.email || null,
-                imageUrl: userData.imageUrl || null,
-                createdAt: userData.createdAt,
-                playedAudioIds: userData.playedAudioIds || [],
-                likedAudioIds: userData.likedAudioIds || [],
-                searchHistory: userData.searchHistory || [],
-                subscribedChannelIds: userData.subscribedChannelIds || []
-            }
-        });
+        updatedAt: userData.updatedAt,
+    }).returning({
+        userId: frontendUsers.userId,
+        createdAt: frontendUsers.createdAt,
+        updatedAt: frontendUsers.updatedAt,
+        playedAudioIds: frontendUsers.playedAudioIds,
+        likedAudioIds: frontendUsers.likedAudioIds,
+        searchHistory: frontendUsers.searchHistory,
+        subscribedChannelIds: frontendUsers.subscribedChannelIds,
+    });
+    return insertResult[0];
 
 }
 

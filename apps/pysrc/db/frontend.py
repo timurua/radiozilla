@@ -1,13 +1,42 @@
-from sqlalchemy import Integer, DateTime, event
+from sqlalchemy import Boolean, Integer, DateTime, event
 from sqlalchemy.sql import func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String
 from typing import List
 from datetime import datetime
+
+from pysrc.db.user import User, UserGroup
+from pysrc.db.web_page import WebPageChannel
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash
 from pysrc.db.base import Base
+
+class Channel(TimestampModel):
+    __tablename__ = "channels"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    web_page_channel_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    web_page_channel: Mapped[WebPageChannel] = relationship("WebPageChannel", back_populates="channels")
+   
+class Station(TimestampModel):
+    __tablename__ = "stations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    is_private: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
+    is_live: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
+    admin_user_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    admin_user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    listener_user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    admin_user: Mapped[User] = relationship("User", foreign_keys=[admin_user_id])
+    admin_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[admin_user_group_id])
+    listener_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[listener_user_group_id])
+    channels: Mapped[List[Channel]] = relationship("Channel", back_populates="stations")
 
 
 class FrontendAuthor(TimestampModel):
@@ -88,14 +117,12 @@ def frontend_audio_ensure_hash(mapper, connection, target: FrontendAudio):
 
 
 class FrontendUser(TimestampModel):
-    __tablename__ = "frontend_users"
-    
+    __tablename__ = "frontend_users"    
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    display_name: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    email: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
     played_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
     liked_audio_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
     search_history: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
     subscribed_channel_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)
     last_active_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    user_station_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+

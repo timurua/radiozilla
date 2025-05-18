@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { saveUserData } from '../data/client';
+import { upsertFrontendUser } from '../data/client';
 import { RZUserData } from "../data/model";
 
 // MobX store for user data
@@ -13,7 +13,7 @@ class UserDataStore {
   setUserData(newData: RZUserData) {
     if (JSON.stringify(newData) !== JSON.stringify(this.userData)) {
       this.userData = newData;
-      saveUserData(newData);
+      upsertFrontendUser(newData);
     }
   }
 
@@ -28,7 +28,7 @@ class UserDataStore {
   addPlayedAudioId(audioId: string) {
     if (!this.userData.playedAudioIds.includes(audioId)) {
       this.userData.playedAudioIds.push(audioId);
-      saveUserData(this.userData);
+      this.setUserData(this.userData);
     }
   }
 }

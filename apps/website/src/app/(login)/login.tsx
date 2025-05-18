@@ -1,12 +1,13 @@
 'use client';
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CircleIcon, Loader2 } from 'lucide-react';
+import { RZUserType } from '@/components/webplayer/data/model';
 import { useAuth } from '@/lib/auth/provider';
+import { CircleIcon, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export enum LoginMode {
@@ -21,7 +22,7 @@ export enum LoginState {
   ERROR = 'error',
 }
 
-export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
+export function Login({ mode }: { mode: LoginMode }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
   const priceId = searchParams.get('priceId');
@@ -30,18 +31,21 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
   const [state, setState] = useState<LoginState>(LoginState.IDLE);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, signInWithEmail, signUpWithEmail, sendEmailVerification } = useAuth();
+  const router = useRouter();
+
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  };
+
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+  };
 
   const handleSubmitSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate form
-    if (password !== confirmPassword) {
-      setState(LoginState.ERROR);
-      return setError('Passwords do not match');
-    }
-
     if (password.length < 6) {
       setState(LoginState.ERROR);
       return setError('Password must be at least 6 characters');
@@ -54,7 +58,6 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
       // Clear form
       setEmail('');
       setPassword('');
-      setConfirmPassword('');
     } catch (err: any) {
       setState(LoginState.ERROR)
       if (err.code === 'auth/email-already-in-use') {
@@ -79,6 +82,47 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
       setError('Invalid credentials. Please try again.');
     }
   };
+
+  if (user.userType === RZUserType.AUTH_USER) {
+    router.push('/dashboard');
+    return null;
+  }
+
+  if (user.userType === RZUserType.WAITING_EMAIL_VERIFICATION) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="flex justify-center">
+            <CircleIcon className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
+            Verify your email address
+          </h2>
+          <p className="text-center text-sm text-foreground-light">
+            A verification email has been sent to your email address. Please check your email and follow the instructions to verify your email address.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Button
+              onClick={async () => {
+                try {
+                  setState(LoginState.LOADING);
+                  await sendEmailVerification();
+                  setState(LoginState.SUCCESS);
+                } catch (err) {
+                  setState(LoginState.ERROR);
+                  setError(err instanceof Error ? err.message : 'An unknown error occurred');
+                }
+              }}
+              variant="outline"
+            >
+              Resend verification email
+            </Button>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
@@ -116,6 +160,7 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
                 maxLength={50}
                 className="appearance-none rounded-full relative block w-full px-3 py-2 border border-input placeholder-muted-foreground text-foreground focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Enter your email"
+                onChange={handleEmailChange}
               />
             </div>
           </div>
@@ -133,7 +178,7 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
                 name="password"
                 type="password"
                 autoComplete={
-                  mode === 'signin' ? 'current-password' : 'new-password'
+                  mode === LoginMode.SIGN_IN ? 'current-password' : 'new-password'
                 }
                 defaultValue={password}
                 required
@@ -141,6 +186,7 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
                 maxLength={100}
                 className="appearance-none rounded-full relative block w-full px-3 py-2 border border-input placeholder-muted-foreground text-foreground focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Enter your password"
+                onChange={handlePasswordChange}
               />
             </div>
           </div>
@@ -160,7 +206,7 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   Loading...
                 </>
-              ) : mode === 'signin' ? (
+              ) : mode === LoginMode.SIGN_IN ? (
                 'Sign in'
               ) : (
                 'Sign up'
@@ -185,11 +231,11 @@ export function Login({ mode = LoginMode.SIGN_IN }: { mode?: LoginMode }) {
 
           <div className="mt-6">
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${redirect ? `?redirect=${redirect}` : ''
+              href={`${mode === LoginMode.SIGN_IN ? '/sign-up' : '/sign-in'}${redirect ? `?redirect=${redirect}` : ''
                 }${priceId ? `&priceId=${priceId}` : ''}`}
               className="w-full flex justify-center py-2 px-4 border border-input rounded-full shadow-sm text-sm font-medium text-foreground bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              {mode === 'signin'
+              {mode === LoginMode.SIGN_IN
                 ? 'Create an account'
                 : 'Sign in to existing account'}
             </Link>

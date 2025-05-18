@@ -1,25 +1,24 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, JSX } from 'react';
-import { observer } from "mobx-react-lite";
+import CookieConsent from '@/components/CookieConsent';
+import { upsertUser } from '@/components/webplayer/data/client';
+import LocalStorage from '@/components/webplayer/utils/LocalStorage';
 import {
-  signInAnonymously,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  linkWithCredential,
   EmailAuthProvider,
-  User
+  linkWithCredential,
+  onAuthStateChanged,
+  signInAnonymously,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  User,
+  sendEmailVerification as sendEmailVerificationFirebase
 } from 'firebase/auth';
+import { createContext, JSX, ReactNode, useContext, useEffect, useState } from 'react';
+import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
 import { auth } from '../../components/webplayer/firebase';
 import { userDataStore } from '../../components/webplayer/state/userData';
 import logger from '../../components/webplayer/utils/logger';
-import Spinner from '../../components/webplayer/components/Spinner';
-import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
-import { getUserData } from '../../components/webplayer/data/client';
-import CookieConsent from '@/components/CookieConsent';
-import LocalStorage from '@/components/webplayer/utils/LocalStorage';
 
 export interface SignIn {
   success: boolean;
@@ -32,13 +31,14 @@ export interface SignUp {
 }
 
 export interface AuthContextType {
-  user: RZUser | null;
+  user: RZUser;
   userPromise: Promise<RZUser>;
   signInAnon: () => Promise<SignIn>;
   signUpWithEmail: (email: string, password: string) => Promise<SignUp>;
   signInWithEmail: (email: string, password: string) => Promise<SignIn>;
+  sendEmailVerification: () => Promise<void>;
   convertAnonToEmail: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +53,7 @@ type UserPromiseState = {
 }
 
 export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
-  const [user, setUser] = useState<RZUser | null>(null);
+  const [user, setUser] = useState<RZUser>(RZUser.nobody());
   const [cookieConsent, setCookieConsent] = useState<boolean>(
     LocalStorage.getCookieConsent()
   );
@@ -81,33 +81,37 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     setUserPromiseState(createNewUserPromise());
   }
 
+  function setUserAndPromise(user: RZUser): void {
+    setUser(user);
+    userPromiseState.userPromiseResolve(user);
+  }
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (user === null) {
-        userPromiseState.userPromiseResolve(RZUser.nobody());
-        setUser(RZUser.nobody());
+        setUserAndPromise(RZUser.nobody());
         userDataStore.setUserData(RZUserData.empty());
         return;
       }
-      setUser(
-        new RZUser(
-          user.uid,
-          user.displayName || '',
-          user.photoURL || '',
-          user.email || '',
-          RZUserType.USER)
-      );
+      const rzUserType = user.isAnonymous ?
+        RZUserType.AUTH_ANONYMOUS :
+        (user.emailVerified ?
+          RZUserType.AUTH_USER :
+          RZUserType.WAITING_EMAIL_VERIFICATION);
+      const rzUser = new RZUser(
+        0,
+        user.uid,
+        user.displayName || '',
+        "",
+        user.photoURL || '',
+        user.email || '',
+        true,
+        new Date(),
+        new Date(),
+        rzUserType);
 
-      const updateData = async () => {
-        const existingUserData = await getUserData(user.uid);
-        existingUserData.id = user.uid;
-        existingUserData.displayName = user.displayName || null;
-        existingUserData.email = user.email || null;
-        existingUserData.imageURL = user.photoURL || null;
-        existingUserData.createdAt = user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
-        userDataStore.setUserData(existingUserData);
-      };
-      updateData();
+      const existingUser = await upsertUser(rzUser);
+      setUserAndPromise(existingUser);
     });
 
     return () => unsubscribe();
@@ -139,6 +143,7 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
       checkCookieConsent();
       startNewUserPromise();
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerificationFirebase(result.user);
       return {
         success: true
       };
@@ -160,6 +165,15 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     }
   };
 
+  const sendEmailVerification = async (): Promise<void> => {
+    try {
+      checkCookieConsent();
+      await sendEmailVerificationFirebase(auth.currentUser!);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
   const convertAnonToEmail = async (email: string, password: string): Promise<void> => {
     try {
       checkCookieConsent();
@@ -172,10 +186,10 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const signOut = async (): Promise<void> => {
     try {
       startNewUserPromise();
-      await signOut(auth);
+      await firebaseSignOut(auth);
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
@@ -187,8 +201,9 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     signInAnon,
     signUpWithEmail,
     signInWithEmail,
+    sendEmailVerification,
     convertAnonToEmail,
-    logout,
+    signOut: signOut,
   };
 
   return (

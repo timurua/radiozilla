@@ -9,125 +9,13 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 100 }),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
-  role: varchar('role', { length: 20 }).notNull().default('member'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at'),
-});
-
-export const teams = pgTable('teams', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  stripeCustomerId: text('stripe_customer_id').unique(),
-  stripeSubscriptionId: text('stripe_subscription_id').unique(),
-  stripeProductId: text('stripe_product_id'),
-  planName: varchar('plan_name', { length: 50 }),
-  subscriptionStatus: varchar('subscription_status', { length: 20 }),
-});
-
-export const teamMembers = pgTable('team_members', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id),
-  teamId: integer('team_id')
-    .notNull()
-    .references(() => teams.id),
-  role: varchar('role', { length: 50 }).notNull(),
-  joinedAt: timestamp('joined_at').notNull().defaultNow(),
-});
-
-export const activityLogs = pgTable('activity_logs', {
-  id: serial('id').primaryKey(),
-  teamId: integer('team_id')
-    .notNull()
-    .references(() => teams.id),
-  userId: integer('user_id').references(() => users.id),
-  action: text('action').notNull(),
-  timestamp: timestamp('timestamp').notNull().defaultNow(),
-  ipAddress: varchar('ip_address', { length: 45 }),
-});
-
-export const invitations = pgTable('invitations', {
-  id: serial('id').primaryKey(),
-  teamId: integer('team_id')
-    .notNull()
-    .references(() => teams.id),
-  email: varchar('email', { length: 255 }).notNull(),
-  role: varchar('role', { length: 50 }).notNull(),
-  invitedBy: integer('invited_by')
-    .notNull()
-    .references(() => users.id),
-  invitedAt: timestamp('invited_at').notNull().defaultNow(),
-  status: varchar('status', { length: 20 }).notNull().default('pending'),
-});
-
-export const teamsRelations = relations(teams, ({ many }) => ({
-  teamMembers: many(teamMembers),
-  activityLogs: many(activityLogs),
-  invitations: many(invitations),
-}));
-
-export const usersRelations = relations(users, ({ many }) => ({
-  teamMembers: many(teamMembers),
-  invitationsSent: many(invitations),
-}));
-
-export const invitationsRelations = relations(invitations, ({ one }) => ({
-  team: one(teams, {
-    fields: [invitations.teamId],
-    references: [teams.id],
-  }),
-  invitedBy: one(users, {
-    fields: [invitations.invitedBy],
-    references: [users.id],
-  }),
-}));
-
-export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
-  user: one(users, {
-    fields: [teamMembers.userId],
-    references: [users.id],
-  }),
-  team: one(teams, {
-    fields: [teamMembers.teamId],
-    references: [teams.id],
-  }),
-}));
-
-export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
-  team: one(teams, {
-    fields: [activityLogs.teamId],
-    references: [teams.id],
-  }),
-  user: one(users, {
-    fields: [activityLogs.userId],
-    references: [users.id],
-  }),
-}));
-
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type Team = typeof teams.$inferSelect;
-export type NewTeam = typeof teams.$inferInsert;
-export type TeamMember = typeof teamMembers.$inferSelect;
-export type NewTeamMember = typeof teamMembers.$inferInsert;
-export type ActivityLog = typeof activityLogs.$inferSelect;
-export type NewActivityLog = typeof activityLogs.$inferInsert;
-export type Invitation = typeof invitations.$inferSelect;
-export type NewInvitation = typeof invitations.$inferInsert;
-export type TeamDataWithMembers = Team & {
-  teamMembers: (TeamMember & {
-    user: Pick<User, 'id' | 'name' | 'email'>;
-  })[];
-};
+import {
+  boolean,
+  primaryKey,
+  json
+} from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 export const frontendAuthors = pgTable('frontend_authors', {
   normalizedUrlHash: varchar('normalized_url_hash', { length: 32 }).primaryKey(),
@@ -192,17 +80,190 @@ export enum ActivityType {
 }
 
 export const frontendUsers = pgTable('frontend_users', {
-  userId: varchar('user_id', { length: 32 }).primaryKey(),
+  userId: serial('user_id').primaryKey(),
   displayName: varchar('display_name'),
   email: varchar('email'),
   imageUrl: varchar('image_url'),
-  createdAt: timestamp('created_at'),
-  updatedAt: timestamp('updated_at'),
-  playedAudioIds: jsonb("played_audio_ids").default([]),
-  likedAudioIds: jsonb("liked_audio_ids").default([]),
-  searchHistory: jsonb("search_history").default([]),
-  subscribedChannelIds: jsonb("subscribed_channel_ids").default([]),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  playedAudioIds: jsonb("played_audio_ids").array().default([]).notNull().$type<string[]>(),
+  likedAudioIds: jsonb("liked_audio_ids").array().default([]).notNull().$type<string[]>(),
+  searchHistory: jsonb("search_history").array().default([]).notNull().$type<string[]>(),
+  subscribedChannelIds: jsonb("subscribed_channel_ids").array().default([]).notNull().$type<string[]>(),
 });
 
 export type FrontendUser = typeof frontendUsers.$inferSelect;
 export type NewFrontendUser = typeof frontendUsers.$inferInsert;
+
+
+// Users Table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  firebaseUserId: varchar("firebase_user_id").notNull().unique(),
+  name: varchar("name"),
+  description: text("description"),
+  email: varchar("email"),
+  imageUrl: varchar("image_url"),
+  is_enabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User Groups Table
+export const userGroups = pgTable("user_groups", {
+  id: serial("id").primaryKey(),
+  name: varchar("name"),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User User Groups (Junction Table)
+export const userUserGroups = pgTable("user_user_groups", {
+  userId: integer("user_id").notNull().references(() => users.id),
+  userGroupId: integer("user_group_id").notNull().references(() => userGroups.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    pk: primaryKey({ columns: [table.userId, table.userGroupId] })
+  };
+});
+
+// User Group Invitations Table
+export const userGroupInvitations = pgTable("user_group_invitations", {
+  id: serial("id").primaryKey(),
+  userGroupId: integer("user_group_id").references(() => userGroups.id),
+  enviteeEmail: varchar("envitee_email"),
+  enviteeId: integer("envitee_id"),
+  role: varchar("role"),
+  invitedBy: integer("invited_by").references(() => users.id),
+  invitedAt: timestamp("invited_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Web Page Channel is mentioned but not defined in the provided code
+// We'll define a placeholder for it
+export const webPageChannels = pgTable("web_page_channels", {
+  id: serial("id").primaryKey(),
+  // Other fields would be defined here
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Channels Table
+export const channels = pgTable("channels", {
+  id: serial("id").primaryKey(),
+  name: varchar("name"),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  webPageChannelId: integer("web_page_channel_id").references(() => webPageChannels.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Stations Table
+export const stations = pgTable("stations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name"),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  isPrivate: boolean("is_private").default(false),
+  isLive: boolean("is_live").default(true),
+  adminUserId: integer("admin_user_id").references(() => users.id),
+  adminUserGroupId: integer("admin_user_group_id").references(() => userGroups.id),
+  listenerUserGroupId: integer("listener_user_group_id").references(() => userGroups.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Activity Logs Table
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  userGroupId: integer("user_group_id").references(() => userGroups.id),
+  userId: integer("user_id").references(() => users.id),
+  action: varchar("action").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// Define Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  userGroups: many(userUserGroups),
+}));
+
+export const userGroupsRelations = relations(userGroups, ({ many }) => ({
+  users: many(userUserGroups),
+}));
+
+export const userUserGroupsRelations = relations(userUserGroups, ({ one }) => ({
+  user: one(users, {
+    fields: [userUserGroups.userId],
+    references: [users.id],
+  }),
+  userGroup: one(userGroups, {
+    fields: [userUserGroups.userGroupId],
+    references: [userGroups.id],
+  }),
+}));
+
+export const webPageChannelsRelations = relations(webPageChannels, ({ many }) => ({
+  channels: many(channels),
+}));
+
+export const channelsRelations = relations(channels, ({ one, many }) => ({
+  webPageChannel: one(webPageChannels, {
+    fields: [channels.webPageChannelId],
+    references: [webPageChannels.id],
+  }),
+  stations: many(stations),
+}));
+
+export const stationsRelations = relations(stations, ({ one, many }) => ({
+  adminUser: one(users, {
+    fields: [stations.adminUserId],
+    references: [users.id],
+  }),
+  adminUserGroup: one(userGroups, {
+    fields: [stations.adminUserGroupId],
+    references: [userGroups.id],
+  }),
+  listenerUserGroup: one(userGroups, {
+    fields: [stations.listenerUserGroupId],
+    references: [userGroups.id],
+  }),
+  channels: many(channels),
+}));
+
+// Zod Schemas for validation
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+
+export const insertUserGroupSchema = createInsertSchema(userGroups);
+export const selectUserGroupSchema = createSelectSchema(userGroups);
+
+export const insertChannelSchema = createInsertSchema(channels);
+export const selectChannelSchema = createSelectSchema(channels);
+
+export const insertStationSchema = createInsertSchema(stations);
+export const selectStationSchema = createSelectSchema(stations);
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs);
+export const selectActivityLogSchema = createSelectSchema(activityLogs);
+
+// Types
+export type User = z.infer<typeof selectUserSchema>;
+export type NewUser = z.infer<typeof insertUserSchema>;
+
+export type UserGroup = z.infer<typeof selectUserGroupSchema>;
+export type NewUserGroup = z.infer<typeof insertUserGroupSchema>;
+
+export type Channel = z.infer<typeof selectChannelSchema>;
+export type NewChannel = z.infer<typeof insertChannelSchema>;
+
+export type Station = z.infer<typeof selectStationSchema>;
+export type NewStation = z.infer<typeof insertStationSchema>;
+
+export type ActivityLog = z.infer<typeof selectActivityLogSchema>;
+export type NewActivityLog = z.infer<typeof insertActivityLogSchema>;

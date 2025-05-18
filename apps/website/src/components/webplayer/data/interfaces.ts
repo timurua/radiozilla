@@ -36,13 +36,23 @@ export interface FrontendAudioDTO {
 }
 
 export interface FrontendUserDTO {
-    userId: string;
-    displayName: string | null;
-    email: string | null;
-    imageUrl: string | null;
-    createdAt: Date | null;
+    userId: number;
     playedAudioIds: string[];
     likedAudioIds: string[];
     searchHistory: string[];
     subscribedChannelIds: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface UserDTO {
+    userId: number;
+    firebaseUserId: string;
+    name: string | null;
+    description: string | null;
+    imageUrl: string | null;
+    email: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    is_enabled: boolean;
 }

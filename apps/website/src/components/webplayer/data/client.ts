@@ -1,10 +1,10 @@
 'use client';
 
-import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUserData, } from "./model";
+import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } from "./model";
 import { TfIdfDocument } from '../tfidf/types';
 import logger from '../utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, getUserDataAction, saveUserDataAction } from './actions';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction } from './actions';
 import { FrontendAudioDTO } from './interfaces';
 
 class AsyncCache<T extends {}> {
@@ -128,38 +128,55 @@ export const getNextAudioPageAction = async (lastPublishedAt: Date | null, pageS
     }
 }
 
+export const upsertUser = async (user: RZUser): Promise<RZUser> => {
+    const userDTO = await upsertUserAction({
+        userId: user.id,
+        firebaseUserId: user.firebaseUserId,
+        name: user.name,
+        description: user.description,
+        email: user.email,
+        imageUrl: user.imageUrl,
+        is_enabled: user.is_enabled,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    });
+    return new RZUser(
+        userDTO.userId,
+        userDTO.firebaseUserId,
+        userDTO.name,
+        userDTO.description,
+        userDTO.imageUrl,
+        userDTO.email,
+        userDTO.is_enabled,
+        userDTO.createdAt,
+        userDTO.updatedAt,
+        user.userType,
+    );
+}
 
-export const getUserData = async (id: string): Promise<RZUserData> => {
-    const userDataDTO = await getUserDataAction(id);
+export const upsertFrontendUser = async (userData: RZUserData): Promise<RZUserData> => {
+    const userDataDTO = await upsertFrontendUserAction({
+        userId: userData.id,
+        createdAt: userData.createdAt,
+        updatedAt: userData.updatedAt,
+        subscribedChannelIds: userData.subscribedChannelIds,
+        likedAudioIds: userData.likedAudioIds,
+        playedAudioIds: userData.playedAudioIds,
+        searchHistory: userData.searchHistory,
+    });
     if (!userDataDTO) {
-        logger.error(`No user data found with ID: ${id}`);
-        throw new Error(`No user data found with ID: ${id}`);
+        logger.error(`No user data found with ID: ${userData.id}`);
+        throw new Error(`No user data found with ID: ${userData.id}`);
     }
     return new RZUserData(
         id,
-        userDataDTO.displayName || null,
-        userDataDTO.email || null,
-        userDataDTO.imageUrl || null,
         userDataDTO.createdAt,
+        userDataDTO.updatedAt,
         userDataDTO.subscribedChannelIds || [],
         userDataDTO.likedAudioIds || [],
         userDataDTO.playedAudioIds || [],
         userDataDTO.searchHistory || []
     );
-}
-
-export const saveUserData = async (userData: RZUserData) => {
-    await saveUserDataAction({
-        userId: userData.id || '',
-        displayName: userData.displayName || null,
-        email: userData.email || null,
-        imageUrl: userData.imageURL || null,
-        createdAt: userData.createdAt,
-        subscribedChannelIds: userData.subscribedChannelIds || [],
-        likedAudioIds: userData.likedAudioIds || [],
-        playedAudioIds: userData.playedAudioIds || [],
-        searchHistory: userData.searchHistory || []
-    });
 }
 
 export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {

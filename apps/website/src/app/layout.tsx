@@ -4,6 +4,7 @@ import { Manrope } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/provider';
 import CookieConsent from '@/components/CookieConsent';
 import MobxProvider from '@/components/webplayer/state/provider';
+import { FrontEndUserProvider } from '@/lib/webplayer/provider';
 
 export const metadata: Metadata = {
   title: 'Radiozilla - AI Radio',
@@ -34,7 +35,9 @@ export default function RootLayout({
       <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
         <MobxProvider>
           <AuthProvider>
-            {children}
+            <FrontEndUserProvider>
+              {children}
+            </FrontEndUserProvider>
           </AuthProvider>
         </MobxProvider>
         <CookieConsent />

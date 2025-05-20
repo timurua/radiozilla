@@ -1,7 +1,7 @@
 'use client';
 
 import CookieConsent from '@/components/CookieConsent';
-import { upsertUser } from '@/components/webplayer/data/client';
+import { upsertUser, deleteUser as deleteUserDB } from '@/lib/db/client';
 import LocalStorage from '@/components/webplayer/utils/LocalStorage';
 import {
   createUserWithEmailAndPassword,
@@ -12,7 +12,11 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   User,
-  sendEmailVerification as sendEmailVerificationFirebase
+  sendEmailVerification as sendEmailVerificationFirebase,
+  signInWithPopup,
+  onIdTokenChanged,
+  GoogleAuthProvider,
+  updatePassword,
 } from 'firebase/auth';
 import { createContext, JSX, ReactNode, useContext, useEffect, useState } from 'react';
 import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
@@ -36,8 +40,12 @@ export interface AuthContextType {
   signInAnon: () => Promise<SignIn>;
   signUpWithEmail: (email: string, password: string) => Promise<SignUp>;
   signInWithEmail: (email: string, password: string) => Promise<SignIn>;
+  signInWithGoogle: () => Promise<SignIn>;
   sendEmailVerification: () => Promise<void>;
   convertAnonToEmail: (email: string, password: string) => Promise<void>;
+  updateUser: (user: RZUser) => Promise<void>;
+  updateEmailPassword: (password: string) => Promise<void>;
+  deleteUser: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -85,6 +93,22 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     setUser(user);
     userPromiseState.userPromiseResolve(user);
   }
+
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, async (user: User | null) => {
+      if (user) {
+        try {
+          await user.getIdToken();
+        } catch (err) {
+          setUserAndPromise(RZUser.nobody());
+        }
+      } else {
+        setUserAndPromise(RZUser.nobody());
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
@@ -165,6 +189,60 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     }
   };
 
+  const signInWithGoogle = async (): Promise<SignIn> => {
+    try {
+      checkCookieConsent();
+      startNewUserPromise();
+      const provider = new GoogleAuthProvider();
+
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Error signing in with Google", error);
+      }
+      return {
+        success: true
+      };
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const updateUser = async (user: RZUser): Promise<void> => {
+    try {
+      const newUser = await upsertUser(user);
+      setUser(newUser);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const updateEmailPassword = async (password: string): Promise<void> => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not found');
+      }
+      await updatePassword(user, password);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const deleteUser = async (): Promise<void> => {
+    try {
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        throw new Error('User not found');
+      }
+      await deleteUserDB(user.id);
+      await firebaseUser.delete();
+
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
   const sendEmailVerification = async (): Promise<void> => {
     try {
       checkCookieConsent();
@@ -201,8 +279,12 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     signInAnon,
     signUpWithEmail,
     signInWithEmail,
+    signInWithGoogle,
     sendEmailVerification,
     convertAnonToEmail,
+    updateUser,
+    updateEmailPassword,
+    deleteUser,
     signOut: signOut,
   };
 

@@ -4,10 +4,10 @@
 import { useEffect, useState } from 'react';
 import { Image, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
-import { getChannel } from '../data/client';
-import { RZChannel } from '../data/model';
-import { storageUtils } from '../firebase';
-import logger from '../utils/logger';
+import { getChannel } from '@/lib/db/client';
+import { RZChannel } from '@/components/webplayer/data/model';
+import { storageUtils } from '@/components/webplayer/firebase';
+import logger from '@/components/webplayer/utils/logger';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';
 
 export function ChannelListItem({ channelId }: { channelId: string }) {

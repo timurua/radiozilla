@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { upsertFrontendUser } from '../data/client';
+import { upsertFrontendUser } from '@/lib/db/client';
 import { RZUserData } from "../data/model";
 
 // MobX store for user data

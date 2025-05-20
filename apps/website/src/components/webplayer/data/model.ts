@@ -77,26 +77,22 @@ export class RZUserData {
 
   static empty(): RZUserData {
     return new RZUserData(
-      null,
-      null,
-      null,
-      null,
-      null,
+      0,
+      new Date(),
+      new Date(),
       [],
       [],
       [],
       [],
-      null,
+      null
     );
   }
 
   clone(): RZUserData {
     return new RZUserData(
       this.id,
-      this.displayName,
-      this.email,
-      this.imageURL,
       this.createdAt,
+      this.updatedAt,
       this.subscribedChannelIds,
       this.likedAudioIds,
       this.playedAudioIds,

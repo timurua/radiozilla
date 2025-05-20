@@ -1,11 +1,12 @@
 'use client';
 
-import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } from "./model";
-import { TfIdfDocument } from '../tfidf/types';
-import logger from '../utils/logger';
+import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } from "@/components/webplayer/data/model";
+import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
+import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction } from './actions';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction } from './actions';
 import { FrontendAudioDTO } from './interfaces';
+import { Subscription } from "./schema";
 
 class AsyncCache<T extends {}> {
     private cache: LRUCache<string, T>;
@@ -154,6 +155,10 @@ export const upsertUser = async (user: RZUser): Promise<RZUser> => {
     );
 }
 
+export const deleteUser = async (userId: number): Promise<void> => {
+    await deleteUserAction(userId);
+}
+
 export const upsertFrontendUser = async (userData: RZUserData): Promise<RZUserData> => {
     const userDataDTO = await upsertFrontendUserAction({
         userId: userData.id,
@@ -169,7 +174,7 @@ export const upsertFrontendUser = async (userData: RZUserData): Promise<RZUserDa
         throw new Error(`No user data found with ID: ${userData.id}`);
     }
     return new RZUserData(
-        id,
+        userDataDTO.userId,
         userDataDTO.createdAt,
         userDataDTO.updatedAt,
         userDataDTO.subscribedChannelIds || [],
@@ -261,6 +266,14 @@ export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedCha
     return (await Promise.all(audiosDTOs.map(async (dto) => {
         return await audioFromDTO(dto);
     }))).filter((audio): audio is RZAudio => audio !== null);
+}
+
+export const getSubscriptionByStripeCustomerId = async (userId: number, stripeCustomerId: string): Promise<Subscription | null> => {
+    return await getSubscriptionByStripeCustomerIdAction(userId, stripeCustomerId);
+}
+
+export const updateSubscription = async (subscriptionId: number, data: Partial<Subscription>): Promise<Subscription> => {
+    return await updateSubscriptionAction(subscriptionId, data);
 }
 
 

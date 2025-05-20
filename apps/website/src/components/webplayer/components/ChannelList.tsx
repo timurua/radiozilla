@@ -1,7 +1,7 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import ChannelListItem from './ChannelListItem';
-import { getAllChannelIds } from '../data/client';
+import { getAllChannelIds } from '@/lib/db/client';
 
 interface ChannelListProps {
     channelIds: string[];

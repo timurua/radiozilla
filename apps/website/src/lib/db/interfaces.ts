@@ -56,3 +56,12 @@ export interface UserDTO {
     updatedAt: Date;
     is_enabled: boolean;
 }
+
+export interface ActivityLogDTO {
+    id: number;
+    userId: number | null;
+    userGroupId: number | null;
+    action: string;
+    createdAt: Date;
+    ipAddress: string | null;
+}

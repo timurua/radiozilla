@@ -1,26 +1,27 @@
 import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
-import { Team } from '@/lib/db/schema';
+import { Subscription } from '@/lib/db/schema';
 import {
-  getTeamByStripeCustomerId,
-  getUser,
-  updateTeamSubscription
-} from '@/lib/db/queries';
+  getSubscriptionByStripeCustomerId,
+  updateSubscription
+} from '@/lib/db/client';
+import { useAuth } from '../auth/provider';
+import { RZUser } from '@/components/webplayer/data/model';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-03-31.basil'
 });
 
 export async function createCheckoutSession({
-  team,
+  subscription,
   priceId
 }: {
-  team: Team | null;
+  subscription: Subscription | null;
   priceId: string;
 }) {
-  const user = await getUser();
+  const { user } = useAuth();
 
-  if (!team || !user) {
+  if (!subscription || !user) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
   }
 
@@ -35,7 +36,7 @@ export async function createCheckoutSession({
     mode: 'subscription',
     success_url: `${process.env.BASE_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.BASE_URL}/pricing`,
-    customer: team.stripeCustomerId || undefined,
+    customer: subscription.stripeCustomerId || undefined,
     client_reference_id: user.id.toString(),
     allow_promotion_codes: true,
     subscription_data: {
@@ -46,8 +47,8 @@ export async function createCheckoutSession({
   redirect(session.url!);
 }
 
-export async function createCustomerPortalSession(team: Team) {
-  if (!team.stripeCustomerId || !team.stripeProductId) {
+export async function createCustomerPortalSession(subscription: Subscription) {
+  if (!subscription.stripeCustomerId) {
     redirect('/pricing');
   }
 
@@ -57,9 +58,9 @@ export async function createCustomerPortalSession(team: Team) {
   if (configurations.data.length > 0) {
     configuration = configurations.data[0];
   } else {
-    const product = await stripe.products.retrieve(team.stripeProductId);
+    const product = await stripe.products.retrieve(subscription.stripeProductId!);
     if (!product.active) {
-      throw new Error("Team's product is not active in Stripe");
+      throw new Error("Subscription's product is not active in Stripe");
     }
 
     const prices = await stripe.prices.list({
@@ -108,40 +109,41 @@ export async function createCustomerPortalSession(team: Team) {
   }
 
   return stripe.billingPortal.sessions.create({
-    customer: team.stripeCustomerId,
+    customer: subscription.stripeCustomerId,
     return_url: `${process.env.BASE_URL}/dashboard`,
     configuration: configuration.id
   });
 }
 
 export async function handleSubscriptionChange(
-  subscription: Stripe.Subscription
+  stripeSubscription: Stripe.Subscription,
+  user: RZUser
 ) {
-  const customerId = subscription.customer as string;
-  const subscriptionId = subscription.id;
-  const status = subscription.status;
+  const customerId = stripeSubscription.customer as string;
+  const subscriptionId = stripeSubscription.id;
+  const status = stripeSubscription.status;
 
-  const team = await getTeamByStripeCustomerId(customerId);
+  const subscription = await getSubscriptionByStripeCustomerId(user.id, customerId);
 
-  if (!team) {
+  if (!subscription) {
     console.error('Team not found for Stripe customer:', customerId);
     return;
   }
 
   if (status === 'active' || status === 'trialing') {
-    const plan = subscription.items.data[0]?.plan;
-    await updateTeamSubscription(team.id, {
+    const plan = stripeSubscription.items.data[0]?.plan;
+    await updateSubscription(subscription.id, {
       stripeSubscriptionId: subscriptionId,
       stripeProductId: plan?.product as string,
-      planName: (plan?.product as Stripe.Product).name,
-      subscriptionStatus: status
+      stripePlanName: (plan?.product as Stripe.Product).name,
+      stripeSubscriptionStatus: status
     });
   } else if (status === 'canceled' || status === 'unpaid') {
-    await updateTeamSubscription(team.id, {
+    await updateSubscription(subscription.id, {
       stripeSubscriptionId: null,
       stripeProductId: null,
-      planName: null,
-      subscriptionStatus: status
+      stripePlanName: null,
+      stripeSubscriptionStatus: status
     });
   }
 }

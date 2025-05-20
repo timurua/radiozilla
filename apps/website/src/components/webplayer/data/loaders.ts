@@ -1,4 +1,4 @@
-import { getAudioListByIds, getNextAudioPageAction } from "./client";
+import { getAudioListByIds, getNextAudioPageAction } from "@/lib/db/client";
 import { PlayableFeedMode, RZAudio } from "./model";
 import AudioLoader, { Subscriber } from '../utils/AudioLoader';
 

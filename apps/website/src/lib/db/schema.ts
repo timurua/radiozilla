@@ -6,6 +6,7 @@ import {
   timestamp,
   integer,
   jsonb,
+  decimal,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -80,10 +81,7 @@ export enum ActivityType {
 }
 
 export const frontendUsers = pgTable('frontend_users', {
-  userId: serial('user_id').primaryKey(),
-  displayName: varchar('display_name'),
-  email: varchar('email'),
-  imageUrl: varchar('image_url'),
+  userId: integer('user_id').primaryKey(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   playedAudioIds: jsonb("played_audio_ids").array().default([]).notNull().$type<string[]>(),
@@ -118,6 +116,36 @@ export const userGroups = pgTable("user_groups", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Plans Table
+export const plans = pgTable("plans", {
+  planId: varchar("plan_id").notNull().primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  pricePerMonth: decimal('price_per_month', { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Subscriptions Table
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  planId: varchar("plan_id").notNull().references(() => plans.planId),
+  status: varchar("status"),
+  adminUserId: integer("admin_user_id").notNull().references(() => users.id),
+  adminUserGroupId: integer("admin_user_group_id").notNull().references(() => userGroups.id),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeProductId: varchar("stripe_product_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripePlanName: varchar("stripe_plan_name"),
+  stripeSubscriptionStatus: varchar("stripe_subscription_status"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
 
 // User User Groups (Junction Table)
 export const userUserGroups = pgTable("user_user_groups", {
@@ -185,7 +213,8 @@ export const activityLogs = pgTable("activity_logs", {
   userGroupId: integer("user_group_id").references(() => userGroups.id),
   userId: integer("user_id").references(() => users.id),
   action: varchar("action").notNull(),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Define Relations

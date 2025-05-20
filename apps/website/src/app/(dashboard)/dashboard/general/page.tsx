@@ -1,13 +1,12 @@
 'use client';
 
-import { startTransition, use, useActionState } from 'react';
+import { startTransition, use, useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/provider';
-import { updateAccount } from '@/app/(login)/actions';
 
 type ActionState = {
   error?: string;
@@ -15,12 +14,8 @@ type ActionState = {
 };
 
 export default function GeneralPage() {
-  const { userPromise } = useAuth();
-  const user = use(userPromise);
-  const [state, formAction, isPending] = useActionState<ActionState, FormData>(
-    updateAccount,
-    { error: '', success: '' }
-  );
+  const { user, updateUser } = useAuth();
+  const [name, setName] = useState(user?.name || '');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,8 +26,11 @@ export default function GeneralPage() {
     // When you use the `action` prop it automatically handles that for you.
     // Another option here is to persist the values to local storage. I might
     // explore alternative options.
-    startTransition(() => {
-      formAction(new FormData(event.currentTarget));
+    startTransition(async () => {
+      await updateUser({
+        ...user,
+        name,
+      });
     });
   };
 
@@ -56,42 +54,16 @@ export default function GeneralPage() {
                 id="name"
                 name="name"
                 placeholder="Enter your name"
-                defaultValue={user?.name || ''}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="email" className="mb-2">
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email"
-                defaultValue={user?.email || ''}
-                required
-              />
-            </div>
-            {state.error && (
-              <p className="text-destructive text-sm">{state.error}</p>
-            )}
-            {state.success && (
-              <p className="text-primary text-sm">{state.success}</p>
-            )}
             <Button
               type="submit"
               className="text-primary-foreground"
-              disabled={isPending}
             >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
+              Save Changes
             </Button>
           </form>
         </CardContent>

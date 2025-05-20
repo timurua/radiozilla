@@ -1,22 +1,25 @@
 'use server';
 
-import { desc } from 'drizzle-orm';
-import { TfIdfDocument } from '../tfidf/types';
-import logger from '../utils/logger';
-import { PlayableFeedMode } from "./model";
+import { and, desc } from 'drizzle-orm';
+import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
+import logger from '@/components/webplayer/utils/logger';
+import { PlayableFeedMode } from '@/components/webplayer/data/model';
 
 import { db } from '@/lib/db/drizzle';
 import {
+    activityLogs,
     FrontendAudio,
     frontendAudios,
     frontendAuthors,
     frontendChannels,
     frontendUsers,
     NewFrontendUser,
+    Subscription,
+    subscriptions,
     users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
-import { FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
+import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -119,10 +122,14 @@ export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
     return insertResult[0];
 }
 
+export const deleteUserAction = async (userId: number): Promise<void> => {
+    await db.delete(users).where(eq(users.id, userId));
+}
+
 
 export const upsertFrontendUserAction = async (userData: FrontendUserDTO): Promise<FrontendUserDTO> => {
 
-    const dbFrontendUsers = await db.select({
+    const dbFrontendUsersPromise = db.select({
         userId: frontendUsers.userId,
         createdAt: frontendUsers.createdAt,
         updatedAt: frontendUsers.updatedAt,
@@ -133,6 +140,7 @@ export const upsertFrontendUserAction = async (userData: FrontendUserDTO): Promi
     }).from(frontendUsers).where(eq(frontendUsers.userId, userData.userId)).limit(1);
 
 
+    const dbFrontendUsers = await dbFrontendUsersPromise;
     if (dbFrontendUsers.length > 0) {
         return {
             userId: dbFrontendUsers[0].userId,
@@ -260,6 +268,53 @@ export const getFeedAudioListAction = async (feedMode: PlayableFeedMode, subscri
     }
 
     return dbAudios.map(dbAudio => dbAudioToDTO(dbAudio));
+}
+
+export const getActivityLogsForUserAction = async (userId: number): Promise<ActivityLogDTO[]> => {
+    const dbActivityLogs = await db
+        .select()
+        .from(activityLogs)
+        .where(
+            eq(activityLogs.userId, userId)
+        )
+        .orderBy(desc(activityLogs.createdAt));
+
+    return dbActivityLogs.map(dbActivityLog => ({
+        id: dbActivityLog.id,
+        userId: dbActivityLog.userId,
+        userGroupId: dbActivityLog.userGroupId,
+        action: dbActivityLog.action,
+        createdAt: dbActivityLog.createdAt,
+        ipAddress: dbActivityLog.ipAddress
+    }));
+}
+
+export const getSubscriptionByStripeCustomerIdAction = async (userId: number, stripeCustomerId: string): Promise<Subscription | null> => {
+    const dbSubscription = await db
+        .select()
+        .from(subscriptions)
+        .where(
+            and(eq(subscriptions.adminUserId, userId), eq(subscriptions.stripeCustomerId, stripeCustomerId))
+        )
+        .limit(1);
+
+    if (dbSubscription.length > 0) {
+        return dbSubscription[0];
+    }
+    return null;
+}
+
+export const updateSubscriptionAction = async (subscriptionId: number, data: Partial<Subscription>): Promise<Subscription> => {
+    const dbSubscription = await db
+        .update(subscriptions)
+        .set(data)
+        .where(eq(subscriptions.id, subscriptionId))
+        .returning();
+
+    if (dbSubscription.length > 0) {
+        return dbSubscription[0];
+    }
+    throw new Error(`No subscription found with ID: ${subscriptionId}`);
 }
 
 

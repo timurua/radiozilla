@@ -5,8 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { customerPortalAction } from '@/lib/payments/actions';
 import { useActionState } from 'react';
-import { TeamDataWithMembers, User } from '@/lib/db/schema';
-import { removeTeamMember } from '@/app/(login)/actions';
 import { InviteTeamMember } from './invite-team';
 
 type ActionState = {
@@ -14,16 +12,8 @@ type ActionState = {
   success?: string;
 };
 
-export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
-  const [removeState, removeAction, isRemovePending] = useActionState<
-    ActionState,
-    FormData
-  >(removeTeamMember, { error: '', success: '' });
-
-  const getUserDisplayName = (user: Pick<User, 'id' | 'name' | 'email'>) => {
-    return user.name || user.email || 'Unknown User';
-  };
-
+export function Settings() { 
+ 
   return (
     <section className="flex-1 p-4 lg:p-8">
       <h1 className="text-lg lg:text-2xl font-medium mb-6 text-black dark:text-white">Team Settings</h1>

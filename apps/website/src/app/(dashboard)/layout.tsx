@@ -17,10 +17,9 @@ import { useAuth } from '@/lib/auth/provider';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user } = useAuth();
   const router = useRouter();
 
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   async function handleSignOut() {
     await signOut();
@@ -56,8 +55,7 @@ function UserMenu() {
         <Avatar className="cursor-pointer size-9">
           <AvatarImage alt={user.name || ''} />
           <AvatarFallback>
-            {user.email
-              .split(' ')
+            {user.email?.split(' ')
               .map((n) => n[0])
               .join('')}
           </AvatarFallback>

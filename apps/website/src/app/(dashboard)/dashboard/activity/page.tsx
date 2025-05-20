@@ -12,7 +12,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ActivityType } from '@/lib/db/schema';
-import { getActivityLogs } from '@/lib/db/queries';
+import { getActivityLogsForUserAction } from '@/lib/db/actions';
+import { useAuth } from '@/lib/auth/provider';
 
 const iconMap: Record<ActivityType, LucideIcon> = {
   [ActivityType.SIGN_UP]: UserPlus,
@@ -69,7 +70,8 @@ function formatAction(action: ActivityType): string {
 }
 
 export default async function ActivityPage() {
-  const logs = await getActivityLogs();
+  const { user } = useAuth();
+  const logs = await getActivityLogsForUserAction(user!.id);
 
   return (
     <section className="flex-1 p-4 lg:p-8">
@@ -100,7 +102,7 @@ export default async function ActivityPage() {
                         {log.ipAddress && ` from IP ${log.ipAddress}`}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {getRelativeTime(new Date(log.timestamp))}
+                        {getRelativeTime(new Date(log.createdAt))}
                       </p>
                     </div>
                   </li>

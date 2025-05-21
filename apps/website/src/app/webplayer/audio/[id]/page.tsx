@@ -3,7 +3,7 @@
 import { AudioPlayer } from '@/components/webplayer/components/AudioPlayer';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { BootstrapBackButton } from '@/components/webplayer/components/BackButton';
-import { getAudio } from '@/components/webplayer/data/client';
+import { getAudio } from '@/lib/db/client';
 import { useEffect, useState } from 'react';
 import { RZAudio } from '@/components/webplayer/data/model';
 import { useParams } from 'next/navigation';

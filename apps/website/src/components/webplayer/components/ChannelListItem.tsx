@@ -6,7 +6,7 @@ import { Image, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
 import { getChannel } from '@/lib/db/client';
 import { RZChannel } from '@/components/webplayer/data/model';
-import { storageUtils } from '@/components/webplayer/firebase';
+import { storageUtils } from '@/lib/firebase';
 import logger from '@/components/webplayer/utils/logger';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';
 

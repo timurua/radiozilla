@@ -11,7 +11,7 @@ import {
     useState
 } from 'react';
 import { RZAudio } from '../data/model';
-import { storageUtils } from '../firebase';
+import { storageUtils } from '../../../lib/firebase';
 import logger from '../utils/logger';
 import { useAuth } from '../../../lib/auth/provider';
 import { observer } from "mobx-react-lite";

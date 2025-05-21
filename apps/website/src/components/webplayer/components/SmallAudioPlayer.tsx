@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { storageUtils } from '../firebase';
+import { storageUtils } from '../../../lib/firebase';
 
 import { Button, ButtonGroup, Image, ProgressBar } from 'react-bootstrap';
 import { BsList, BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';

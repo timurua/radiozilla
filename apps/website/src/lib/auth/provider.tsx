@@ -20,9 +20,10 @@ import {
 } from 'firebase/auth';
 import { createContext, JSX, ReactNode, useContext, useEffect, useState } from 'react';
 import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
-import { auth } from '../../components/webplayer/firebase';
+import { auth } from '../firebase';
 import { userDataStore } from '../../components/webplayer/state/userData';
 import logger from '../../components/webplayer/utils/logger';
+import { setCookie, deleteCookie } from "cookies-next";
 
 export interface SignIn {
   success: boolean;
@@ -98,11 +99,13 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     const unsubscribe = onIdTokenChanged(auth, async (user: User | null) => {
       if (user) {
         try {
-          await user.getIdToken();
+          const token = await user.getIdToken();
+          setCookie("__session", token);
         } catch (err) {
           setUserAndPromise(RZUser.nobody());
         }
       } else {
+        deleteCookie("__session");
         setUserAndPromise(RZUser.nobody());
       }
     });

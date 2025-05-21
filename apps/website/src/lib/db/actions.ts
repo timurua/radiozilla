@@ -13,13 +13,13 @@ import {
     frontendAuthors,
     frontendChannels,
     frontendUsers,
-    NewFrontendUser,
     Subscription,
     subscriptions,
     users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
 import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
+import { getAuthenticatedAppForUser } from '../server/firebase';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -82,6 +82,14 @@ export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> 
 }
 
 export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
+    const { currentUser } = await getAuthenticatedAppForUser();
+    if (!currentUser) {
+        throw new Error("No user found");
+    }
+    if (user.firebaseUserId !== currentUser.uid) {
+        throw new Error("User ID mismatch");
+    }
+
     user.userId = user.userId || 0;
     const dbUsers = await db.select({
         userId: users.id,
@@ -139,17 +147,16 @@ export const upsertFrontendUserAction = async (userData: FrontendUserDTO): Promi
         subscribedChannelIds: frontendUsers.subscribedChannelIds
     }).from(frontendUsers).where(eq(frontendUsers.userId, userData.userId)).limit(1);
 
-
     const dbFrontendUsers = await dbFrontendUsersPromise;
     if (dbFrontendUsers.length > 0) {
         return {
             userId: dbFrontendUsers[0].userId,
-            createdAt: dbFrontendUsers[0].createdAt,
-            updatedAt: dbFrontendUsers[0].updatedAt,
             playedAudioIds: dbFrontendUsers[0].playedAudioIds,
             likedAudioIds: dbFrontendUsers[0].likedAudioIds,
             searchHistory: dbFrontendUsers[0].searchHistory,
-            subscribedChannelIds: dbFrontendUsers[0].subscribedChannelIds
+            subscribedChannelIds: dbFrontendUsers[0].subscribedChannelIds,
+            createdAt: dbFrontendUsers[0].createdAt,
+            updatedAt: dbFrontendUsers[0].updatedAt
         };
     }
     const insertResult = await db.insert(frontendUsers).values({

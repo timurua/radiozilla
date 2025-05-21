@@ -7,7 +7,7 @@ import { BootstrapBackButton } from '@/components/webplayer/components/BackButto
 import { ChannelList } from '@/components/webplayer/components/ChannelList';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { SuspenseLoading } from '@/components/webplayer/components/SuspenseLoading';
-import { getAudioListForChannel } from '@/components/webplayer/data/client';
+import { getAudioListForChannel } from '@/lib/db/client';
 import { MultiAudioLoader } from '@/components/webplayer/data/loaders';
 import AudioLoader from '@/components/webplayer/utils/AudioLoader';
 

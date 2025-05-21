@@ -82,12 +82,17 @@ export enum ActivityType {
 
 export const frontendUsers = pgTable('frontend_users', {
   userId: integer('user_id').primaryKey(),
+
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  playedAudioIds: jsonb("played_audio_ids").array().default([]).notNull().$type<string[]>(),
-  likedAudioIds: jsonb("liked_audio_ids").array().default([]).notNull().$type<string[]>(),
-  searchHistory: jsonb("search_history").array().default([]).notNull().$type<string[]>(),
-  subscribedChannelIds: jsonb("subscribed_channel_ids").array().default([]).notNull().$type<string[]>(),
+  deletedAt: timestamp('deleted_at').notNull().defaultNow(),
+  lastActiveAt: timestamp('last_active_at').notNull().defaultNow(),
+  userStationId: integer('user_station_id'),
+
+  playedAudioIds: jsonb("played_audio_ids").default([]).notNull().$type<string[]>(),
+  likedAudioIds: jsonb("liked_audio_ids").default([]).notNull().$type<string[]>(),
+  searchHistory: jsonb("search_history").default([]).notNull().$type<string[]>(),
+  subscribedChannelIds: jsonb("subscribed_channel_ids").default([]).notNull().$type<string[]>(),
 });
 
 export type FrontendUser = typeof frontendUsers.$inferSelect;

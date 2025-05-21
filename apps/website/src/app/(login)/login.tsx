@@ -77,16 +77,12 @@ export function Login({ mode }: { mode: LoginMode }) {
       setState(LoginState.LOADING);
       await signInWithEmail(email, password);
       setState(LoginState.SUCCESS);
+      router.push('/');
     } catch (err) {
       setState(LoginState.ERROR);
       setError('Invalid credentials. Please try again.');
     }
   };
-
-  if (user.userType === RZUserType.AUTH_USER) {
-    router.push('/dashboard');
-    return null;
-  }
 
   if (user.userType === RZUserType.WAITING_EMAIL_VERIFICATION) {
     return (

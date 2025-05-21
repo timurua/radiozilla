@@ -11,7 +11,7 @@ import log from 'loglevel';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDDbO0ULQjRbxFeVlIFuq4z_CdMcv-f1JU",
   authDomain: "radiozilla-92c5f.firebaseapp.com",
   projectId: "radiozilla-92c5f",
@@ -30,7 +30,7 @@ const auth = getAuth(app);
 
 const urlCache = new LRUCache<string, string>({
   max: 10000, // Maximum number of items in cache
-  ttl: 60*1000, // Expiration time in milliseconds
+  ttl: 60 * 1000, // Expiration time in milliseconds
 });
 
 const storageUtils = {
@@ -38,7 +38,7 @@ const storageUtils = {
     if (url.startsWith('gs://')) {
 
       const cachedUrl = urlCache.get(url);
-      if(cachedUrl){
+      if (cachedUrl) {
         log.debug(`Retrieved from cache originalUrl: ${url}, downloadUrl': ${cachedUrl} `);
         return Promise.resolve(cachedUrl);
       }

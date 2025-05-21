@@ -6,7 +6,7 @@ import { Button, ButtonGroup, Container, Image, ProgressBar } from 'react-bootst
 import { BsFastForwardFill, BsPause, BsPlayFill, BsRewindFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
 import { useRouter } from 'next/navigation';
 import { RZAudio } from '../data/model';
-import { storageUtils } from '../firebase';
+import { storageUtils } from '../../../lib/firebase';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';

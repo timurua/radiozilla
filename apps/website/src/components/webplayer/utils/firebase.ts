@@ -1,5 +1,5 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../../lib/firebase";
 
 export interface Batch {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -37,12 +37,12 @@ export interface FrontendAudioDTO {
 
 export interface FrontendUserDTO {
     userId: number;
+    createdAt: Date;
+    updatedAt: Date;
     playedAudioIds: string[];
     likedAudioIds: string[];
     searchHistory: string[];
     subscribedChannelIds: string[];
-    createdAt: Date;
-    updatedAt: Date;
 }
 
 export interface UserDTO {

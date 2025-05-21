@@ -9,7 +9,7 @@ import { useAudio } from "../providers/AudioProvider";
 import { userDataStore } from "../state/userData";
 import logger from '../utils/logger';
 import { RZAudio } from "../data/model";
-import { storageUtils } from '../firebase';
+import { storageUtils } from '../../../lib/firebase';
 
 export const AudioListItem = observer(function AudioListItem({ rzAudio, onClick }: { rzAudio: RZAudio, onClick?: (audio: RZAudio) => void }) {
     const { rzAudio: currentPlayable } = useAudio();

@@ -5,38 +5,43 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Lock, Trash2, Loader2 } from 'lucide-react';
-import { startTransition, useActionState } from 'react';
-import { updatePassword, deleteAccount } from '@/app/(login)/actions';
+import { startTransition, useState } from 'react';
+import { useAuth } from '@/lib/auth/provider';
 
 type ActionState = {
   error?: string;
   success?: string;
+  isPending?: boolean;
 };
 
 export default function SecurityPage() {
-  const [passwordState, passwordAction, isPasswordPending] = useActionState<
-    ActionState,
-    FormData
-  >(updatePassword, { error: '', success: '' });
 
-  const [deleteState, deleteAction, isDeletePending] = useActionState<
-    ActionState,
-    FormData
-  >(deleteAccount, { error: '', success: '' });
+  const { user, updateEmailPassword, deleteUser } = useAuth();
+  const [passwordState, setPasswordState] = useState<ActionState>({});
+  const [deleteState, setDeleteState] = useState<ActionState>({});
 
   const handlePasswordSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-    // If you call the Server Action directly, it will automatically
-    // reset the form. We don't want that here, because we want to keep the
-    // client-side values in the inputs. So instead, we use an event handler
-    // which calls the action. You must wrap direct calls with startTransition.
-    // When you use the `action` prop it automatically handles that for you.
-    // Another option here is to persist the values to local storage. I might
-    // explore alternative options.
-    startTransition(() => {
-      passwordAction(new FormData(event.currentTarget));
+    const formData = new FormData(event.currentTarget);
+    const currentPassword = formData.get('currentPassword') as string;
+    const newPassword = formData.get('newPassword') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+
+    if (newPassword !== confirmPassword) {
+      setPasswordState({ error: 'Passwords do not match' });
+      return;
+    }
+
+    setPasswordState({ isPending: true });
+    startTransition(async () => {
+      try {
+        await updateEmailPassword(newPassword);
+        setPasswordState({ success: 'Password updated successfully' });
+      } catch (err) {
+        setPasswordState({ error: err instanceof Error ? err.message : 'An error occurred' });
+      }
     });
   };
 
@@ -45,7 +50,7 @@ export default function SecurityPage() {
   ) => {
     event.preventDefault();
     startTransition(() => {
-      deleteAction(new FormData(event.currentTarget));
+      deleteUser();
     });
   };
 
@@ -110,9 +115,9 @@ export default function SecurityPage() {
             <Button
               type="submit"
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isPasswordPending}
+              disabled={passwordState.isPending}
             >
-              {isPasswordPending ? (
+              {passwordState.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Updating...
@@ -156,9 +161,9 @@ export default function SecurityPage() {
             <Button
               type="submit"
               variant="destructive"
-              disabled={isDeletePending}
+              disabled={deleteState.isPending}
             >
-              {isDeletePending ? (
+              {deleteState.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...

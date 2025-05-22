@@ -71,7 +71,6 @@ export const AudioProvider: FC<AudioProviderProps> = observer(({ children }) => 
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
-    const userData = userDataStore.userData;
     const { user } = useAuth();
 
     const [reportedMinute, setReportedMinute] = useState<number>(-1);

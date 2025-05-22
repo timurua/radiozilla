@@ -42,7 +42,7 @@ export async function getUser(): Promise<UserDTO | null> {
         return null;
     }
     const dbUsers = await db.select({
-        userId: users.id,
+        id: users.id,
         firebaseUserId: users.firebaseUserId,
         name: users.name,
         description: users.description,

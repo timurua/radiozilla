@@ -5,8 +5,8 @@ import {
   getSubscriptionByStripeCustomerId,
   updateSubscription
 } from '@/lib/db/client';
-import { useAuth } from '../auth/provider';
-import { RZUser } from '@/components/webplayer/data/model';
+
+import { getUser } from '../server/firebase';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-03-31.basil'
@@ -19,7 +19,7 @@ export async function createCheckoutSession({
   subscription: Subscription | null;
   priceId: string;
 }) {
-  const { user } = useAuth();
+  const user = await getUser();
 
   if (!subscription || !user) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
@@ -117,13 +117,12 @@ export async function createCustomerPortalSession(subscription: Subscription) {
 
 export async function handleSubscriptionChange(
   stripeSubscription: Stripe.Subscription,
-  user: RZUser
 ) {
   const customerId = stripeSubscription.customer as string;
   const subscriptionId = stripeSubscription.id;
   const status = stripeSubscription.status;
 
-  const subscription = await getSubscriptionByStripeCustomerId(user.id, customerId);
+  const subscription = await getSubscriptionByStripeCustomerId(customerId);
 
   if (!subscription) {
     console.error('Team not found for Stripe customer:', customerId);

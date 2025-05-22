@@ -1,17 +1,11 @@
 'use client';
 
-import { startTransition, use, useActionState, useState } from 'react';
+import { startTransition, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/provider';
-
-type ActionState = {
-  error?: string;
-  success?: string;
-};
 
 export default function GeneralPage() {
   const { user, updateUser } = useAuth();

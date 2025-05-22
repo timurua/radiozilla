@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Database } from 'lucide-react';
 import { SlackIcon, GithubIcon, WikiIcon, WebScrapeIcon } from './page-icons';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
@@ -34,7 +35,7 @@ export default function HomePage() {
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center lg:justify-end">
               <a href="/webplayer" className="block">
-                <img src="player.jpeg" alt="Player" className="h-[480px] w-auto object-contain" />
+                <Image src="/player.jpeg" alt="Player" className="h-[480px] w-auto object-contain" height={480} width={100} />
               </a>
             </div>
           </div>
@@ -177,7 +178,7 @@ export default function HomePage() {
                 Join Our Open Source Community!
               </h2>
               <p className="mt-3 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
-                We believe in the power of open collaboration and innovation. Contribute your skills, ideas, and enthusiasm to AI Radio, and help shape the future of accessible, engaging audio content. Together, we can amplify creativity and make information universally accessible. Let's innovate and grow together!
+                We believe in the power of open collaboration and innovation. Contribute your skills, ideas, and enthusiasm to AI Radio, and help shape the future of accessible, engaging audio content. Together, we can amplify creativity and make information universally accessible. Let&apos;s innovate and grow together!
               </p>
             </div>
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end">

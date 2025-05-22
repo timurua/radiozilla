@@ -4,11 +4,11 @@ import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } f
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction } from './actions';
-import { FrontendAudioDTO } from './interfaces';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction } from './actions';
+import { FrontendAudioDTO, UserDTO } from './interfaces';
 import { Subscription } from "./schema";
 
-class AsyncCache<T extends {}> {
+class AsyncCache<T extends object> {
     private cache: LRUCache<string, T>;
     private pendingRequests: Map<string, Promise<T>> = new Map();
 
@@ -131,7 +131,7 @@ export const getNextAudioPageAction = async (lastPublishedAt: Date | null, pageS
 
 export const upsertUser = async (user: RZUser): Promise<RZUser> => {
     const userDTO = await upsertUserAction({
-        userId: user.id,
+        id: user.id,
         firebaseUserId: user.firebaseUserId,
         name: user.name,
         description: user.description,
@@ -142,7 +142,7 @@ export const upsertUser = async (user: RZUser): Promise<RZUser> => {
         updatedAt: user.updatedAt,
     });
     return new RZUser(
-        userDTO.userId,
+        userDTO.id,
         userDTO.firebaseUserId,
         userDTO.name,
         userDTO.description,
@@ -268,13 +268,22 @@ export const getFeedAudioList = async (feedMode: PlayableFeedMode, subscribedCha
     }))).filter((audio): audio is RZAudio => audio !== null);
 }
 
-export const getSubscriptionByStripeCustomerId = async (userId: number, stripeCustomerId: string): Promise<Subscription | null> => {
-    return await getSubscriptionByStripeCustomerIdAction(userId, stripeCustomerId);
+export const getSubscriptionByStripeCustomerId = async (stripeCustomerId: string): Promise<Subscription | null> => {
+    return await getSubscriptionByStripeCustomerIdAction(stripeCustomerId);
 }
 
 export const updateSubscription = async (subscriptionId: number, data: Partial<Subscription>): Promise<Subscription> => {
     return await updateSubscriptionAction(subscriptionId, data);
 }
 
+export const getSubscriptionForCurrentUser = async (): Promise<Subscription | null> => {
+    return await getSubscriptionForCurrentUserAction();
+}
 
+export const getSubscriptionUsersForSubscription = async (): Promise<UserDTO[]> => {
+    return await getSubscriptionUsersForSubscriptionAction();
+}
 
+export const getSubscriptionByUserId = async (userId: number): Promise<Subscription | null> => {
+    return await getSubscriptionByUserIdAction(userId);
+}

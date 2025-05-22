@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { storageUtils } from '../../../lib/firebase';
 
 import { Button, ButtonGroup, Image, ProgressBar } from 'react-bootstrap';
-import { BsList, BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
+import { BsPause, BsPlayFill, BsSkipEndFill, BsSkipStartFill } from 'react-icons/bs';
 import { useRouter } from 'next/navigation';
 import { useAudio } from '../providers/AudioProvider';
 import logger from '../utils/logger';
@@ -52,10 +52,6 @@ function SmallAudioPlayerImpl() {
   const handleNext = useCallback(() => {
     playNext();
   }, [playNext]);
-
-  const handlePlaying = useCallback(() => {
-    router.push('/webplayer/playing');
-  }, [router]);
 
   useEffect(() => {
     const fetchImage = async () => {

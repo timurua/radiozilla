@@ -26,11 +26,13 @@ export class SingleAudioLoader extends SubscriberAudioLoader implements AudioLoa
         this.audio = audio;
     }
 
-    async getPreviosAudio(__audio: RZAudio): Promise<RZAudio | null> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getPreviosAudio(_audio: RZAudio): Promise<RZAudio | null> {
         return null;
     }
 
-    async getNextAudio(__audio: RZAudio): Promise<RZAudio | null> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getNextAudio(_audio: RZAudio): Promise<RZAudio | null> {
         return null;
     }
 

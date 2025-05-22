@@ -20,7 +20,7 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ children, noShowSmallPlayer
 
     useEffect(() => {
         childrenRef.current?.scrollTo({ top: -100, behavior: 'instant' })
-    }, [childrenRef.current]);
+    }, []);
 
 
     return (

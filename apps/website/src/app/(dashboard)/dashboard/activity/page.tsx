@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Settings,
@@ -14,6 +16,7 @@ import {
 import { ActivityType } from '@/lib/db/schema';
 import { getActivityLogsForUserAction } from '@/lib/db/actions';
 import { useAuth } from '@/lib/auth/provider';
+import { Suspense, use } from 'react';
 
 const iconMap: Record<ActivityType, LucideIcon> = {
   [ActivityType.SIGN_UP]: UserPlus,
@@ -69,9 +72,15 @@ function formatAction(action: ActivityType): string {
   }
 }
 
-export default async function ActivityPage() {
+export default function ActivityPage() {
+  return (<Suspense fallback={<div>Loading...</div>}>
+    <Activities />
+  </Suspense>);
+}
+
+function Activities() {
   const { user } = useAuth();
-  const logs = await getActivityLogsForUserAction(user!.id);
+  const logs = use(getActivityLogsForUserAction(user!.id));
 
   return (
     <section className="flex-1 p-4 lg:p-8">

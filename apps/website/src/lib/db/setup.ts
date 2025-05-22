@@ -100,7 +100,7 @@ async function setupLocalPostgres() {
   try {
     await execAsync('docker --version');
     console.log('Docker is installed.');
-  } catch (error) {
+  } catch {
     console.error(
       'Docker is not installed. Please install Docker and try again.'
     );

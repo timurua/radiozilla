@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { RZUserType } from '@/components/webplayer/data/model';
 import { useAuth } from '@/lib/auth/provider';
+import Image from 'next/image';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -86,7 +87,7 @@ function Header() {
     <header className="border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
-          <img src="/radiozilla.svg" alt="Radiozilla" className="ml-2 h-8 w-auto" />
+          <Image src="/radiozilla.svg" alt="Radiozilla" className="ml-2 h-8 w-auto" width={32} height={32} />
         </Link>
         <div className="flex items-center space-x-4">
           <Suspense fallback={<div className="h-9" />}>

@@ -1,6 +1,6 @@
 'use server';
 
-import { and, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { PlayableFeedMode } from '@/components/webplayer/data/model';
@@ -19,7 +19,7 @@ import {
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
 import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
-import { getAuthenticatedAppForUser } from '../server/firebase';
+import { getAuthenticatedAppForUser, getUser } from '../server/firebase';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -90,9 +90,8 @@ export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
         throw new Error("User ID mismatch");
     }
 
-    user.userId = user.userId || 0;
     const dbUsers = await db.select({
-        userId: users.id,
+        id: users.id,
         firebaseUserId: users.firebaseUserId,
         name: users.name,
         description: users.description,
@@ -117,7 +116,7 @@ export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
     }).returning({
-        userId: users.id,
+        id: users.id,
         firebaseUserId: users.firebaseUserId,
         name: users.name,
         description: users.description,
@@ -296,12 +295,39 @@ export const getActivityLogsForUserAction = async (userId: number): Promise<Acti
     }));
 }
 
-export const getSubscriptionByStripeCustomerIdAction = async (userId: number, stripeCustomerId: string): Promise<Subscription | null> => {
+export const getSubscriptionByStripeCustomerIdAction = async (stripeCustomerId: string): Promise<Subscription | null> => {
     const dbSubscription = await db
         .select()
         .from(subscriptions)
         .where(
-            and(eq(subscriptions.adminUserId, userId), eq(subscriptions.stripeCustomerId, stripeCustomerId))
+            eq(subscriptions.stripeCustomerId, stripeCustomerId)
+        )
+        .limit(1);
+
+    if (dbSubscription.length > 0) {
+        return dbSubscription[0];
+    }
+    return null;
+}
+
+export const getSubscriptionForCurrentUserAction = async (): Promise<Subscription | null> => {
+    const user = await getUser();
+    if (!user) {
+        return null;
+    }
+    return await getSubscriptionByUserIdAction(user.id);
+}
+
+export const getSubscriptionUsersForSubscriptionAction = async (): Promise<UserDTO[]> => {
+    return [];
+}
+
+export const getSubscriptionByUserIdAction = async (userId: number): Promise<Subscription | null> => {
+    const dbSubscription = await db
+        .select()
+        .from(subscriptions)
+        .where(
+            eq(subscriptions.adminUserId, userId)
         )
         .limit(1);
 

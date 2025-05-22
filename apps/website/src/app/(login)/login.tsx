@@ -53,19 +53,24 @@ export function Login({ mode }: { mode: LoginMode }) {
 
     try {
       setState(LoginState.LOADING);
-      const result = await signUpWithEmail(email, password);
+      await signUpWithEmail(email, password);
       setState(LoginState.SUCCESS);
       // Clear form
       setEmail('');
       setPassword('');
-    } catch (err: any) {
-      setState(LoginState.ERROR)
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Email is already in use');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address');
+    } catch (err) {
+      setState(LoginState.ERROR);
+      if (err && typeof err === 'object' && 'code' in err) {
+        const firebaseError = err as { code: string; message?: string };
+        if (firebaseError.code === 'auth/email-already-in-use') {
+          setError('Email is already in use');
+        } else if (firebaseError.code === 'auth/invalid-email') {
+          setError('Invalid email address');
+        } else {
+          setError(firebaseError.message || 'An error occurred');
+        }
       } else {
-        setError(err.message);
+        setError('An unexpected error occurred');
       }
     }
   };
@@ -78,7 +83,7 @@ export function Login({ mode }: { mode: LoginMode }) {
       await signInWithEmail(email, password);
       setState(LoginState.SUCCESS);
       router.push('/');
-    } catch (err) {
+    } catch {
       setState(LoginState.ERROR);
       setError('Invalid credentials. Please try again.');
     }

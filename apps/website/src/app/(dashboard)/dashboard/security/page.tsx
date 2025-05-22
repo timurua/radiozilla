@@ -16,7 +16,7 @@ type ActionState = {
 
 export default function SecurityPage() {
 
-  const { user, updateEmailPassword, deleteUser } = useAuth();
+  const { updateEmailPassword, deleteUser } = useAuth();
   const [passwordState, setPasswordState] = useState<ActionState>({});
   const [deleteState, setDeleteState] = useState<ActionState>({});
 
@@ -37,7 +37,7 @@ export default function SecurityPage() {
     setPasswordState({ isPending: true });
     startTransition(async () => {
       try {
-        await updateEmailPassword(newPassword);
+        await updateEmailPassword(currentPassword, newPassword);
         setPasswordState({ success: 'Password updated successfully' });
       } catch (err) {
         setPasswordState({ error: err instanceof Error ? err.message : 'An error occurred' });
@@ -49,8 +49,14 @@ export default function SecurityPage() {
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+    setDeleteState({ isPending: true });
     startTransition(() => {
-      deleteUser();
+      try {
+        deleteUser();
+        setDeleteState({ success: 'Account deleted successfully' });
+      } catch (err) {
+        setDeleteState({ error: err instanceof Error ? err.message : 'An error occurred' });
+      }
     });
   };
 

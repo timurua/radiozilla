@@ -46,7 +46,7 @@ export interface FrontendUserDTO {
 }
 
 export interface UserDTO {
-    userId: number;
+    id: number;
     firebaseUserId: string;
     name: string | null;
     description: string | null;

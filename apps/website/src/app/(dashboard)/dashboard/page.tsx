@@ -1,4 +1,4 @@
-import { Settings } from './settings';
+import { Settings } from './subscription/settings';
 
 
 export default async function SettingsPage() {

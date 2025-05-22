@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
+import { Form, FormControl, InputGroup } from 'react-bootstrap';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import AudioList from '@/components/webplayer/components/AudioList';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';

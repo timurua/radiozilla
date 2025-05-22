@@ -11,17 +11,17 @@ const postgresUrl = process.env.POSTGRES_UNIX_SOCKET ?
 
 export const client = process.env.POSTGRES_UNIX_SOCKET ?
   postgres(postgresUrl, {
-    database: process.env.POSTGRES_DB!!,
-    user: process.env.POSTGRES_USER!!,
-    password: process.env.POSTGRES_PASSWORD!!,
-    host: process.env.POSTGRES_UNIX_SOCKET!!,
+    database: process.env.POSTGRES_DB!,
+    user: process.env.POSTGRES_USER!,
+    password: process.env.POSTGRES_PASSWORD!,
+    host: process.env.POSTGRES_UNIX_SOCKET!,
   }) :
   postgres(postgresUrl, {
-    database: process.env.POSTGRES_DB!!,
-    user: process.env.POSTGRES_USER!!,
-    password: process.env.POSTGRES_PASSWORD!!,
-    host: process.env.POSTGRES_HOST!!,
-    port: parseInt(process.env.POSTGRES_PORT!!)
+    database: process.env.POSTGRES_DB!,
+    user: process.env.POSTGRES_USER!,
+    password: process.env.POSTGRES_PASSWORD!,
+    host: process.env.POSTGRES_HOST!,
+    port: parseInt(process.env.POSTGRES_PORT!)
   });
 
 export const db = drizzle(client, { schema });

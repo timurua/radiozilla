@@ -4,15 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { customerPortalAction } from '@/lib/payments/actions';
-import { useActionState } from 'react';
-import { InviteTeamMember } from './invite-team';
+import { Suspense, use } from 'react';
+import { getSubscriptionForCurrentUser, getSubscriptionUsersForSubscription } from '@/lib/db/client';
 
-type ActionState = {
-  error?: string;
-  success?: string;
-};
+export function SettingsPage() {
+  return <Suspense fallback={<div>Loading...</div>}>
+    <Settings />
+  </Suspense>
+
+}
 
 export function Settings() {
+
+  const subscription = use(getSubscriptionForCurrentUser());
+
+  if (!subscription) {
+    return <div>Subscription not found</div>
+  }
+
+  const subscriptionUsers = use(getSubscriptionUsersForSubscription());
 
   return (
     <section className="flex-1 p-4 lg:p-8">
@@ -26,12 +36,12 @@ export function Settings() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
               <div className="mb-4 sm:mb-0">
                 <p className="font-medium text-black dark:text-white">
-                  Current Plan: {teamData.planName || 'Free'}
+                  Current Plan: {subscription?.stripePlanName || 'Free'}
                 </p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {teamData.subscriptionStatus === 'active'
+                  {subscription?.stripeSubscriptionStatus === 'active'
                     ? 'Billed monthly'
-                    : teamData.subscriptionStatus === 'trialing'
+                    : subscription?.stripeSubscriptionStatus === 'trialing'
                       ? 'Trial period'
                       : 'No active subscription'}
                 </p>
@@ -51,53 +61,34 @@ export function Settings() {
         </CardHeader>
         <CardContent>
           <ul className="space-y-4">
-            {teamData.teamMembers.map((member, index) => (
-              <li key={member.id} className="flex items-center justify-between">
+            {subscriptionUsers.map((user) => (
+              <li key={user.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Avatar>
                     <AvatarImage
                       src={`/placeholder.svg?height=32&width=32`}
-                      alt={getUserDisplayName(member.user)}
+                      alt={user.name || ''}
                     />
                     <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
-                      {getUserDisplayName(member.user)
-                        .split(' ')
+                      {user.name?.split(' ')
                         .map((n) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-black dark:text-white">
-                      {getUserDisplayName(member.user)}
+                      {user.name || ''}
                     </p>
                     <p className="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                      {member.role}
+                      {user.email || ''}
                     </p>
                   </div>
                 </div>
-                {index > 1 ? (
-                  <form action={removeAction}>
-                    <input type="hidden" name="memberId" value={member.id} />
-                    <Button
-                      type="submit"
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-300 dark:border-gray-600 text-black dark:text-white"
-                      disabled={isRemovePending}
-                    >
-                      {isRemovePending ? 'Removing...' : 'Remove'}
-                    </Button>
-                  </form>
-                ) : null}
               </li>
             ))}
           </ul>
-          {removeState?.error && (
-            <p className="text-red-500 dark:text-red-400 mt-4">{removeState.error}</p>
-          )}
         </CardContent>
       </Card>
-      <InviteTeamMember />
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } f
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction } from './actions';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction, getUserAction } from './actions';
 import { FrontendAudioDTO, UserDTO } from './interfaces';
 import { Subscription } from "./schema";
 
@@ -140,19 +140,20 @@ export const upsertUser = async (user: RZUser): Promise<RZUser> => {
         is_enabled: user.is_enabled,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        userType: user.userType,
     });
-    return new RZUser(
-        userDTO.id,
-        userDTO.firebaseUserId,
-        userDTO.name,
-        userDTO.description,
-        userDTO.imageUrl,
-        userDTO.email,
-        userDTO.is_enabled,
-        userDTO.createdAt,
-        userDTO.updatedAt,
-        user.userType,
-    );
+    return {
+        id: userDTO.id,
+        firebaseUserId: userDTO.firebaseUserId,
+        name: userDTO.name,
+        description: userDTO.description,
+        imageUrl: userDTO.imageUrl,
+        email: userDTO.email,
+        is_enabled: userDTO.is_enabled,
+        createdAt: userDTO.createdAt,
+        updatedAt: userDTO.updatedAt,
+        userType: userDTO.userType,
+    }
 }
 
 export const deleteUser = async (userId: number): Promise<void> => {

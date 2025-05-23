@@ -3,7 +3,7 @@
 import { desc } from 'drizzle-orm';
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
-import { PlayableFeedMode } from '@/components/webplayer/data/model';
+import { PlayableFeedMode, RZUser, RZUserType } from '@/components/webplayer/data/model';
 
 import { db } from '@/lib/db/drizzle';
 import {
@@ -18,8 +18,8 @@ import {
     users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
-import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserDTO } from './interfaces';
-import { getAuthenticatedAppForUser, getUser } from '../server/firebase';
+import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO } from './interfaces';
+import { getAuthenticatedAppForUser, getUser as getUserFirebase } from '../server/firebase';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -81,7 +81,68 @@ export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> 
     }
 }
 
-export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
+export const getUserAction = async (): Promise<RZUser | null> => {
+    const { currentUser } = await getAuthenticatedAppForUser();
+    if (currentUser) {
+        const rzUserType = currentUser.isAnonymous ?
+            RZUserType.AUTH_ANONYMOUS :
+            (currentUser.emailVerified ?
+                RZUserType.AUTH_USER :
+                RZUserType.WAITING_EMAIL_VERIFICATION);
+
+        const dbUsers = await db.select({
+            id: users.id,
+            firebaseUserId: users.firebaseUserId,
+            name: users.name,
+            description: users.description,
+            email: users.email,
+            imageUrl: users.imageUrl,
+            createdAt: users.createdAt,
+            updatedAt: users.updatedAt,
+            is_enabled: users.is_enabled
+        }).from(users).where(eq(users.firebaseUserId, currentUser.uid)).limit(1);
+        if (dbUsers.length > 0) {
+            return {
+                ...dbUsers[0],
+                userType: rzUserType
+            };
+        }
+    }
+
+    return {
+        id: 0,
+        firebaseUserId: "",
+        name: null,
+        description: null,
+        email: null,
+        imageUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        is_enabled: false,
+        userType: RZUserType.NONE
+    };
+}
+
+export const getUser = async (): Promise<RZUser | null> => {
+    const userDTO = await getUserAction();
+    if (!userDTO) {
+        return null;
+    }
+    return {
+        id: userDTO.id,
+        firebaseUserId: userDTO.firebaseUserId,
+        name: userDTO.name,
+        description: userDTO.description,
+        imageUrl: userDTO.imageUrl,
+        email: userDTO.email,
+        is_enabled: userDTO.is_enabled,
+        createdAt: userDTO.createdAt,
+        updatedAt: userDTO.updatedAt,
+        userType: userDTO.userType,
+    };
+}
+
+export const upsertUserAction = async (user: RZUser): Promise<RZUser> => {
     const { currentUser } = await getAuthenticatedAppForUser();
     if (!currentUser) {
         throw new Error("No user found");
@@ -103,7 +164,10 @@ export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
     }).from(users).where(eq(users.firebaseUserId, user.firebaseUserId)).limit(1);
 
     if (dbUsers.length > 0) {
-        return dbUsers[0];
+        return {
+            ...dbUsers[0],
+            userType: user.userType
+        }
     }
 
     const insertResult = await db.insert(users).values({
@@ -126,7 +190,10 @@ export const upsertUserAction = async (user: UserDTO): Promise<UserDTO> => {
         updatedAt: users.updatedAt,
         is_enabled: users.is_enabled
     });
-    return insertResult[0];
+    return {
+        ...insertResult[0],
+        userType: user.userType
+    };
 }
 
 export const deleteUserAction = async (userId: number): Promise<void> => {
@@ -175,7 +242,9 @@ export const upsertFrontendUserAction = async (userData: FrontendUserDTO): Promi
         searchHistory: frontendUsers.searchHistory,
         subscribedChannelIds: frontendUsers.subscribedChannelIds,
     });
-    return insertResult[0];
+    return {
+        ...insertResult[0],
+    };
 
 }
 
@@ -311,14 +380,14 @@ export const getSubscriptionByStripeCustomerIdAction = async (stripeCustomerId: 
 }
 
 export const getSubscriptionForCurrentUserAction = async (): Promise<Subscription | null> => {
-    const user = await getUser();
+    const user = await getUserFirebase();
     if (!user) {
         return null;
     }
     return await getSubscriptionByUserIdAction(user.id);
 }
 
-export const getSubscriptionUsersForSubscriptionAction = async (): Promise<UserDTO[]> => {
+export const getSubscriptionUsersForSubscriptionAction = async (): Promise<RZUser[]> => {
     return [];
 }
 

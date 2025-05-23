@@ -20,7 +20,7 @@ import {
   reauthenticateWithCredential
 } from 'firebase/auth';
 import { createContext, JSX, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { RZUser, RZUserData, RZUserType } from '../../components/webplayer/data/model';
+import { RZUser, RZUserData, RZUserType, nobody } from '../../components/webplayer/data/model';
 import { auth } from '../firebase';
 import { userDataStore } from '../../components/webplayer/state/userData';
 import logger from '../../components/webplayer/utils/logger';
@@ -63,7 +63,7 @@ type UserPromiseState = {
 }
 
 export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
-  const [user, setUser] = useState<RZUser>(RZUser.nobody());
+  const [user, setUser] = useState<RZUser>(nobody);
 
   const createNewUserPromise = useCallback(() => {
     let userPromiseResolve: (user: RZUser) => void = () => { };
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
 
   const [userPromiseState, setUserPromiseState] = useState<UserPromiseState>(() => {
     return {
-      userPromise: Promise.resolve(RZUser.nobody()),
+      userPromise: Promise.resolve(nobody()),
       userPromiseResolve: () => { }
     };
   });
@@ -100,11 +100,11 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
           const token = await user.getIdToken();
           setCookie("__session", token);
         } catch {
-          setUserAndPromise(RZUser.nobody());
+          setUserAndPromise(nobody());
         }
       } else {
         deleteCookie("__session");
-        setUserAndPromise(RZUser.nobody());
+        setUserAndPromise(nobody());
       }
     });
 
@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (user === null) {
-        setUserAndPromise(RZUser.nobody());
+        setUserAndPromise(nobody());
         userDataStore.setUserData(RZUserData.empty());
         return;
       }
@@ -123,17 +123,18 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
         (user.emailVerified ?
           RZUserType.AUTH_USER :
           RZUserType.WAITING_EMAIL_VERIFICATION);
-      const rzUser = new RZUser(
-        0,
-        user.uid,
-        user.displayName || '',
-        "",
-        user.photoURL || '',
-        user.email || '',
-        true,
-        new Date(),
-        new Date(),
-        rzUserType);
+      const rzUser = {
+        id: 0,
+        firebaseUserId: user.uid,
+        name: user.displayName || '',
+        description: "",
+        imageUrl: user.photoURL || '',
+        email: user.email || '',
+        is_enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userType: rzUserType
+      };
 
       const existingUser = await upsertUser(rzUser);
       setUserAndPromise(existingUser);
@@ -309,3 +310,32 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
+
+type UserContextType = {
+  userPromise: Promise<RZUser | null>;
+};
+
+const UserContext = createContext<UserContextType | null>(null);
+
+export function useUser(): UserContextType {
+  let context = useContext(UserContext);
+  if (context === null) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+}
+
+export function UserProvider({
+  children,
+  userPromise
+}: {
+  children: ReactNode;
+  userPromise: Promise<RZUser | null>;
+}) {
+  return (
+    <UserContext.Provider value={{ userPromise }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+

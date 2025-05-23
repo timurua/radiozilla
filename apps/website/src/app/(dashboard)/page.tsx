@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Database } from 'lucide-react';
 import { SlackIcon, GithubIcon, WikiIcon, WebScrapeIcon } from './page-icons';

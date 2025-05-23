@@ -31,36 +31,33 @@ export enum RZUserType {
   WAITING_EMAIL_VERIFICATION = "WaitingEmailVerification",
 }
 
-export class RZUser {
-  constructor(
-    public id: number,
-    public firebaseUserId: string,
-    public name: string | null,
-    public description: string | null,
-    public imageUrl: string | null,
-    public email: string | null,
-    public is_enabled: boolean,
-    public createdAt: Date,
-    public updatedAt: Date,
-    public userType: RZUserType,
-  ) {
-  }
-
-  static nobody(): RZUser {
-    return new RZUser(
-      0,
-      '',
-      '',
-      '',
-      '',
-      '',
-      true,
-      new Date(),
-      new Date(),
-      RZUserType.NONE,
-    );
-  }
+export interface RZUser {
+  id: number;
+  firebaseUserId: string;
+  name: string | null;
+  description: string | null;
+  imageUrl: string | null,
+  email: string | null,
+  is_enabled: boolean,
+  createdAt: Date,
+  updatedAt: Date,
+  userType: RZUserType,
 }
+
+export const nobody = (): RZUser => {
+  return {
+    id: 0,
+    firebaseUserId: "",
+    name: null,
+    description: null,
+    imageUrl: null,
+    email: null,
+    is_enabled: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    userType: RZUserType.NONE
+  }
+};
 
 export class RZUserData {
   constructor(

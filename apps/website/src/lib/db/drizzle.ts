@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv.config();
 
 const postgresUrl = process.env.POSTGRES_UNIX_SOCKET ?
   `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@localhost:5432/${process.env.POSTGRES_DB}` :

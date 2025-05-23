@@ -13,14 +13,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { RZUserType } from '@/components/webplayer/data/model';
-import { useAuth } from '@/lib/auth/provider';
+import { useAuth, useUser } from '@/lib/auth/provider';
 import Image from 'next/image';
+import { use } from 'react';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { userPromise } = useUser();
+  const user = use(userPromise);
 
   async function handleSignOut() {
     await signOut();
@@ -28,7 +31,7 @@ function UserMenu() {
     router.push('/');
   }
 
-  if (user.userType !== RZUserType.AUTH_USER) {
+  if (!user || user.userType !== RZUserType.AUTH_USER) {
     return (
       <>
         <Link

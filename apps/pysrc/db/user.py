@@ -52,6 +52,9 @@ class Subscription(TimestampModel):
     stripe_subscription_id: Mapped[str] = mapped_column(String, nullable=True, default=None, index=True)
     admin_user_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
     admin_user: Mapped[User] = relationship(User, foreign_keys=[admin_user_id])    
+    admin_user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
+    admin_user_group: Mapped[UserGroup] = relationship(UserGroup, foreign_keys=[admin_user_group_id])    
+    
         
 class UserGroupInvitation(TimestampModel):
     __tablename__ = "user_group_invitations"
@@ -76,8 +79,8 @@ class ActivityLog(Base):
     user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
     user_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
     action: Mapped[str] = mapped_column(String, nullable=False)
-    ipAddress: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    createdAt: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
+    ip_address: Mapped[str] = mapped_column(String, nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=None)
     
     
     

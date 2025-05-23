@@ -1,3 +1,5 @@
+import { RZUserType } from "@/components/webplayer/data/model";
+
 export interface FrontendAuthorDTO {
     id: string;
     name: string;
@@ -43,18 +45,6 @@ export interface FrontendUserDTO {
     likedAudioIds: string[];
     searchHistory: string[];
     subscribedChannelIds: string[];
-}
-
-export interface UserDTO {
-    id: number;
-    firebaseUserId: string;
-    name: string | null;
-    description: string | null;
-    imageUrl: string | null;
-    email: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    is_enabled: boolean;
 }
 
 export interface ActivityLogDTO {

@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/lib/auth/provider';
+import { useUser } from '@/lib/query/hooks';
+import { useUpsertUser } from '@/lib/query/hooks';
+import { RZUser } from '@/components/webplayer/data/model';
 
 export default function GeneralPage() {
-  const { user, updateUser } = useAuth();
+  const { data: user } = useUser();
+  const updateUserMutation = useUpsertUser();
+
   const [name, setName] = useState(user?.name || '');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -21,10 +25,16 @@ export default function GeneralPage() {
     // Another option here is to persist the values to local storage. I might
     // explore alternative options.
     startTransition(async () => {
-      await updateUser({
+      if (!user) {
+        return;
+      }
+
+      const newUser: RZUser = {
         ...user,
-        name,
-      });
+        name
+      }
+
+      await updateUserMutation.mutateAsync(newUser);
     });
   };
 

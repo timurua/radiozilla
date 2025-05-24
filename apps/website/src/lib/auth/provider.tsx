@@ -1,7 +1,7 @@
 'use client';
 
 import CookieConsent from '@/components/CookieConsent';
-import { upsertUser, deleteUser as deleteUserDB } from '@/lib/db/client';
+import { deleteUser as deleteUserDB } from '@/lib/db/client';
 import LocalStorage from '@/components/webplayer/utils/LocalStorage';
 import {
   createUserWithEmailAndPassword,
@@ -19,12 +19,12 @@ import {
   updatePassword,
   reauthenticateWithCredential
 } from 'firebase/auth';
-import { createContext, JSX, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { RZUser, RZUserData, RZUserType, nobody } from '../../components/webplayer/data/model';
+import { createContext, JSX, ReactNode, useCallback, useContext, useEffect } from 'react';
+import { RZUser, RZUserType } from '../../components/webplayer/data/model';
 import { auth } from '../firebase';
-import { userDataStore } from '../../components/webplayer/state/userData';
 import logger from '../../components/webplayer/utils/logger';
 import { setCookie, deleteCookie } from "cookies-next";
+import { useResetUser, useUpsertUser } from '../query/hooks';
 
 export interface SignIn {
   success: boolean;
@@ -37,8 +37,6 @@ export interface SignUp {
 }
 
 export interface AuthContextType {
-  user: RZUser;
-  userPromise: Promise<RZUser>;
   signInAnon: () => Promise<SignIn>;
   signUpWithEmail: (email: string, password: string) => Promise<SignUp>;
   signInWithEmail: (email: string, password: string) => Promise<SignIn>;
@@ -57,41 +55,11 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
-type UserPromiseState = {
-  userPromise: Promise<RZUser>;
-  userPromiseResolve: (user: RZUser) => void;
-}
-
 export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
-  const [user, setUser] = useState<RZUser>(nobody);
+  const upsertUserMutation = useUpsertUser();
+  const resetUserMutation = useResetUser();
 
-  const createNewUserPromise = useCallback(() => {
-    let userPromiseResolve: (user: RZUser) => void = () => { };
-    const userPromise = new Promise<RZUser>((resolve) => {
-      userPromiseResolve = resolve;
-    });
 
-    return {
-      userPromise,
-      userPromiseResolve
-    }
-  }, []);
-
-  const [userPromiseState, setUserPromiseState] = useState<UserPromiseState>(() => {
-    return {
-      userPromise: Promise.resolve(nobody()),
-      userPromiseResolve: () => { }
-    };
-  });
-
-  const startNewUserPromise = useCallback(() => {
-    setUserPromiseState(createNewUserPromise());
-  }, [createNewUserPromise]);
-
-  const setUserAndPromise = useCallback((user: RZUser) => {
-    setUser(user);
-    userPromiseState.userPromiseResolve(user);
-  }, [userPromiseState]);
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user: User | null) => {
@@ -100,22 +68,20 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
           const token = await user.getIdToken();
           setCookie("__session", token);
         } catch {
-          setUserAndPromise(nobody());
+          deleteCookie("__session");
         }
       } else {
         deleteCookie("__session");
-        setUserAndPromise(nobody());
       }
     });
 
     return () => unsubscribe();
-  }, [setUserAndPromise]);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (user === null) {
-        setUserAndPromise(nobody());
-        userDataStore.setUserData(RZUserData.empty());
+        resetUserMutation();
         return;
       }
       const rzUserType = user.isAnonymous ?
@@ -135,13 +101,13 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
         updatedAt: new Date(),
         userType: rzUserType
       };
-
-      const existingUser = await upsertUser(rzUser);
-      setUserAndPromise(existingUser);
+      upsertUserMutation.mutate(rzUser);
     });
 
-    return () => unsubscribe();
-  }, [setUserAndPromise]);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const checkCookieConsent = useCallback(() => {
     const cookieConsent = LocalStorage.getCookieConsent();
@@ -154,7 +120,6 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
   const signInAnon = useCallback(async (): Promise<SignIn> => {
     try {
       checkCookieConsent();
-      startNewUserPromise();
       await signInAnonymously(auth);
       return {
         success: true
@@ -162,12 +127,11 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [checkCookieConsent, startNewUserPromise]);
+  }, [checkCookieConsent]);
 
   const signUpWithEmail = useCallback(async (email: string, password: string): Promise<SignUp> => {
     try {
       checkCookieConsent();
-      startNewUserPromise();
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerificationFirebase(result.user);
       return {
@@ -176,12 +140,11 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [checkCookieConsent, startNewUserPromise]);
+  }, [checkCookieConsent]);
 
   const signInWithEmail = useCallback(async (email: string, password: string): Promise<SignIn> => {
     try {
       checkCookieConsent();
-      startNewUserPromise();
       await signInWithEmailAndPassword(auth, email, password);
       return {
         success: true
@@ -189,12 +152,11 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [checkCookieConsent, startNewUserPromise]);
+  }, [checkCookieConsent]);
 
   const signInWithGoogle = useCallback(async (): Promise<SignIn> => {
     try {
       checkCookieConsent();
-      startNewUserPromise();
       const provider = new GoogleAuthProvider();
 
       try {
@@ -208,16 +170,15 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [checkCookieConsent, startNewUserPromise]);
+  }, [checkCookieConsent]);
 
   const updateUser = useCallback(async (user: RZUser): Promise<void> => {
     try {
-      const newUser = await upsertUser(user);
-      setUser(newUser);
+      await upsertUserMutation.mutateAsync(user);
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [setUser]);
+  }, [upsertUserMutation]);
 
   const updateEmailPassword = useCallback(async (currentPassword: string, newPassword: string): Promise<void> => {
     try {
@@ -239,13 +200,13 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
       if (!firebaseUser) {
         throw new Error('User not found');
       }
-      await deleteUserDB(user.id);
+      await deleteUserDB();
       await firebaseUser.delete();
 
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [user]);
+  }, []);
 
   const sendEmailVerification = useCallback(async (): Promise<void> => {
     try {
@@ -270,16 +231,14 @@ export const AuthProvider = ({ children }: AppProviderProps): JSX.Element => {
 
   const signOut = useCallback(async (): Promise<void> => {
     try {
-      startNewUserPromise();
+      resetUserMutation();
       await firebaseSignOut(auth);
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [startNewUserPromise]);
+  }, [resetUserMutation]);
 
   const value: AuthContextType = {
-    user,
-    userPromise: userPromiseState.userPromise,
     signInAnon,
     signUpWithEmail,
     signInWithEmail,
@@ -311,31 +270,4 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-type UserContextType = {
-  userPromise: Promise<RZUser | null>;
-};
-
-const UserContext = createContext<UserContextType | null>(null);
-
-export function useUser(): UserContextType {
-  let context = useContext(UserContext);
-  if (context === null) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
-}
-
-export function UserProvider({
-  children,
-  userPromise
-}: {
-  children: ReactNode;
-  userPromise: Promise<RZUser | null>;
-}) {
-  return (
-    <UserContext.Provider value={{ userPromise }}>
-      {children}
-    </UserContext.Provider>
-  );
-}
 

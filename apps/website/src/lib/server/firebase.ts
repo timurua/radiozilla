@@ -5,10 +5,6 @@ import "server-only";
 import { cookies } from "next/headers";
 import { initializeApp, initializeServerApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { db } from "../db/drizzle";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
-import { UserDTO } from "../db/interfaces";
 import { firebaseConfig } from "../firebase";
 
 // Returns an authenticated client SDK instance for use in Server Side Rendering
@@ -36,25 +32,3 @@ export async function getAuthenticatedAppForUser(): Promise<{
     return { firebaseServerApp, currentUser: auth.currentUser };
 }
 
-export async function getUser(): Promise<UserDTO | null> {
-    const { currentUser } = await getAuthenticatedAppForUser();
-    if (!currentUser) {
-        return null;
-    }
-    const dbUsers = await db.select({
-        id: users.id,
-        firebaseUserId: users.firebaseUserId,
-        name: users.name,
-        description: users.description,
-        email: users.email,
-        imageUrl: users.imageUrl,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-        is_enabled: users.is_enabled
-    }).from(users).where(eq(users.firebaseUserId, currentUser?.uid)).limit(1);
-
-    if (dbUsers.length > 0) {
-        return dbUsers[0];
-    }
-    return null;
-}

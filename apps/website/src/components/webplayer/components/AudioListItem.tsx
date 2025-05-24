@@ -64,7 +64,7 @@ export const AudioListItem = observer(function AudioListItem({ rzAudio, onClick 
     return (
         <ListGroup.Item key={rzAudio.id} className={"no-select d-flex align-items-center text-light " + (isPlaying ? "bg-secondary rounded" : "bg-dark")} onClick={() => onAudioClick(isPlaying, rzAudio)}>
             <div className="no-select d-flex align-items-center text-light me-3 flex-grow-0">
-                <Image src={imageUrl} rounded className="flex-grow-0" width={50} height={50} />
+                <Image alt="Audio cover" src={imageUrl} rounded className="flex-grow-0" width={50} height={50} />
                 {userDataPlayedAudioIds.includes(rzAudio.id) &&
                     <div style={{ position: 'relative' }}>
                         <BsCheckCircleFill style={{

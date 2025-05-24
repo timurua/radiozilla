@@ -112,7 +112,7 @@ function AudioPlayerImpl({ showExtendedInfo = false, displayAudio: displayRzAudi
       <Container className="audio-player bg-dark">
         {rzAudioToDisplay ? (
           <div className="d-flex align-items-center text-light bg-dark" onClick={onTextClick}>
-            <Image src={imageUrl} rounded className="me-3" width={50} height={50} />
+            <Image alt="Audio cover" src={imageUrl} rounded className="me-3" width={50} height={50} />
             <div>
               <div>{rzAudioToDisplay.name}</div>
               <small className="user-select-none" onClick={(e) => openChannel(rzAudioToDisplay, e)}>{rzAudioToDisplay.channel.name}</small>

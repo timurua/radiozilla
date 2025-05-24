@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RZUserType } from '@/components/webplayer/data/model';
 import { useAuth } from '@/lib/auth/provider';
+import { useUserSuspense } from '@/lib/query/hooks';
 import { CircleIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -31,8 +32,10 @@ export function Login({ mode }: { mode: LoginMode }) {
   const [state, setState] = useState<LoginState>(LoginState.IDLE);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { user, signInWithEmail, signUpWithEmail, sendEmailVerification } = useAuth();
+  const { signInWithEmail, signUpWithEmail, sendEmailVerification } = useAuth();
   const router = useRouter();
+  const { data: user } = useUserSuspense();
+
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -89,7 +92,7 @@ export function Login({ mode }: { mode: LoginMode }) {
     }
   };
 
-  if (user.userType === RZUserType.WAITING_EMAIL_VERIFICATION) {
+  if (user?.userType === RZUserType.WAITING_EMAIL_VERIFICATION) {
     return (
       <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">

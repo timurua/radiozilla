@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { createCheckoutSession, createCustomerPortalSession } from './stripe';
 import { getSubscriptionForCurrentUser } from '../db/client';
+import { getSubscriptionForCurrentUserAction } from '../db/actions';
 
 
 export const checkoutAction = async (formData: FormData) => {
@@ -15,7 +16,7 @@ export const checkoutAction = async (formData: FormData) => {
 };
 
 export const customerPortalAction = async () => {
-  const subscription = await getSubscriptionForCurrentUser();
+  const subscription = await getSubscriptionForCurrentUserAction();
   if (!subscription) {
     redirect('/pricing');
   }

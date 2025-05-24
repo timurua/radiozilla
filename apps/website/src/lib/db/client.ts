@@ -4,8 +4,8 @@ import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } f
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction, getUserAction } from './actions';
-import { FrontendAudioDTO, UserDTO } from './interfaces';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction } from './actions';
+import { FrontendAudioDTO } from './interfaces';
 import { Subscription } from "./schema";
 
 class AsyncCache<T extends object> {
@@ -156,8 +156,8 @@ export const upsertUser = async (user: RZUser): Promise<RZUser> => {
     }
 }
 
-export const deleteUser = async (userId: number): Promise<void> => {
-    await deleteUserAction(userId);
+export const deleteUser = async (): Promise<void> => {
+    await deleteUserAction();
 }
 
 export const upsertFrontendUser = async (userData: RZUserData): Promise<RZUserData> => {
@@ -281,7 +281,7 @@ export const getSubscriptionForCurrentUser = async (): Promise<Subscription | nu
     return await getSubscriptionForCurrentUserAction();
 }
 
-export const getSubscriptionUsersForSubscription = async (): Promise<UserDTO[]> => {
+export const getSubscriptionUsersForSubscription = async (): Promise<RZUser[]> => {
     return await getSubscriptionUsersForSubscriptionAction();
 }
 

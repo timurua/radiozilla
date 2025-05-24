@@ -13,10 +13,10 @@ import {
 import { RZAudio } from '../data/model';
 import { storageUtils } from '../../../lib/firebase';
 import logger from '../utils/logger';
-import { useAuth } from '../../../lib/auth/provider';
 import { observer } from "mobx-react-lite";
 import { userDataStore } from "../state/userData";
 import AudioLoader from '../utils/AudioLoader';
+import { useUser } from '@/lib/query/hooks';
 
 interface AudioContextProps {
     play: (audio?: RZAudio | null) => Promise<void>;
@@ -71,7 +71,7 @@ export const AudioProvider: FC<AudioProviderProps> = observer(({ children }) => 
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
-    const { user } = useAuth();
+    const { data: user } = useUser();
 
     const [reportedMinute, setReportedMinute] = useState<number>(-1);
 
@@ -79,16 +79,16 @@ export const AudioProvider: FC<AudioProviderProps> = observer(({ children }) => 
         return document.createElement('audio');
     }, []);
 
-    const reportPlayback = async () => {
+    const reportPlayback = useCallback(async () => {
         const userId = user?.id;
         if (rzAudio && isPlaying && userId && reportedMinute >= 0) {
             userDataStore.addPlayedAudioId(rzAudio.id);
         }
-    }
+    }, [rzAudio, isPlaying, user, reportedMinute]);
 
     useEffect(() => {
         reportPlayback();
-    }, [rzAudio, reportedMinute, isPlaying]);
+    }, [reportPlayback]);
 
     useEffect(() => {
         // Cleanup function to remove the audio element on unmount

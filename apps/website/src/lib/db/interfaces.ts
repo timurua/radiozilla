@@ -1,5 +1,3 @@
-import { RZUserType } from "@/components/webplayer/data/model";
-
 export interface FrontendAuthorDTO {
     id: string;
     name: string;

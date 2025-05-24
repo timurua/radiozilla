@@ -1,11 +1,11 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
-import { AuthProvider, UserProvider } from '@/lib/auth/provider';
+import { AuthProvider } from '@/lib/auth/provider';
 import CookieConsent from '@/components/CookieConsent';
 import MobxProvider from '@/components/webplayer/state/provider';
 import { FrontEndUserProvider } from '@/lib/webplayer/provider';
-import { getUser } from '@/lib/db/actions';
+import { QueryProvider } from '@/lib/query/provider';
 
 export const metadata: Metadata = {
   title: 'Radiozilla - AI Radio',
@@ -34,15 +34,17 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/radiozilla.svg" />
       </head>
       <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
-        <MobxProvider>
-          <AuthProvider>
-            <UserProvider userPromise={getUser()}>
+        <QueryProvider>
+          <MobxProvider>
+            <AuthProvider>
+
               <FrontEndUserProvider>
                 {children}
               </FrontEndUserProvider>
-            </UserProvider>
-          </AuthProvider>
-        </MobxProvider>
+
+            </AuthProvider>
+          </MobxProvider>
+        </QueryProvider>
         <CookieConsent />
       </body>
     </html>

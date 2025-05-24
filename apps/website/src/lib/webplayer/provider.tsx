@@ -1,13 +1,13 @@
 'use client';
 
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { useAuth } from "../auth/provider";
 import { RZUserData } from "@/components/webplayer/data/model";
 import { upsertFrontendUser } from "@/lib/db/client";
 import logger from "@/components/webplayer/utils/logger";
+import { useUser } from "../query/hooks";
 
 export const FrontEndUserProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { data: user } = useUser();
   const [frontEndUser, setFrontEndUser] = useState<RZUserData | null>(null);
 
   useEffect(() => {

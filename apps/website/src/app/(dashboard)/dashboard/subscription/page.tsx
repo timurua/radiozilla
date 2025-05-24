@@ -1,19 +1,18 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/provider';
-import { useState, useEffect } from 'react';
-import { getSubscriptionByUserId } from '@/lib/db/client';
-import { Subscription } from '@/lib/db/schema';
+import { Suspense } from 'react';
+import { useUserSubscriptionSuspense } from '@/lib/query/hooks';
 
 export default function SubscriptionPage() {
-    const { user } = useAuth();
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <SubscriptionPageInner />
+        </Suspense>
+    );
+}
 
-    useEffect(() => {
-        if (user) {
-            getSubscriptionByUserId(user.id).then(setSubscription);
-        }
-    }, [user]);
+function SubscriptionPageInner() {
+    const { data: subscription } = useUserSubscriptionSuspense();
 
     return (
         <div>

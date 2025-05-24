@@ -37,7 +37,7 @@ export function ChannelListItem({ channelId }: { channelId: string }) {
     return (
         <ListGroup.Item onClick={handleClick} key={channelId} className={"no-select d-flex align-items-center text-light bg-dark"}>
             {channel === null ? null : <>
-                <Image src={imageUrl} rounded className="me-3 text-light" width={50} height={50}
+                <Image alt="Channel cover" src={imageUrl} rounded className="me-3 text-light" width={50} height={50}
                     style={{ filter: 'brightness(0) invert(1)' }} />
                 <div>
                     <div className='small'>{channel.name}</div>

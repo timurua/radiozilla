@@ -6,6 +6,7 @@ import { SlackIcon, GithubIcon, WikiIcon, WebScrapeIcon } from './page-icons';
 import Image from 'next/image';
 
 export default function HomePage() {
+
   return (
     <main>
       <section className="py-20">

@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { customerPortalAction } from '@/lib/payments/actions';
-import { Suspense, use, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { getSubscriptionForCurrentUser, getSubscriptionUsersForSubscription } from '@/lib/db/client';
+import { Subscription } from '@/lib/db/schema';
+import { RZUser } from '@/components/webplayer/data/model';
 
 export default function DashboardPage() {
   return <Suspense fallback={<div>Loading...</div>}>
@@ -13,18 +15,26 @@ export default function DashboardPage() {
   </Suspense>
 }
 
-export function Dashboard() {
+function Dashboard() {
 
-  const [subscriptionPromise] = useState(() => getSubscriptionForCurrentUser());
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscriptionUsers, setSubscriptionUsers] = useState<RZUser[]>([]);
 
-  const subscription = use(subscriptionPromise);
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      const sub = await getSubscriptionForCurrentUser();
+      if (!sub) {
+        return;
+      }
+      setSubscription(sub);
 
-  if (!subscription) {
-    return <div>Subscription not found</div>
-  }
+      const subscriptionUsers = await getSubscriptionUsersForSubscription();
+      setSubscriptionUsers(subscriptionUsers);
+    };
 
-  const subscriptionUsersPromise = useMemo(() => getSubscriptionUsersForSubscription(), []);
-  const subscriptionUsers = use(subscriptionUsersPromise);
+    fetchSubscription();
+  }, []);
+
 
   return (
     <section className="flex-1 p-4 lg:p-8">
@@ -73,7 +83,7 @@ export function Dashboard() {
                     />
                     <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white">
                       {user.name?.split(' ')
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>

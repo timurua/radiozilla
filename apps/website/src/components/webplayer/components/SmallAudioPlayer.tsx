@@ -82,7 +82,7 @@ function SmallAudioPlayerImpl() {
       <div className="d-flex justify-content-between align-items-center w-100">
         {rzAudio ? (
           <div className="d-flex align-items-center text-light bg-dark flex-grow-1 w-100" style={{ maxWidth: "calc(100% - 200px)", }} onClick={onTextClick}>
-            <Image src={imageUrl} rounded className="me-3" width={30} height={30} />
+            <Image alt="Audio cover" src={imageUrl} rounded className="me-3" width={30} height={30} />
             <div className='flex-shrink-1 w-100 pb-2'>
               <div className='w-100'>
                 <div

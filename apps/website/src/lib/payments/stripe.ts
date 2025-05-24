@@ -6,8 +6,6 @@ import {
   updateSubscription
 } from '@/lib/db/client';
 
-import { getUser } from '../server/firebase';
-
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-03-31.basil'
 });
@@ -19,9 +17,8 @@ export async function createCheckoutSession({
   subscription: Subscription | null;
   priceId: string;
 }) {
-  const user = await getUser();
 
-  if (!subscription || !user) {
+  if (!subscription) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
   }
 

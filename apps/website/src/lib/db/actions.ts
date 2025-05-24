@@ -19,7 +19,7 @@ import {
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
 import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO } from './interfaces';
-import { getAuthenticatedAppForUser, getUser as getUserFirebase } from '../server/firebase';
+import { getAuthenticatedAppForUser } from '../server/firebase';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -81,7 +81,7 @@ export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> 
     }
 }
 
-export const getUserAction = async (): Promise<RZUser | null> => {
+export const getUserAction = async (): Promise<RZUser> => {
     const { currentUser } = await getAuthenticatedAppForUser();
     if (currentUser) {
         const rzUserType = currentUser.isAnonymous ?
@@ -196,8 +196,12 @@ export const upsertUserAction = async (user: RZUser): Promise<RZUser> => {
     };
 }
 
-export const deleteUserAction = async (userId: number): Promise<void> => {
-    await db.delete(users).where(eq(users.id, userId));
+export const deleteUserAction = async (): Promise<void> => {
+    const { currentUser } = await getAuthenticatedAppForUser();
+    if (!currentUser) {
+        throw new Error("No user found");
+    }
+    await db.delete(users).where(eq(users.firebaseUserId, currentUser.uid));
 }
 
 
@@ -345,12 +349,18 @@ export const getFeedAudioListAction = async (feedMode: PlayableFeedMode, subscri
     return dbAudios.map(dbAudio => dbAudioToDTO(dbAudio));
 }
 
-export const getActivityLogsForUserAction = async (userId: number): Promise<ActivityLogDTO[]> => {
+export const getActivityLogsForUserAction = async (): Promise<ActivityLogDTO[]> => {
+
+    const user = await getUserAction();
+    if (!user) {
+        return [];
+    }
+
     const dbActivityLogs = await db
         .select()
         .from(activityLogs)
         .where(
-            eq(activityLogs.userId, userId)
+            eq(activityLogs.userId, user.id)
         )
         .orderBy(desc(activityLogs.createdAt));
 
@@ -380,7 +390,7 @@ export const getSubscriptionByStripeCustomerIdAction = async (stripeCustomerId: 
 }
 
 export const getSubscriptionForCurrentUserAction = async (): Promise<Subscription | null> => {
-    const user = await getUserFirebase();
+    const user = await getUserAction();
     if (!user) {
         return null;
     }

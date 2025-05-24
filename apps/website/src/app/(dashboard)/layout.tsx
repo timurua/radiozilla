@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Home, LogOut } from 'lucide-react';
 import {
@@ -13,17 +13,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { RZUserType } from '@/components/webplayer/data/model';
-import { useAuth, useUser } from '@/lib/auth/provider';
+import { useAuth } from '@/lib/auth/provider';
 import Image from 'next/image';
-import { use } from 'react';
+import { useUserSuspense } from '@/lib/query/hooks';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const { signOut } = useAuth();
-  const { userPromise } = useUser();
-  const user = use(userPromise);
+  const { data: user } = useUserSuspense();
 
   async function handleSignOut() {
     await signOut();
@@ -103,10 +102,17 @@ function Header() {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
-    <section className="flex flex-col min-h-screen">
-      <Header />
-      {children}
-    </section>
+    <div className="flex flex-col min-h-screen">
+      {isClient && <Header />}
+      {isClient && children}
+    </div>
   );
 }

@@ -37,7 +37,7 @@ function Search() {
             setAudioLoader(new IdsAudioLoader(documents.map(doc => doc.docId)));
         }
         searchIndex();
-    }, [searchValue]);
+    }, [searchValue, search]);
 
     return (
         <PlayerScreen>

@@ -14,9 +14,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ActivityType } from '@/lib/db/schema';
-import { getActivityLogsForUserAction } from '@/lib/db/actions';
-import { useAuth } from '@/lib/auth/provider';
-import { Suspense, use } from 'react';
+import { Suspense } from 'react';
+import { useUserActivitiesSuspense } from '@/lib/query/hooks';
 
 const iconMap: Record<ActivityType, LucideIcon> = {
   [ActivityType.SIGN_UP]: UserPlus,
@@ -79,8 +78,7 @@ export default function ActivityPage() {
 }
 
 function Activities() {
-  const { user } = useAuth();
-  const logs = use(getActivityLogsForUserAction(user!.id));
+  const { data: logs } = useUserActivitiesSuspense();
 
   return (
     <section className="flex-1 p-4 lg:p-8">

@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
 import { TfIdf } from './tf-idf';
 import { TfIdfSearchResult, TfIdfDocument } from './types';
-import { useAuth } from '../../../lib/auth/provider';
 import { getSearchDocuments } from '@/lib/db/client';
 
 interface TfIdfContextType {
@@ -24,17 +23,14 @@ export const TfIdfProvider: React.FC<TfIdfProviderProps> = ({
     const tfIdf = useMemo(() => {
         return new TfIdf(1000);
     }, []);
-    const { user } = useAuth();
 
     useEffect(() => {
         const fetchDocuments = async () => {
-            if (user) {
-                const documents = await getSearchDocuments();
-                tfIdf.addDocuments(documents);
-            };
+            const documents = await getSearchDocuments();
+            tfIdf.addDocuments(documents);
         }
         fetchDocuments();
-    }, [tfIdf, user]);
+    }, [tfIdf]);
 
     useEffect(() => {
         return () => {

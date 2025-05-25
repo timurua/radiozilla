@@ -248,6 +248,30 @@ export const getOrCreateStationForUserAction = async (): Promise<RZStation> => {
     return dbStation[0];
 }
 
+export const updateStationForUserAction = async (station: RZStation): Promise<RZStation> => {
+    const user = await getUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
+    const result = await db.update(stations).set({
+        name: station.name,
+        description: station.description,
+        updatedAt: new Date()
+    }).returning({
+        id: stations.id,
+        name: stations.name,
+        description: stations.description,
+        imageUrl: stations.imageUrl,
+        isPublic: stations.isPublic,
+        adminUserId: stations.adminUserId,
+        adminUserGroupId: stations.adminUserGroupId,
+        listenerUserGroupId: stations.listenerUserGroupId,
+        createdAt: stations.createdAt,
+        updatedAt: stations.updatedAt
+    });
+    return result[0];
+}
+
 export const upsertAllPlayerForUserAction = async (): Promise<void> => {
     const user = await getUserAction();
     if (!user) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUserSuspense } from '@/lib/query/hooks';
+import { useUpdateUserStation, useUserSuspense } from '@/lib/query/hooks';
 import { RZStation } from '@/components/webplayer/data/model';
 import { Button } from '@/components/ui/button';
 import { useUserStationSuspense } from '@/lib/query/hooks';
@@ -38,13 +38,18 @@ function StationForm({ station }: { station: RZStation }) {
     const [name, setName] = useState(station?.name || '');
     const [description, setDescription] = useState(station?.description || '');
     const { showInfo, showWarning } = useNotification();
+    const updateStation = useUpdateUserStation();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            // Here you would add your API call to update the station
-            // Example: await updateStation({ id: station.id, name, description });
+            updateStation.mutate({
+                ...station,
+                name,
+                description,
+            });
             showInfo("Station updated successfully");
+
         } catch (error) {
             showWarning("Failed to update station");
         }

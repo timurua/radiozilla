@@ -12,33 +12,6 @@ from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash
 from pysrc.db.base import Base
 
-class Channel(TimestampModel):
-    __tablename__ = "channels"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    web_page_channel_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
-    web_page_channel: Mapped[WebPageChannel] = relationship("WebPageChannel", back_populates="channels")
-   
-class Station(TimestampModel):
-    __tablename__ = "stations"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    description: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
-    is_private: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
-    is_live: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
-    admin_user_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
-    admin_user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
-    listener_user_group_id: Mapped[int] = mapped_column(Integer, nullable=True, default=None, index=True)
-    admin_user: Mapped[User] = relationship("User", foreign_keys=[admin_user_id])
-    admin_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[admin_user_group_id])
-    listener_user_group: Mapped[UserGroup] = relationship("UserGroup", foreign_keys=[listener_user_group_id])
-    channels: Mapped[List[Channel]] = relationship("Channel", back_populates="stations")
-
-
 class FrontendAuthor(TimestampModel):
     __tablename__ = "frontend_authors"
 

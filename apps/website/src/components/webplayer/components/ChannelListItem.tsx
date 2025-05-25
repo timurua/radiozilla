@@ -5,14 +5,14 @@ import { useEffect, useState } from 'react';
 import { Image, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
 import { getChannel } from '@/lib/db/client';
-import { RZChannel } from '@/components/webplayer/data/model';
+import { RZFrontendChannel } from '@/components/webplayer/data/model';
 import { storageUtils } from '@/lib/firebase';
 import logger from '@/components/webplayer/utils/logger';
 import { ChannelSubscribeButton } from './ChannelSubscribeButton';
 
 export function ChannelListItem({ channelId }: { channelId: string }) {
     const router = useRouter();
-    const [channel, setChannel] = useState<RZChannel | null>(null);
+    const [channel, setChannel] = useState<RZFrontendChannel | null>(null);
     const handleClick = () => {
         router.push(`/webplayer/channel/${channelId}`);
         window.scrollTo({ top: 0, behavior: 'instant' });

@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayableFeedMode, RZAudio, RZAuthor, RZChannel, RZUser, RZUserData, } from "@/components/webplayer/data/model";
+import { PlayableFeedMode, RZAudio, RZAuthor, RZFrontendChannel, RZUser, RZUserData, } from "@/components/webplayer/data/model";
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
@@ -74,14 +74,14 @@ const authorCache = new AsyncCache<RZAuthor>(getAuthor, {
 });
 
 // Modify getChannel with caching
-export const getChannel = async (id: string): Promise<RZChannel> => {
+export const getChannel = async (id: string): Promise<RZFrontendChannel> => {
     const channelDTO = await getChannelAction(id);
     if (!channelDTO) {
         logger.error(`No channel found with ID: ${id}`);
         throw new Error(`No channel found with ID: ${id}`);
     }
 
-    const channel = new RZChannel(
+    const channel = new RZFrontendChannel(
         id,
         channelDTO.name || '',
         channelDTO.description || '',
@@ -90,7 +90,7 @@ export const getChannel = async (id: string): Promise<RZChannel> => {
     return channel;
 }
 
-const channelCache = new AsyncCache<RZChannel>(
+const channelCache = new AsyncCache<RZFrontendChannel>(
     getChannel, {
     max: 100, // Maximum number of channels in cache
     ttl: 15 * 60 * 1000 // 15 minute expiration  
@@ -185,7 +185,7 @@ export const upsertFrontendUser = async (userData: RZUserData): Promise<RZUserDa
     );
 }
 
-export const getChannels = async (ids: string[]): Promise<RZChannel[]> => {
+export const getChannels = async (ids: string[]): Promise<RZFrontendChannel[]> => {
     const channels = await Promise.all(ids.map(async (id) => {
         return channelCache.get(id);
     }));

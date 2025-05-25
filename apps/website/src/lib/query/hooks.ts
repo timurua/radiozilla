@@ -1,48 +1,58 @@
 import { nobody, RZUser } from "@/components/webplayer/data/model";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { getActivityLogsForUserAction, getUser, upsertUserAction } from "../db/actions";
+import { getActivityLogsForUserAction, getOrCreateStationForUserAction, getUser, upsertUserAction } from "../db/actions";
 import { getSubscriptionForCurrentUser } from "../db/client";
 
-export const userKeys = {
+export const queryKeys = {
     all: ['users'] as const,
-    current: () => [...userKeys.all, 'current'] as const,
-    currentSubscription: () => [...userKeys.current(), 'currentSubscription'] as const,
-    lists: () => [...userKeys.all, 'list'] as const,
-    list: (filters: string) => [...userKeys.lists(), { filters }] as const,
-    details: () => [...userKeys.all, 'detail'] as const,
-    detail: (id: number) => [...userKeys.details(), id] as const,
-    activities: () => [...userKeys.all, 'activities'] as const,
-    activity: (id: number) => [...userKeys.activities(), id] as const,
-    subscription: () => [...userKeys.all, 'subscription'] as const,
-    subscriptionId: (id: number) => [...userKeys.subscription(), id] as const,
+    current: () => [...queryKeys.all, 'current'] as const,
+    currentSubscription: () => [...queryKeys.current(), 'currentSubscription'] as const,
+    lists: () => [...queryKeys.all, 'list'] as const,
+    list: (filters: string) => [...queryKeys.lists(), { filters }] as const,
+    details: () => [...queryKeys.all, 'detail'] as const,
+    detail: (id: number) => [...queryKeys.details(), id] as const,
+    activities: () => [...queryKeys.all, 'activities'] as const,
+    activity: (id: number) => [...queryKeys.activities(), id] as const,
+    subscription: () => [...queryKeys.all, 'subscription'] as const,
+    subscriptionId: (id: number) => [...queryKeys.subscription(), id] as const,
+    station: () => [...queryKeys.all, 'station'] as const,
+    stationId: (id: number) => [...queryKeys.station(), id] as const,
+    currentUserStation: () => [...queryKeys.station(), 'current'] as const,
 };
 
 
 export function useUserSuspense() {
     return useSuspenseQuery({
-        queryKey: userKeys.current(),
+        queryKey: queryKeys.current(),
         queryFn: getUser,
     });
 }
 
 export function useUser() {
     return useQuery({
-        queryKey: userKeys.current(),
+        queryKey: queryKeys.current(),
         queryFn: getUser,
     });
 }
 
 export function useUserActivitiesSuspense() {
     return useSuspenseQuery({
-        queryKey: userKeys.activities(),
+        queryKey: queryKeys.activities(),
         queryFn: getActivityLogsForUserAction,
     });
 }
 
 export function useUserSubscriptionSuspense() {
     return useSuspenseQuery({
-        queryKey: userKeys.currentSubscription(),
+        queryKey: queryKeys.currentSubscription(),
         queryFn: getSubscriptionForCurrentUser,
+    });
+}
+
+export function useUserStationSuspense() {
+    return useSuspenseQuery({
+        queryKey: queryKeys.currentUserStation(),
+        queryFn: getOrCreateStationForUserAction,
     });
 }
 
@@ -54,9 +64,9 @@ export function useUpsertUser() {
         mutationFn: upsertUserAction,
         onSuccess: (newUser) => {
             // Update the users list cache
-            queryClient.setQueryData<RZUser>(userKeys.current(), newUser);
+            queryClient.setQueryData<RZUser>(queryKeys.current(), newUser);
             // Invalidate to refetch from server
-            queryClient.invalidateQueries({ queryKey: userKeys.current() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.current() });
         },
     });
 }
@@ -65,6 +75,6 @@ export function useResetUser() {
     const queryClient = useQueryClient();
 
     return () => {
-        queryClient.setQueryData<RZUser>(userKeys.current(), nobody());
+        queryClient.setQueryData<RZUser>(queryKeys.current(), nobody());
     };
 }

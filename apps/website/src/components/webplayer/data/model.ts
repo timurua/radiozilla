@@ -1,5 +1,5 @@
 
-export class RZChannel {
+export class RZFrontendChannel {
   constructor(
     public id: string,
     public name: string,
@@ -9,8 +9,8 @@ export class RZChannel {
   }
 
 
-  static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZChannel {
-    return new RZChannel(
+  static fromObject(obj: { name: string; description: string; imageUrl: string }, id: string): RZFrontendChannel {
+    return new RZFrontendChannel(
       id,
       obj.name,
       obj.description,
@@ -42,6 +42,30 @@ export interface RZUser {
   createdAt: Date,
   updatedAt: Date,
   userType: RZUserType,
+}
+
+export interface RZChannel {
+  id: number;
+  name: string | null;
+  description: string | null;
+  imageUrl: string | null,
+  isPublic: boolean,
+  webPageChannelId: number,
+  createdAt: Date,
+  updatedAt: Date,
+}
+
+export interface RZStation {
+  id: number;
+  name: string | null;
+  description: string | null;
+  imageUrl: string | null,
+  isPublic: boolean | null,
+  adminUserId: number | null,
+  adminUserGroupId: number | null,
+  listenerUserGroupId: number | null,
+  createdAt: Date,
+  updatedAt: Date,
 }
 
 export const nobody = (): RZUser => {
@@ -148,7 +172,7 @@ export class RZAudio {
     public audioUrl: string,
     public topics: string[],
     public author: RZAuthor,
-    public channel: RZChannel,
+    public channel: RZFrontendChannel,
     public audioText: string,
     public durationSeconds: number,
     public webUrl: string,
@@ -156,7 +180,7 @@ export class RZAudio {
   ) {
   }
 
-  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string, publishedAt: Date | null }, id: string, createdAt: Date, author: RZAuthor, channel: RZChannel): RZAudio {
+  static fromObject(obj: { name: string; audioUrl: string; imageUrl: string, topics: string[], audioText: string, durationSeconds: number, webUrl: string, publishedAt: Date | null }, id: string, createdAt: Date, author: RZAuthor, channel: RZFrontendChannel): RZAudio {
     return new RZAudio(
       id,
       createdAt,  // Convert to Date object

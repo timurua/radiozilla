@@ -3,7 +3,7 @@
 import { desc } from 'drizzle-orm';
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
-import { PlayableFeedMode, RZUser, RZUserType } from '@/components/webplayer/data/model';
+import { PlayableFeedMode, RZStation, RZUser, RZUserType } from '@/components/webplayer/data/model';
 
 import { db } from '@/lib/db/drizzle';
 import {
@@ -13,6 +13,8 @@ import {
     frontendAuthors,
     frontendChannels,
     frontendUsers,
+    Station,
+    stations,
     Subscription,
     subscriptions,
     users
@@ -202,6 +204,55 @@ export const deleteUserAction = async (): Promise<void> => {
         throw new Error("No user found");
     }
     await db.delete(users).where(eq(users.firebaseUserId, currentUser.uid));
+}
+
+export const getOrCreateStationForUserAction = async (): Promise<RZStation> => {
+    const user = await getUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
+    const dbStation = await db.select({
+        id: stations.id,
+        name: stations.name,
+        description: stations.description,
+        imageUrl: stations.imageUrl,
+        isPublic: stations.isPublic,
+        adminUserId: stations.adminUserId,
+        adminUserGroupId: stations.adminUserGroupId,
+        listenerUserGroupId: stations.listenerUserGroupId,
+        createdAt: stations.createdAt,
+        updatedAt: stations.updatedAt
+    }).from(stations).where(eq(stations.adminUserId, user.id)).limit(1);
+    if (dbStation.length === 0) {
+        const result = await db.insert(stations).values({
+            adminUserId: user.id,
+            adminUserGroupId: null,
+            listenerUserGroupId: null,
+            isPublic: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }).returning({
+            id: stations.id,
+            name: stations.name,
+            description: stations.description,
+            imageUrl: stations.imageUrl,
+            isPublic: stations.isPublic,
+            adminUserId: stations.adminUserId,
+            adminUserGroupId: stations.adminUserGroupId,
+            listenerUserGroupId: stations.listenerUserGroupId,
+            createdAt: stations.createdAt,
+            updatedAt: stations.updatedAt
+        });
+        return result[0];
+    }
+    return dbStation[0];
+}
+
+export const upsertAllPlayerForUserAction = async (): Promise<void> => {
+    const user = await getUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
 }
 
 

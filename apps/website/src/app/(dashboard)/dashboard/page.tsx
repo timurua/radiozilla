@@ -38,10 +38,10 @@ function Dashboard() {
 
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium mb-6 text-black dark:text-white">Team Settings</h1>
+      <h1 className="text-lg lg:text-2xl font-medium mb-6 text-black dark:text-white">Subscription Settings</h1>
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="text-black dark:text-white">Team Subscription</CardTitle>
+          <CardTitle className="text-black dark:text-white">Subscription</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

@@ -6,6 +6,7 @@ import CookieConsent from '@/components/CookieConsent';
 import MobxProvider from '@/components/webplayer/state/provider';
 import { FrontEndUserProvider } from '@/lib/webplayer/provider';
 import { QueryProvider } from '@/lib/query/provider';
+import { NotificationProvider } from '@/components/webplayer/providers/NotificationProvider';
 
 export const metadata: Metadata = {
   title: 'Radiozilla - AI Radio',
@@ -35,15 +36,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-[100dvh] bg-background text-foreground dark" style={{ colorScheme: 'dark' }}>
         <QueryProvider>
-          <MobxProvider>
-            <AuthProvider>
+          <NotificationProvider>
+            <MobxProvider>
+              <AuthProvider>
 
-              <FrontEndUserProvider>
-                {children}
-              </FrontEndUserProvider>
+                <FrontEndUserProvider>
+                  {children}
+                </FrontEndUserProvider>
 
-            </AuthProvider>
-          </MobxProvider>
+              </AuthProvider>
+            </MobxProvider>
+          </NotificationProvider>
         </QueryProvider>
         <CookieConsent />
       </body>

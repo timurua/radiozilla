@@ -10,6 +10,24 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNotification } from '@/components/webplayer/providers/NotificationProvider';
+import { z } from 'zod';
+
+const schema = z.object({
+    name: z
+        .string()
+        .min(1, 'Name is required')
+        .min(2, 'Name must be at least 2 characters'),
+    description: z
+        .string()
+        .min(1, 'Description is required')
+        .min(2, 'Description must be at least 2 characters'),
+});
+
+type FormData = z.infer<typeof schema>;
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+
 
 export default function StationPage() {
     return (
@@ -35,18 +53,32 @@ function StationComponent() {
 }
 
 function StationForm({ station }: { station: RZStation }) {
-    const [name, setName] = useState(station?.name || '');
-    const [description, setDescription] = useState(station?.description || '');
     const { showInfo, showWarning } = useNotification();
     const updateStation = useUpdateUserStation();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        control,
+        watch,
+        setValue,
+        formState: { errors, isSubmitting, isDirty, isValid },
+        reset
+    } = useForm<FormData>({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            name: '',
+            description: '',
+        },
+        mode: 'onChange' // Validate on change for better UX
+    });
+
+    const onSubmit: SubmitHandler<FormData> = async (data) => {
         try {
             updateStation.mutate({
                 ...station,
-                name,
-                description,
+                name: data.name,
+                description: data.description,
             });
             showInfo("Station updated successfully");
 
@@ -56,18 +88,15 @@ function StationForm({ station }: { station: RZStation }) {
     };
 
     return (
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
                 <Label htmlFor="name" className="mb-2">
                     Station Name
                 </Label>
                 <Input
                     id="name"
-                    name="name"
                     placeholder="Enter station name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
+                    {...register('name')}
                 />
             </div>
             <div>
@@ -76,10 +105,8 @@ function StationForm({ station }: { station: RZStation }) {
                 </Label>
                 <Input
                     id="description"
-                    name="description"
                     placeholder="Enter station description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    {...register('description')}
                 />
             </div>
             <Button

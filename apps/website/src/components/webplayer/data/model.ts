@@ -61,9 +61,6 @@ export interface RZStation {
   description: string | null;
   imageUrl: string | null,
   isPublic: boolean | null,
-  adminUserId: number | null,
-  adminUserGroupId: number | null,
-  listenerUserGroupId: number | null,
   createdAt: Date,
   updatedAt: Date,
 }

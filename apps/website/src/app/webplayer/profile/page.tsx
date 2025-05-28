@@ -9,7 +9,7 @@ import AudioList from '@/components/webplayer/components/AudioList';
 import ChannelListItem from '@/components/webplayer/components/ChannelListItem';
 import PlayerScreen from '@/components/webplayer/components/PlayerScreen';
 import { IdsAudioLoader } from '@/components/webplayer/data/loaders';
-import { useUserSuspense } from '@/lib/query/hooks';
+import { useCurrentUserSuspense } from '@/lib/query/hooks';
 
 const UserProfile = () => {
   return (
@@ -22,7 +22,7 @@ const UserProfile = () => {
 
 const UserProfileInner = observer(function UserProfile() {
 
-  const { data: user } = useUserSuspense();
+  const { data: user } = useCurrentUserSuspense();
   const userData = userDataStore.userData;
 
   const audioLoader = useMemo(() => {

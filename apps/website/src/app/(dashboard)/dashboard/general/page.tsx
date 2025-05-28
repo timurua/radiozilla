@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useUser } from '@/lib/query/hooks';
+import { useCurrentUser } from '@/lib/query/hooks';
 import { useUpsertUser } from '@/lib/query/hooks';
 import { RZUser } from '@/components/webplayer/data/model';
 
 export default function GeneralPage() {
-  const { data: user } = useUser();
+  const { data: user } = useCurrentUser();
   const updateUserMutation = useUpsertUser();
 
   const [name, setName] = useState(user?.name || '');

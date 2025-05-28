@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RZUserType } from '@/components/webplayer/data/model';
 import { useAuth } from '@/lib/auth/provider';
-import { useUserSuspense } from '@/lib/query/hooks';
+import { useCurrentUserSuspense } from '@/lib/query/hooks';
 import { CircleIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -34,7 +34,7 @@ export function Login({ mode }: { mode: LoginMode }) {
   const [password, setPassword] = useState('');
   const { signInWithEmail, signUpWithEmail, sendEmailVerification } = useAuth();
   const router = useRouter();
-  const { data: user } = useUserSuspense();
+  const { data: user } = useCurrentUserSuspense();
 
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {

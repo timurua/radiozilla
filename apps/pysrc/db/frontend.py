@@ -6,7 +6,6 @@ from sqlalchemy import String
 from typing import List
 from datetime import datetime
 
-from pysrc.db.user import User, UserGroup
 from pysrc.db.web_page import WebPageChannel
 from .base import TimestampModel
 from pyminiscraper.url import normalized_url_hash

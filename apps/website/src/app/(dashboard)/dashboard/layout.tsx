@@ -16,7 +16,7 @@ export default function DashboardLayout({
 
   const navItems = [
     { href: '/dashboard', icon: Users, label: 'Subscription' },
-    { href: '/dashboard/station', icon: Settings, label: 'Station' },
+    { href: '/dashboard/stations', icon: Settings, label: 'Stations' },
     { href: '/dashboard/channel', icon: Settings, label: 'Channel' },
     { href: '/dashboard/general', icon: Settings, label: 'General' },
     { href: '/dashboard/activity', icon: Activity, label: 'Activity' },

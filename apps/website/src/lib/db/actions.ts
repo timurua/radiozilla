@@ -1,9 +1,10 @@
 'use server';
 
-import { desc } from 'drizzle-orm';
+import { and, desc, inArray } from 'drizzle-orm';
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { PlayableFeedMode, RZStation, RZUser, RZUserType } from '@/components/webplayer/data/model';
+import { withErrorHandler } from '@/lib/serverActionWrapper';
 
 import { db } from '@/lib/db/drizzle';
 import {
@@ -13,14 +14,14 @@ import {
     frontendAuthors,
     frontendChannels,
     frontendUsers,
-    Station,
     stations,
     Subscription,
     subscriptions,
+    userPermissions,
     users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
-import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO } from './interfaces';
+import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserPermissionDTO } from './interfaces';
 import { getAuthenticatedAppForUser } from '../server/firebase';
 
 
@@ -83,7 +84,7 @@ export const getChannelAction = async (id: string): Promise<FrontendChannelDTO> 
     }
 }
 
-export const getUserAction = async (): Promise<RZUser> => {
+export const getCurrentUserAction = async (): Promise<RZUser> => {
     const { currentUser } = await getAuthenticatedAppForUser();
     if (currentUser) {
         const rzUserType = currentUser.isAnonymous ?
@@ -126,7 +127,7 @@ export const getUserAction = async (): Promise<RZUser> => {
 }
 
 export const getUser = async (): Promise<RZUser | null> => {
-    const userDTO = await getUserAction();
+    const userDTO = await getCurrentUserAction();
     if (!userDTO) {
         return null;
     }
@@ -144,7 +145,7 @@ export const getUser = async (): Promise<RZUser | null> => {
     };
 }
 
-export const upsertUserAction = async (user: RZUser): Promise<RZUser> => {
+export const upsertUserAction = withErrorHandler(async (user: RZUser): Promise<RZUser> => {
     const { currentUser } = await getAuthenticatedAppForUser();
     if (!currentUser) {
         throw new Error("No user found");
@@ -196,7 +197,7 @@ export const upsertUserAction = async (user: RZUser): Promise<RZUser> => {
         ...insertResult[0],
         userType: user.userType
     };
-}
+});
 
 export const deleteUserAction = async (): Promise<void> => {
     const { currentUser } = await getAuthenticatedAppForUser();
@@ -206,53 +207,125 @@ export const deleteUserAction = async (): Promise<void> => {
     await db.delete(users).where(eq(users.firebaseUserId, currentUser.uid));
 }
 
-export const getOrCreateStationForUserAction = async (): Promise<RZStation> => {
-    const user = await getUserAction();
+export const checkViewUserPermission = async (userId: number, permissionTargetName: string, permissionTargetId: number): Promise<boolean> => {
+    const permissions = await getUserPermissionsForUserAction(userId, permissionTargetName, permissionTargetId);
+    if (!permissions || permissions.length === 0) {
+        return false;
+    }
+    return true;
+}
+
+export const checkEditUserPermission = async (userId: number, permissionTargetName: string, permissionTargetId: number): Promise<boolean> => {
+    const permissions = await getUserPermissionsForUserAction(userId, permissionTargetName, permissionTargetId);
+    if (!permissions || permissions.length === 0) {
+        return false;
+    }
+    return permissions.some(p => p.permission === "edit");
+}
+
+export const addViewUserPermissionAction = async (userId: number, permissionTargetName: string, permissionTargetId: number): Promise<void> => {
+    await db.insert(userPermissions).values({
+        userId: userId,
+        permissionTargetName: permissionTargetName,
+        permissionTargetId: permissionTargetId,
+        permission: "view"
+    });
+}
+
+export const addEditUserPermissionAction = async (userId: number, permissionTargetName: string, permissionTargetId: number): Promise<void> => {
+    await db.insert(userPermissions).values({
+        userId: userId,
+        permissionTargetName: permissionTargetName,
+        permissionTargetId: permissionTargetId,
+        permission: "edit"
+    });
+}
+
+export const getStationsForCurrentUserAction = async (): Promise<RZStation[]> => {
+    const user = await getCurrentUserAction();
     if (!user) {
         throw new Error("No user found");
     }
+
+    const permission = await getUserPermissionsForCurrentUserAction();
+    if (!permission || permission.length === 0) {
+        return [];
+    }
+    const stationIds = permission.filter(p => p.permissionTargetName === "station").map(p => p.permissionTargetId);
+
+    const dbStations = await db.select({
+        id: stations.id,
+        name: stations.name,
+        description: stations.description,
+        imageUrl: stations.imageUrl,
+        isPublic: stations.isPublic,
+        createdAt: stations.createdAt,
+        updatedAt: stations.updatedAt
+    }).from(stations).where(inArray(stations.id, stationIds)).limit(1);
+    return dbStations;
+}
+
+
+export const getStationForCurrentUserAction = async (stationId: number): Promise<RZStation | null> => {
+    const user = await getCurrentUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
+
+    if (!await checkViewUserPermission(user.id, "station", stationId)) {
+        return null;
+    }
+
     const dbStation = await db.select({
         id: stations.id,
         name: stations.name,
         description: stations.description,
         imageUrl: stations.imageUrl,
         isPublic: stations.isPublic,
-        adminUserId: stations.adminUserId,
-        adminUserGroupId: stations.adminUserGroupId,
-        listenerUserGroupId: stations.listenerUserGroupId,
         createdAt: stations.createdAt,
         updatedAt: stations.updatedAt
-    }).from(stations).where(eq(stations.adminUserId, user.id)).limit(1);
-    if (dbStation.length === 0) {
-        const result = await db.insert(stations).values({
-            adminUserId: user.id,
-            adminUserGroupId: null,
-            listenerUserGroupId: null,
-            isPublic: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }).returning({
-            id: stations.id,
-            name: stations.name,
-            description: stations.description,
-            imageUrl: stations.imageUrl,
-            isPublic: stations.isPublic,
-            adminUserId: stations.adminUserId,
-            adminUserGroupId: stations.adminUserGroupId,
-            listenerUserGroupId: stations.listenerUserGroupId,
-            createdAt: stations.createdAt,
-            updatedAt: stations.updatedAt
-        });
-        return result[0];
-    }
-    return dbStation[0];
+    }).from(stations).where(eq(stations.id, stationId)).limit(1);
+    return dbStation.length > 0 ? dbStation[0] : null;
 }
 
-export const updateStationForUserAction = async (station: RZStation): Promise<RZStation> => {
-    const user = await getUserAction();
+export const createStationForUserAction = async (station: RZStation): Promise<RZStation> => {
+    const user = await getCurrentUserAction();
     if (!user) {
         throw new Error("No user found");
     }
+
+    const result = await db.insert(stations).values({
+        name: station.name,
+        description: station.description,
+        isPublic: station.isPublic,
+        imageUrl: station.imageUrl,
+        updatedAt: station.updatedAt,
+        createdAt: station.createdAt,
+    }).returning({
+        id: stations.id,
+        name: stations.name,
+        description: stations.description,
+        imageUrl: stations.imageUrl,
+        isPublic: stations.isPublic,
+        createdAt: stations.createdAt,
+        updatedAt: stations.updatedAt
+    });
+
+    await addEditUserPermissionAction(user.id, "station", result[0].id);
+    return result[0];
+}
+
+
+export const updateStationForUserAction = async (station: RZStation): Promise<RZStation> => {
+    const user = await getCurrentUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
+
+    if (!await checkEditUserPermission(user.id, "station", station.id)) {
+        throw new Error("No permission found");
+    }
+
     const result = await db.update(stations).set({
         name: station.name,
         description: station.description,
@@ -263,9 +336,6 @@ export const updateStationForUserAction = async (station: RZStation): Promise<RZ
         description: stations.description,
         imageUrl: stations.imageUrl,
         isPublic: stations.isPublic,
-        adminUserId: stations.adminUserId,
-        adminUserGroupId: stations.adminUserGroupId,
-        listenerUserGroupId: stations.listenerUserGroupId,
         createdAt: stations.createdAt,
         updatedAt: stations.updatedAt
     });
@@ -273,7 +343,7 @@ export const updateStationForUserAction = async (station: RZStation): Promise<RZ
 }
 
 export const upsertAllPlayerForUserAction = async (): Promise<void> => {
-    const user = await getUserAction();
+    const user = await getCurrentUserAction();
     if (!user) {
         throw new Error("No user found");
     }
@@ -424,9 +494,45 @@ export const getFeedAudioListAction = async (feedMode: PlayableFeedMode, subscri
     return dbAudios.map(dbAudio => dbAudioToDTO(dbAudio));
 }
 
-export const getActivityLogsForUserAction = async (): Promise<ActivityLogDTO[]> => {
+export const getUserPermissionsForUserAction = async (userId: number, permissionTargetName: string, permissionTargetId: number): Promise<UserPermissionDTO[]> => {
+    const dbUserPermissions = await db
+        .select()
+        .from(userPermissions)
+        .where(
+            and(eq(userPermissions.userId, userId),
+                eq(userPermissions.permissionTargetName, permissionTargetName),
+                eq(userPermissions.permissionTargetId, permissionTargetId))
+        );
+    return dbUserPermissions.map(dbUserPermission => ({
+        userId: dbUserPermission.userId,
+        permissionTargetName: dbUserPermission.permissionTargetName,
+        permissionTargetId: dbUserPermission.permissionTargetId,
+        permission: dbUserPermission.permission
+    }));
+}
 
-    const user = await getUserAction();
+export const getUserPermissionsForCurrentUserAction = async (): Promise<UserPermissionDTO[]> => {
+    const user = await getCurrentUserAction();
+    if (!user) {
+        return [];
+    }
+    const dbUserPermissions = await db
+        .select()
+        .from(userPermissions)
+        .where(
+            eq(userPermissions.userId, user.id)
+        );
+    return dbUserPermissions.map(dbUserPermission => ({
+        userId: dbUserPermission.userId,
+        permissionTargetName: dbUserPermission.permissionTargetName,
+        permissionTargetId: dbUserPermission.permissionTargetId,
+        permission: dbUserPermission.permission
+    }));
+}
+
+export const getActivityLogsForCurrentUserAction = async (): Promise<ActivityLogDTO[]> => {
+
+    const user = await getCurrentUserAction();
     if (!user) {
         return [];
     }
@@ -442,7 +548,6 @@ export const getActivityLogsForUserAction = async (): Promise<ActivityLogDTO[]> 
     return dbActivityLogs.map(dbActivityLog => ({
         id: dbActivityLog.id,
         userId: dbActivityLog.userId,
-        userGroupId: dbActivityLog.userGroupId,
         action: dbActivityLog.action,
         createdAt: dbActivityLog.createdAt,
         ipAddress: dbActivityLog.ipAddress
@@ -465,7 +570,7 @@ export const getSubscriptionByStripeCustomerIdAction = async (stripeCustomerId: 
 }
 
 export const getSubscriptionForCurrentUserAction = async (): Promise<Subscription | null> => {
-    const user = await getUserAction();
+    const user = await getCurrentUserAction();
     if (!user) {
         return null;
     }

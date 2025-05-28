@@ -8,7 +8,6 @@ import {
   jsonb,
   decimal,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
 
 import {
   boolean,
@@ -111,12 +110,12 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// User Groups Table
-export const userGroups = pgTable("user_groups", {
-  id: serial("id").primaryKey(),
-  name: varchar("name"),
-  description: text("description"),
-  imageUrl: varchar("image_url"),
+// User Permissions Table
+export const userPermissions = pgTable("user_permissions", {
+  userId: integer("user_id").notNull(),
+  permissionTargetName: varchar("permission_target_name").notNull(),
+  permissionTargetId: integer("permission_target_id").notNull(),
+  permission: varchar("permission").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -135,10 +134,8 @@ export const plans = pgTable("plans", {
 // Subscriptions Table
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
-  planId: varchar("plan_id").notNull().references(() => plans.planId),
+  planId: varchar("plan_id").notNull(),
   status: varchar("status"),
-  adminUserId: integer("admin_user_id").notNull().references(() => users.id),
-  adminUserGroupId: integer("admin_user_group_id").notNull().references(() => userGroups.id),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeProductId: varchar("stripe_product_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
@@ -151,30 +148,6 @@ export const subscriptions = pgTable("subscriptions", {
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 
-// User User Groups (Junction Table)
-export const userUserGroups = pgTable("user_user_groups", {
-  userId: integer("user_id").notNull().references(() => users.id),
-  userGroupId: integer("user_group_id").notNull().references(() => userGroups.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => {
-  return {
-    pk: primaryKey({ columns: [table.userId, table.userGroupId] })
-  };
-});
-
-// User Group Invitations Table
-export const userGroupInvitations = pgTable("user_group_invitations", {
-  id: serial("id").primaryKey(),
-  userGroupId: integer("user_group_id").references(() => userGroups.id),
-  enviteeEmail: varchar("envitee_email"),
-  enviteeId: integer("envitee_id"),
-  role: varchar("role"),
-  invitedBy: integer("invited_by").references(() => users.id),
-  invitedAt: timestamp("invited_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
 
 // Web Page Channel is mentioned but not defined in the provided code
 // We'll define a placeholder for it
@@ -192,7 +165,7 @@ export const channels = pgTable("channels", {
   description: text("description"),
   isPublic: boolean("is_public").default(false),
   imageUrl: varchar("image_url"),
-  webPageChannelId: integer("web_page_channel_id").references(() => webPageChannels.id),
+  webPageChannelId: integer("web_page_channel_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -204,9 +177,14 @@ export const stations = pgTable("stations", {
   description: text("description"),
   imageUrl: varchar("image_url"),
   isPublic: boolean("is_public").default(false),
-  adminUserId: integer("admin_user_id").references(() => users.id),
-  adminUserGroupId: integer("admin_user_group_id").references(() => userGroups.id),
-  listenerUserGroupId: integer("listener_user_group_id").references(() => userGroups.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Station Channels Table
+export const stationChannels = pgTable("station_channels", {
+  stationId: integer("station_id").notNull(),
+  channelId: integer("channel_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -214,73 +192,27 @@ export const stations = pgTable("stations", {
 // Activity Logs Table
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
-  userGroupId: integer("user_group_id").references(() => userGroups.id),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id"),
   action: varchar("action").notNull(),
   ipAddress: varchar("ip_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Define Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  userGroups: many(userUserGroups),
-}));
-
-export const userGroupsRelations = relations(userGroups, ({ many }) => ({
-  users: many(userUserGroups),
-}));
-
-export const userUserGroupsRelations = relations(userUserGroups, ({ one }) => ({
-  user: one(users, {
-    fields: [userUserGroups.userId],
-    references: [users.id],
-  }),
-  userGroup: one(userGroups, {
-    fields: [userUserGroups.userGroupId],
-    references: [userGroups.id],
-  }),
-}));
-
-export const webPageChannelsRelations = relations(webPageChannels, ({ many }) => ({
-  channels: many(channels),
-}));
-
-export const channelsRelations = relations(channels, ({ one, many }) => ({
-  webPageChannel: one(webPageChannels, {
-    fields: [channels.webPageChannelId],
-    references: [webPageChannels.id],
-  }),
-  stations: many(stations),
-}));
-
-export const stationsRelations = relations(stations, ({ one, many }) => ({
-  adminUser: one(users, {
-    fields: [stations.adminUserId],
-    references: [users.id],
-  }),
-  adminUserGroup: one(userGroups, {
-    fields: [stations.adminUserGroupId],
-    references: [userGroups.id],
-  }),
-  listenerUserGroup: one(userGroups, {
-    fields: [stations.listenerUserGroupId],
-    references: [userGroups.id],
-  }),
-  channels: many(channels),
-}));
-
 // Zod Schemas for validation
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 
-export const insertUserGroupSchema = createInsertSchema(userGroups);
-export const selectUserGroupSchema = createSelectSchema(userGroups);
+export const insertUserPermissionSchema = createInsertSchema(userPermissions);
+export const selectUserPermissionSchema = createSelectSchema(userPermissions);
 
 export const insertChannelSchema = createInsertSchema(channels);
 export const selectChannelSchema = createSelectSchema(channels);
 
 export const insertStationSchema = createInsertSchema(stations);
 export const selectStationSchema = createSelectSchema(stations);
+
+export const insertStationChannelsSchema = createInsertSchema(stationChannels);
+export const selectStationChannelsSchema = createSelectSchema(stationChannels);
 
 export const insertActivityLogSchema = createInsertSchema(activityLogs);
 export const selectActivityLogSchema = createSelectSchema(activityLogs);
@@ -289,14 +221,17 @@ export const selectActivityLogSchema = createSelectSchema(activityLogs);
 export type User = z.infer<typeof selectUserSchema>;
 export type NewUser = z.infer<typeof insertUserSchema>;
 
-export type UserGroup = z.infer<typeof selectUserGroupSchema>;
-export type NewUserGroup = z.infer<typeof insertUserGroupSchema>;
+export type UserPermission = z.infer<typeof selectUserPermissionSchema>;
+export type NewUserPermission = z.infer<typeof insertUserPermissionSchema>;
 
 export type Channel = z.infer<typeof selectChannelSchema>;
 export type NewChannel = z.infer<typeof insertChannelSchema>;
 
 export type Station = z.infer<typeof selectStationSchema>;
 export type NewStation = z.infer<typeof insertStationSchema>;
+
+export type StationChannels = z.infer<typeof selectStationChannelsSchema>;
+export type NewStationChannels = z.infer<typeof insertStationChannelsSchema>;
 
 export type ActivityLog = z.infer<typeof selectActivityLogSchema>;
 export type NewActivityLog = z.infer<typeof insertActivityLogSchema>;

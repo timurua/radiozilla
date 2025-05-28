@@ -1,58 +1,105 @@
 import { nobody, RZStation, RZUser } from "@/components/webplayer/data/model";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { getActivityLogsForUserAction, getOrCreateStationForUserAction, getUser, updateStationForUserAction, upsertUserAction } from "../db/actions";
+import { createStationForUserAction, getActivityLogsForCurrentUserAction, getStationForCurrentUserAction, getStationsForCurrentUserAction, getUser, getUserPermissionsForCurrentUserAction, updateStationForUserAction, upsertUserAction } from "../db/actions";
 import { getSubscriptionForCurrentUser } from "../db/client";
 
 export const queryKeys = {
-    all: ['users'] as const,
-    currentUser: () => [...queryKeys.all, 'current'] as const,
-    currentUserSubscription: () => [...queryKeys.currentUser(), 'currentSubscription'] as const,
-    lists: () => [...queryKeys.all, 'list'] as const,
-    list: (filters: string) => [...queryKeys.lists(), { filters }] as const,
-    details: () => [...queryKeys.all, 'detail'] as const,
-    detail: (id: number) => [...queryKeys.details(), id] as const,
-    activities: () => [...queryKeys.all, 'activities'] as const,
-    activity: (id: number) => [...queryKeys.activities(), id] as const,
-    subscription: () => [...queryKeys.all, 'subscription'] as const,
-    subscriptionId: (id: number) => [...queryKeys.subscription(), id] as const,
-    station: () => [...queryKeys.all, 'station'] as const,
-    stationId: (id: number) => [...queryKeys.station(), id] as const,
-    currentUserStation: () => [...queryKeys.station(), 'current'] as const,
+    // Base keys
+    all: ['all'] as const,
+
+    // User related keys
+    user: {
+        current: () => [...queryKeys.all, 'current'] as const,
+    },
+
+    userPermissions: {
+        current: () => [...queryKeys.all, 'current'] as const,
+    },
+
+    // Station related keys
+    station: {
+        all: () => [...queryKeys.all, 'station'] as const,
+        current: () => [...queryKeys.station.all(), 'current'] as const,
+        byId: (id: number) => [...queryKeys.station.all(), id] as const,
+    },
+
+    // Subscription related keys
+    subscription: {
+        all: () => [...queryKeys.all, 'subscription'] as const,
+        current: () => [...queryKeys.user.current(), 'currentSubscription'] as const,
+        byId: (id: number) => [...queryKeys.subscription.all(), id] as const,
+    },
+
+    // Activity related keys
+    activity: {
+        all: () => [...queryKeys.all, 'activities'] as const,
+        byId: (id: number) => [...queryKeys.activity.all(), id] as const,
+    },
 };
 
 
-export function useUserSuspense() {
+export function useCurrentUserSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.currentUser(),
+        queryKey: queryKeys.user.current(),
         queryFn: getUser,
     });
 }
 
-export function useUser() {
+export function useCurrentUser() {
     return useQuery({
-        queryKey: queryKeys.currentUser(),
+        queryKey: queryKeys.user.current(),
         queryFn: getUser,
+    });
+}
+
+export function useCurrentUserPermissionsSuspense() {
+    return useSuspenseQuery({
+        queryKey: queryKeys.userPermissions.current(),
+        queryFn: getUserPermissionsForCurrentUserAction,
     });
 }
 
 export function useUserActivitiesSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.activities(),
-        queryFn: getActivityLogsForUserAction,
+        queryKey: queryKeys.activity.all(),
+        queryFn: getActivityLogsForCurrentUserAction,
     });
 }
 
 export function useUserSubscriptionSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.currentUserSubscription(),
+        queryKey: queryKeys.subscription.current(),
         queryFn: getSubscriptionForCurrentUser,
     });
 }
 
-export function useUserStationSuspense() {
+export function useUserStationsSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.currentUserStation(),
-        queryFn: getOrCreateStationForUserAction,
+        queryKey: queryKeys.station.all(),
+        queryFn: getStationsForCurrentUserAction,
+    });
+}
+
+
+export function useUserStationSuspense({ id }: { id: number }) {
+    return useSuspenseQuery({
+        queryKey: queryKeys.station.byId(id),
+        queryFn: async () => await getStationForCurrentUserAction(id),
+    });
+}
+
+// Mutation hooks
+export function useCreateUserStation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: createStationForUserAction,
+        onSuccess: (station) => {
+            // Update the users list cache
+            queryClient.setQueryData<RZStation>(queryKeys.station.current(), station);
+            // Invalidate to refetch from server
+            queryClient.invalidateQueries({ queryKey: queryKeys.station.current() });
+        },
     });
 }
 
@@ -64,9 +111,9 @@ export function useUpdateUserStation() {
         mutationFn: updateStationForUserAction,
         onSuccess: (station) => {
             // Update the users list cache
-            queryClient.setQueryData<RZStation>(queryKeys.currentUserStation(), station);
+            queryClient.setQueryData<RZStation>(queryKeys.station.current(), station);
             // Invalidate to refetch from server
-            queryClient.invalidateQueries({ queryKey: queryKeys.currentUserStation() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.station.current() });
         },
     });
 }
@@ -80,9 +127,9 @@ export function useUpsertUser() {
         mutationFn: upsertUserAction,
         onSuccess: (newUser) => {
             // Update the users list cache
-            queryClient.setQueryData<RZUser>(queryKeys.currentUser(), newUser);
+            queryClient.setQueryData<RZUser>(queryKeys.user.current(), newUser);
             // Invalidate to refetch from server
-            queryClient.invalidateQueries({ queryKey: queryKeys.currentUser() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.user.current() });
         },
     });
 }
@@ -91,6 +138,6 @@ export function useResetUser() {
     const queryClient = useQueryClient();
 
     return () => {
-        queryClient.setQueryData<RZUser>(queryKeys.currentUser(), nobody());
+        queryClient.setQueryData<RZUser>(queryKeys.user.current(), nobody());
     };
 }

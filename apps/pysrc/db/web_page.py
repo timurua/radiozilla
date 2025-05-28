@@ -37,11 +37,12 @@ def web_page_seed_to_dict(data: list[WebPageSeed]) -> list[dict[str, str]]:
     
 
 class WebPageChannel(TimestampModel):
-    __tablename__ = "web_page_channels"
+    __tablename__ = "web_page_channels"    
 
-    normalized_url_hash: Mapped[str] = mapped_column(String(32), primary_key=True)    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)    
     url: Mapped[str] = mapped_column(String)
-    normalized_url: Mapped[str] = mapped_column(String)    
+    normalized_url: Mapped[str] = mapped_column(String)
+    normalized_url_hash: Mapped[str] = mapped_column(String(32))
     name: Mapped[str] = mapped_column(String, nullable=True, default=None)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
     image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)

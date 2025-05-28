@@ -48,8 +48,14 @@ export interface FrontendUserDTO {
 export interface ActivityLogDTO {
     id: number;
     userId: number | null;
-    userGroupId: number | null;
     action: string;
     createdAt: Date;
     ipAddress: string | null;
+}
+
+export interface UserPermissionDTO {
+    userId: number;
+    permissionTargetName: string;
+    permissionTargetId: number;
+    permission: string;
 }

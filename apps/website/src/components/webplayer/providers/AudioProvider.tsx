@@ -16,7 +16,7 @@ import logger from '../utils/logger';
 import { observer } from "mobx-react-lite";
 import { userDataStore } from "../state/userData";
 import AudioLoader from '../utils/AudioLoader';
-import { useUser } from '@/lib/query/hooks';
+import { useCurrentUser } from '@/lib/query/hooks';
 
 interface AudioContextProps {
     play: (audio?: RZAudio | null) => Promise<void>;
@@ -71,7 +71,7 @@ export const AudioProvider: FC<AudioProviderProps> = observer(({ children }) => 
     const [duration, setDuration] = useState<number>(0);
     const [rzAudio, setRzAudioState] = useState<RZAudio | null>(null);
     const [audioLoader, setAudioLoader] = useState<AudioLoader | null>(null);
-    const { data: user } = useUser();
+    const { data: user } = useCurrentUser();
 
     const [reportedMinute, setReportedMinute] = useState<number>(-1);
 

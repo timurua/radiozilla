@@ -15,14 +15,14 @@ import { useRouter } from 'next/navigation';
 import { RZUserType } from '@/components/webplayer/data/model';
 import { useAuth } from '@/lib/auth/provider';
 import Image from 'next/image';
-import { useUserSuspense } from '@/lib/query/hooks';
+import { useCurrentUserSuspense } from '@/lib/query/hooks';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const { signOut } = useAuth();
-  const { data: user } = useUserSuspense();
+  const { data: user } = useCurrentUserSuspense();
 
   async function handleSignOut() {
     await signOut();

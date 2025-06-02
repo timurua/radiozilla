@@ -4,7 +4,7 @@ import { PlayableFeedMode, RZAudio, RZAuthor, RZFrontendChannel, RZUser, RZUserD
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
 import { LRUCache } from 'lru-cache';
-import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getSubscriptionByUserIdAction, getSubscriptionForCurrentUserAction, getSubscriptionUsersForSubscriptionAction } from './actions';
+import { getAudioPageAction, getAllChannelIdsAction, getAudioAction, getAudioListForChannelAction, getAuthorAction, getChannelAction, getFeedAudioListAction, getSearchDocumentsAction, upsertFrontendUserAction, upsertUserAction, deleteUserAction, getSubscriptionByStripeCustomerIdAction, updateSubscriptionAction, getStationForCurrentUserAction, getStationChannelsForCurrentUserAction, getStationsForCurrentUserAction, getSubscriptionUsersForSubscriptionAction } from './actions';
 import { FrontendAudioDTO } from './interfaces';
 import { Subscription } from "./schema";
 
@@ -275,16 +275,4 @@ export const getSubscriptionByStripeCustomerId = async (stripeCustomerId: string
 
 export const updateSubscription = async (subscriptionId: number, data: Partial<Subscription>): Promise<Subscription> => {
     return await updateSubscriptionAction(subscriptionId, data);
-}
-
-export const getSubscriptionForCurrentUser = async (): Promise<Subscription | null> => {
-    return await getSubscriptionForCurrentUserAction();
-}
-
-export const getSubscriptionUsersForSubscription = async (): Promise<RZUser[]> => {
-    return await getSubscriptionUsersForSubscriptionAction();
-}
-
-export const getSubscriptionByUserId = async (userId: number): Promise<Subscription | null> => {
-    return await getSubscriptionByUserIdAction(userId);
 }

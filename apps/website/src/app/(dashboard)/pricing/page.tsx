@@ -6,14 +6,22 @@ import { SubmitButton } from './submit-button';
 // Prices are fresh for one hour max
 export const revalidate = 3600;
 
+interface PricingPlan {
+  planId: string;
+  name: string;
+  price: number;
+}
+
 export default async function PricingPage() {
   const [prices, products] = await Promise.all([
     getStripePrices(),
     getStripeProducts(),
   ]);
 
-  const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
+  const plans = [];
+
+  const basePlan = products.find((product) => product.name.includes('Base'));
+  const plusPlan = products.find((product) => product.name.includes('Plus'));
 
   const basePrice = prices.find((price) => price.productId === basePlan?.id);
   const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
@@ -29,17 +37,17 @@ export default async function PricingPage() {
 
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <PricingCard
-          name={basePlan?.name || 'Free'}
-          price={basePrice?.unitAmount || 0}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 365}
+          name={'Free'}
+          price={0}
+          interval={'month'}
+          trialDays={365}
           features={[
             'Unlimited Usage',
             'One Workspace Member',
             'Web Scraping',
             'Wiki Integration',
           ]}
-          priceId={basePrice?.id}
+          priceId={""}
         />
         <PricingCard
           name={basePlan?.name || 'Base'}
@@ -107,7 +115,7 @@ function PricingCard({
       </p>
       <ul className="space-y-4 mb-8">
         {features.map((feature, index) => (
-          <li key={index} className="flex items-center py-4">
+          <li key={index} className="flex items-center">
             <Check className="h-5 w-5 text-success mr-2 mt-0.5 flex-shrink-0" />
             <span className="text-muted-foreground">{feature}</span>
           </li>

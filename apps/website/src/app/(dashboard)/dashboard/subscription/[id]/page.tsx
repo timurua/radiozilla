@@ -1,18 +1,25 @@
 'use client';
 
+import { useUserSubscriptionsSuspense, useUserSubscriptionSuspense } from '@/lib/query/hooks';
 import { Suspense } from 'react';
-import { useUserSubscriptionSuspense } from '@/lib/query/hooks';
 
-export default function SubscriptionPage() {
+interface SubscriptionPageProps {
+    params: {
+        id: string;
+    };
+    searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function SubscriptionPage({ params }: SubscriptionPageProps) {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <SubscriptionPageInner />
+            <SubscriptionPageInner subscriptionId={params.id} />
         </Suspense>
     );
 }
 
-function SubscriptionPageInner() {
-    const { data: subscription } = useUserSubscriptionSuspense();
+function SubscriptionPageInner({ subscriptionId }: { subscriptionId: string }) {
+    const { data: subscription } = useUserSubscriptionSuspense(Number(subscriptionId));
 
     return (
         <div>
@@ -25,8 +32,6 @@ function SubscriptionPageInner() {
                     <p>Stripe Customer ID: {subscription.stripeCustomerId}</p>
                     <p>Stripe Product ID: {subscription.stripeProductId}</p>
                     <p>Stripe Plan Name: {subscription.stripePlanName}</p>
-                    <p>Admin User ID: {subscription.adminUserId}</p>
-                    <p>Admin User Group ID: {subscription.adminUserGroupId}</p>
                     <p>Created At: {subscription.createdAt.toDateString()}</p>
                     <p>Updated At: {subscription.updatedAt.toDateString()}</p>
                 </div>

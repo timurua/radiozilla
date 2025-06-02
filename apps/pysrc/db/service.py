@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sql_text, select, func
 
+from pysrc.db.user import Audio, AudioContent, Channel
 from pysrc.db.upserter import Upserter
 from pysrc.config.rzconfig import RzConfig
 from pysrc.dfs.dfs import FRONTEND_IMAGES, WEB_IMAGES, WEB_PAGES_CONTENT, DFSClient
-from .web_page import WebImageContent, WebPage, WebPageContent, WebPageSummary, WebPageChannel, WebPageJob, WebPageJobState, WebImage
-from .frontend import FrontendAudio
+from .web_page import WebImageContent, WebPage, WebPageContent, WebPageChannel, WebImage
 import logging
 from pyminiscraper.url import normalized_url_hash
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,30 @@ import base64
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+class ChannelService:
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.logger = logging.getLogger("channel_service")
+
+    async def upsert(self, channel: Channel) -> None:
+        await Upserter[Channel](self.session).upsert(channel)
+        
+    async def find_by_id(self, id: int) -> Channel|None:
+        stmt = select(Channel).where(Channel.id == id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def find_by_web_page_channel_id(self, web_page_channel_id: int) -> Channel|None:
+        stmt = select(Channel).where(Channel.web_page_channel_id == web_page_channel_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def find_all(self) -> list[Channel]:
+        stmt = select(Channel)
+        result = await self.session.scalars(stmt)
+        channels = result.all()
+        return list(channels)
 
 
 class WebPageChannelService:
@@ -29,13 +53,18 @@ class WebPageChannelService:
         self.session = session
         self.logger = logging.getLogger("web_page_channel_service")
 
-    async def upsert(self, web_page_channel: WebPageChannel) -> None:
-        await Upserter[WebPageChannel](self.session).upsert(web_page_channel)
-        
+    async def upsert(self, web_page_channel: WebPageChannel) -> WebPageChannel:
+        return await Upserter[WebPageChannel](self.session).upsert(web_page_channel)        
 
     async def find_by_url(self, normalized_url: str) -> WebPageChannel|None:
         hash = normalized_url_hash(normalized_url)
         return await self.find_by_hash(hash)
+    
+    async def find_by_url(self, url: str) -> WebPageChannel|None:
+        hash = normalized_url_hash(url)
+        stmt = select(WebPageChannel).where(WebPageChannel.normalized_url_hash == hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
     
     async def find_by_hash(self, hash: str) -> WebPageChannel|None:
         stmt = select(WebPageChannel).where(WebPageChannel.normalized_url_hash == hash)
@@ -153,43 +182,22 @@ class WebPageService:
             content.to_bytes(),
         )
 
-
-              
-class WebPageJobService:
-    
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-        self.logger = logging.getLogger("web_page_job_service")
-
-    async def upsert(self, entity: WebPageJob) -> None:  
-        await Upserter[WebPageJob](self.session).upsert(entity)        
-        
-
-    async def find_by_url(self, normalized_url: str) -> WebPageJob|None:
-        hash = normalized_url_hash(normalized_url)
-        stmt = select(WebPageJob).execution_options(readonly=True).where(WebPageJob.normalized_url_hash == hash)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-    
-    async def find_with_state(self, state: WebPageJobState) -> list[str]:
-        stmt = select(WebPageJob.normalized_url).where(WebPageJob.state == state)    
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
-    
-    
-class WebPageSummaryService:
+   
+class AudioContentService:
     _model = None
     
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logging.getLogger("web_page_summary_service")
+        self.logger = logging.getLogger("audio_job_service")
 
-    async def upsert(self, web_page_summary: WebPageSummary) -> None:
-        await Upserter[WebPageSummary](self.session).upsert(web_page_summary)        
+    async def upsert(self, audio_job: AudioContent) -> None:
+        await Upserter[AudioContent](self.session).upsert(audio_job)        
                 
-    async def find_by_url(self, normalized_url: str) -> WebPageSummary|None:
+    async def find_by_url(self, normalized_url: str) -> AudioContent|None:
         hash = normalized_url_hash(normalized_url)
-        return await self.session.get(WebPageSummary, hash)
+        stmt = select(AudioContent).execution_options(readonly=True).where(AudioContent.web_page_normalized_url_hash == hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
     
 
 @dataclass
@@ -198,32 +206,34 @@ class FrontendAudioSearchResult:
     similarity_score: float
 
     
-class FrontendAudioService:
+class AudioService:
     _model = None
     
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logging.getLogger("frontend_audio_service")
+        self.logger = logging.getLogger("audio_service")
 
-    async def upsert(self, frontend_audio: FrontendAudio) -> None:
-        self.logger.info(f"Inserting frontend audio for url: {frontend_audio.normalized_url}")            
-        await Upserter[FrontendAudio](self.session).upsert(frontend_audio)        
+    async def upsert(self, audio: Audio) -> None:
+        self.logger.info(f"Inserting frontend audio for url: {audio.normalized_url}")            
+        await Upserter[FrontendAudio](self.session).upsert(audio)        
 
-    async def update(self, normalized_url_hash: str, modifier: Callable[[FrontendAudio], Awaitable[None]]) -> None:
-        self.logger.info(f"Updating web page summary for url: {normalized_url_hash}")
-        existing = await self.session.get(FrontendAudio, normalized_url_hash)
+    async def update(self, normalized_url_hash: str, modifier: Callable[[Audio], Awaitable[None]]) -> None:
+        self.logger.info(f"Updating audio for url: {normalized_url_hash}")
+        existing = await self.get_by_url(normalized_url_hash)
         if existing is None:
-            raise ValueError(f"Frontend Audio not found for url: {normalized_url_hash}")
+            raise ValueError(f"Audio not found for url: {normalized_url_hash}")
         
         await modifier(existing)
         await self.session.commit()        
 
-    async def get_by_url(self, url: str) -> FrontendAudio|None:
+    async def get_by_url(self, url: str) -> Audio|None:
         hash = normalized_url_hash(url)
-        return await self.session.get(FrontendAudio, hash)        
+        stmt = select(Audio).execution_options(readonly=True).where(Audio.web_page_normalized_url_hash == hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()        
 
-    async def get(self, normalized_url_hash: str) -> FrontendAudio|None:
-        return await self.session.get(FrontendAudio, normalized_url_hash)
+    async def get(self, normalized_url_hash: str) -> Audio|None:
+        return await self.session.get(Audio, normalized_url_hash)
     
     async def select_with_similarity(self, column: Mapped[Optional[list[float]]], limit: int, text_embeddings: list[float]) -> list[FrontendAudioSearchResult]:
         similarity_expr = (
@@ -231,7 +241,7 @@ class FrontendAudioService:
         ).label("similarity_score")
         
         stmt = select(
-            FrontendAudio.normalized_url_hash,
+            Audio.web_page_normalized_url_hash,
             similarity_expr
         ).order_by(
             similarity_expr.asc()

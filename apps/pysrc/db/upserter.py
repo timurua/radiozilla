@@ -12,7 +12,7 @@ class Upserter(Generic[ModelType]):
         self.session = session
     
     async def upsert(self, 
-                     instance: ModelType) -> None:
+                     instance: ModelType) -> ModelType:
         model_class = instance.__class__
         
         # Extract dictionary from instance
@@ -34,6 +34,7 @@ class Upserter(Generic[ModelType]):
         stmt = stmt.on_conflict_do_update(
             index_elements=primary_key_columns,
             set_=instance_dict
-        )
+        ).returning(model_class) 
         
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

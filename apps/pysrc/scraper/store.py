@@ -1,6 +1,7 @@
 from httpx import request
+from apps.pysrc.db.user import AudioContent, AudioContentState
 from pysrc.scraper.image import thumbnailed_image_height, thumbnailed_image_width
-from ..db.web_page import WebImageContent, WebPage, WebPageContent, WebPageJob, WebPageJobState, WebImage
+from ..db.web_page import WebImageContent, WebPage, WebPageContent, WebImage
 from pyminiscraper.model import ScraperWebPage, ScraperUrl
 from pyminiscraper.config import ScraperCallback, ScraperContext
 from pyminiscraper.url import normalize_url, normalized_url_hash
@@ -8,10 +9,9 @@ import logging
 from typing import Awaitable, Optional, override
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Callable
-from ..db.service import WebPageService, WebPageJobService, WebImageService
+from ..db.service import AudioContentService, WebPageService, WebImageService
 from ..db.database import Database
 from datetime import datetime, timezone
-from ..db.web_page import is_state_good_for_publishing
 from .minhash import MinHasher
 import asyncio
 import concurrent.futures
@@ -47,10 +47,6 @@ class ServiceScraperStore(ScraperCallback):
     @override
     async def on_web_page(self, context: ScraperContext, request: ScraperUrl, response: ScraperWebPage) -> None:
         async for session in Database.get_session():
-            existing_web_page_job = await WebPageJobService(session).find_by_url(response.normalized_url)
-            if existing_web_page_job is not None and not is_state_good_for_publishing(existing_web_page_job.state):
-                return
-            
             existing_web_page = await WebPageService(session).find_by_url(response.normalized_url)
             
             new_web_page = WebPage(
@@ -95,10 +91,36 @@ class ServiceScraperStore(ScraperCallback):
             
             if existing_web_page is None:
                 await WebPageService(session).upsert(new_web_page, new_web_page_content)
-                await WebPageJobService(session).upsert(WebPageJob(
-                        normalized_url = response.normalized_url,
-                        state = WebPageJobState.SCRAPED_NEED_SUMMARIZING,                
-                    ))
+                audio_content = await AudioContentService(session).find_by_url(response.normalized_url)
+                if audio_content is not None:
+                    audio_content.state = AudioContentState.IMPORTED_NEED_SUMMARIZING,
+                    audio_content.web_page_normalized_url_hash = new_web_page.normalized_url_hash,
+                    audio_content.web_channel_id = new_web_page.web_channel_id
+                    audio_content.title = new_web_page_content.metadata_title
+                    audio_content.description = new_web_page_content.metadata_description
+                    audio_content.image_url = new_web_page_content.metadata_image_url
+                    audio_content.published_at = new_web_page_content.metadata_published_at
+                    audio_content.raw_text = new_web_page_content.visible_text
+                    audio_content.summarized_text = ""
+                    audio_content.summarized_text_audio_url = ""
+                    audio_content.summarized_text_audio_duration_seconds = 0
+                    audio_content.uploaded_at = response.requested_at                                        
+                else:
+                    audio_content = AudioContent(
+                        web_page_normalized_url_hash = new_web_page.normalized_url_hash,
+                        state = AudioContentState.IMPORTED_NEED_SUMMARIZING,
+                        web_channel_id = new_web_page.web_channel_id,
+                        title = new_web_page_content.metadata_title,
+                        description = new_web_page_content.metadata_description,
+                        image_url = new_web_page_content.metadata_image_url,
+                        published_at = new_web_page_content.metadata_published_at,
+                        raw_text = new_web_page_content.visible_text,
+                        summarized_text = "",
+                        summarized_text_audio_url = "",
+                        summarized_text_audio_duration_seconds = 0,
+                        uploaded_at = response.requested_at,
+                    )
+                await AudioContentService(session).upsert(audio_content)
                 if response.metadata_image_url:
                     await self.request_and_store_image(session, context, response.metadata_image_url)                
                 return

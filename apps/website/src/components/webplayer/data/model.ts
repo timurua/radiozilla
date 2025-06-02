@@ -49,8 +49,8 @@ export interface RZChannel {
   name: string | null;
   description: string | null;
   imageUrl: string | null,
-  isPublic: boolean,
-  webPageChannelId: number,
+  isPublic: boolean | null,
+  webPageChannelId?: number | null,
   createdAt: Date,
   updatedAt: Date,
 }

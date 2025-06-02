@@ -59,3 +59,25 @@ export interface UserPermissionDTO {
     permissionTargetId: number;
     permission: string;
 }
+
+export interface RZSubscriptionDTO {
+    id: number;
+    planId: string;
+    status: string | null;
+    stripeCustomerId: string | null;
+    stripeProductId: string | null;
+    stripeSubscriptionId: string | null;
+    stripePlanName: string | null;
+    stripeSubscriptionStatus: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface RZPlanDTO {
+    id: string;
+    name: string;
+    description: string;
+    price_per_month: number;    
+    createdAt: Date;
+    updatedAt: Date;
+}

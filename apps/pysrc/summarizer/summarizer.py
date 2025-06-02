@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 
 from .crewai_summarizer import CrewAISummarizer
-from ..db.web_page import WebPageSummary, WebPageJobState, WebPageJob
+from ..db.web_page import WebPageJobState, WebPageJob
 from ..db.database import Database
 from pyminiscraper.url import normalized_url_hash, normalize_url
 from .ollama import OllamaClient

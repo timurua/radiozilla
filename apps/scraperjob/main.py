@@ -1,8 +1,8 @@
 import asyncclick as click
 import asyncio
 from pysrc.db.database import Database
-from pysrc.db.service import WebPageChannelService, WebPageJobService, WebPageService
-from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageJobState, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
+from pysrc.db.service import WebPageChannelService, WebPageService
+from pysrc.db.web_page import WebPageChannel, WebPageContent, WebPageSeedType, WebPageSeed, web_page_seed_to_dict, web_page_seed_from_dict, WebPage
 from pysrc.observe.log import Logging
 from pysrc.scraper.service import ScraperService
 from pysrc.utils.parallel import ParallelTaskManager
@@ -20,8 +20,7 @@ logger = logging.getLogger("scraperjob")
 @click.command()
 @click.option("-channel", "--channel-url", help="Process only this specific channel URL")
 async def main(channel_url: str|None = None):
-    await Jobs.initialize()
-    await create_channels()    
+    await Jobs.initialize()    
     await clean_channels(channel_url)    
     await scrape_channels(channel_url)
     await clean_channels(channel_url)

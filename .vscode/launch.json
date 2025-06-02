@@ -29,10 +29,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/apps/scraperjob/main.py",
             "console": "integratedTerminal",
-            "args": [
-                "-channel",
-                "https://www.llamaindex.ai/",
-            ],
             "jinja": true,
             "justMyCode": false,
             "cwd": "${workspaceFolder}/apps",

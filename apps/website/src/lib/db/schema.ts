@@ -153,7 +153,12 @@ export type NewSubscription = typeof subscriptions.$inferInsert;
 // We'll define a placeholder for it
 export const webPageChannels = pgTable("web_page_channels", {
   id: serial("id").primaryKey(),
-  // Other fields would be defined here
+  url: varchar("url").notNull().unique(),
+  normalizedUrlHash: varchar("normalized_url_hash", { length: 32 }).notNull().unique(),
+  normalizedUrl: varchar("normalized_url").notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

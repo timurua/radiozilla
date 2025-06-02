@@ -1,8 +1,8 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCreateUserStation, useUpdateUserStation } from '@/lib/query/hooks';
-import { RZStation } from '@/components/webplayer/data/model';
+import { useCreateUserStation, useUpdateUserStation, useUserStationChannelsSuspense } from '@/lib/query/hooks';
+import { RZChannel, RZStation } from '@/components/webplayer/data/model';
 import { Button } from '@/components/ui/button';
 import { useUserStationSuspense } from '@/lib/query/hooks';
 import { Suspense } from 'react';
@@ -72,7 +72,11 @@ function StationComponent({ stationId }: { stationId: number | null }) {
         );
     }
 
-    return (
+    const { data: channels } = stationId ? useUserStationChannelsSuspense({ id: stationId }) : {
+        data: []
+    };
+
+    return (<>
         <Card>
             <CardHeader>
                 <CardTitle>{stationId === null ? 'Create a new station' : 'Station'}</CardTitle>
@@ -81,6 +85,15 @@ function StationComponent({ stationId }: { stationId: number | null }) {
                 <StationForm station={station} />
             </CardContent>
         </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Channels</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <StationChannelsList channels={channels} />
+            </CardContent>
+        </Card>
+    </>
     );
 }
 
@@ -98,6 +111,8 @@ function StationForm({ station }: { station: RZStation }) {
         defaultValues: {
             name: station?.name || '',
             description: station?.description || '',
+            imageUrl: station?.imageUrl || '',
+            isPublic: station?.isPublic || false,
         },
         mode: 'onChange' // Validate on change for better UX
     });
@@ -109,8 +124,8 @@ function StationForm({ station }: { station: RZStation }) {
                     id: 0,
                     name: data.name,
                     description: data.description,
-                    imageUrl: '',
-                    isPublic: false,
+                    imageUrl: data.imageUrl || null,
+                    isPublic: data.isPublic || false,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
@@ -198,5 +213,31 @@ function StationForm({ station }: { station: RZStation }) {
                 {station?.id === 0 ? 'Create' : 'Save Changes'}
             </Button>
         </form>
+    );
+}
+
+function StationChannelsList({ channels }: { channels: RZChannel[] }) {
+    return (
+        <div>
+            {channels.length === 0 && <div>No channels found</div>}
+            <ul>
+                {channels.map((channel) => (
+                    <li className="row" key={channel.id}>
+                        <div>{channel.name}</div>
+                        <div>{channel.description}</div>
+                        <div>{channel.imageUrl}</div>
+                        <div>{channel.isPublic}</div>
+                        <div>
+                            <Link href={`/dashboard/channel/${channel.id}`}>
+                                <Button>View</Button>
+                            </Link>
+                            <Button>Delete</Button>
+                        </div>
+                    </li>
+
+                ))}
+            </ul>
+            <Button>Add Channel</Button>
+        </div>
     );
 }

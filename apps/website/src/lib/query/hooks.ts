@@ -1,7 +1,7 @@
-import { nobody, RZStation, RZUser } from "@/components/webplayer/data/model";
+import { nobody, RZChannel, RZStation, RZUser } from "@/components/webplayer/data/model";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createStationForUserAction, getActivityLogsForCurrentUserAction, getStationForCurrentUserAction, getStationsForCurrentUserAction, getUser, getUserPermissionsForCurrentUserAction, updateStationForUserAction, upsertUserAction } from "../db/actions";
-import { getSubscriptionForCurrentUser } from "../db/client";
+import { addChannelToStationAction, createStationForUserAction, getActivityLogsForCurrentUserAction, getStationChannelsForCurrentUserAction, getStationForCurrentUserAction, getStationsForCurrentUserAction, getSubscriptionForCurrentUserAction, getSubscriptionsForCurrentUserAction, getSubscriptionUsersForSubscriptionAction, getUser, getUserPermissionsForCurrentUserAction, updateStationForUserAction, upsertUserAction } from "../db/actions";
+import { useNotification } from '@/components/webplayer/providers/NotificationProvider';
 
 export const queryKeys = {
     // Base keys
@@ -10,6 +10,7 @@ export const queryKeys = {
     // User related keys
     user: {
         current: () => [...queryKeys.all, 'current'] as const,
+        allForSubscription: (subscriptionId: number) => [...queryKeys.user.current(), 'allForSubscription', subscriptionId] as const,
     },
 
     userPermissions: {
@@ -18,16 +19,23 @@ export const queryKeys = {
 
     // Station related keys
     station: {
-        all: () => [...queryKeys.all, 'station'] as const,
-        current: () => [...queryKeys.station.all(), 'current'] as const,
-        byId: (id: number) => [...queryKeys.station.all(), id] as const,
+        root: () => [...queryKeys.all, 'stations'] as const,
+        allForCurrentUser: () => [...queryKeys.station.root(), 'allForCurrentUser'] as const,
+        byId: (id: number) => [...queryKeys.station.root(), id] as const,
+    },
+
+    channel: {
+        root: () => [...queryKeys.all, 'channels'] as const,
+        allForCurrentUser: () => [...queryKeys.channel.root(), 'allForCurrentUser'] as const,
+        byStationId: (id: number) => [...queryKeys.channel.root(), "byStationId", id] as const,
+        available: () => [...queryKeys.channel.root(), "available"] as const,
     },
 
     // Subscription related keys
     subscription: {
-        all: () => [...queryKeys.all, 'subscription'] as const,
-        current: () => [...queryKeys.user.current(), 'currentSubscription'] as const,
-        byId: (id: number) => [...queryKeys.subscription.all(), id] as const,
+        root: () => [...queryKeys.all, 'subscription'] as const,
+        allForCurrentUser: () => [...queryKeys.subscription.root(), 'allForCurrentUser'] as const,
+        byId: (id: number) => [...queryKeys.subscription.root(), id] as const,
     },
 
     // Activity related keys
@@ -66,16 +74,30 @@ export function useUserActivitiesSuspense() {
     });
 }
 
-export function useUserSubscriptionSuspense() {
+export function useUserSubscriptionsSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.subscription.current(),
-        queryFn: getSubscriptionForCurrentUser,
+        queryKey: queryKeys.subscription.allForCurrentUser(),
+        queryFn: getSubscriptionsForCurrentUserAction,
+    });
+}
+
+export function useUserSubscriptionSuspense(subscriptionId: number) {
+    return useSuspenseQuery({
+        queryKey: queryKeys.subscription.byId(subscriptionId),
+        queryFn: () => getSubscriptionForCurrentUserAction(subscriptionId),
+    });
+}
+
+export function useSubscriptionUsersSuspense(subscriptionId: number) {
+    return useSuspenseQuery({
+        queryKey: queryKeys.user.allForSubscription(subscriptionId),
+        queryFn: () => getSubscriptionUsersForSubscriptionAction(subscriptionId),
     });
 }
 
 export function useUserStationsSuspense() {
     return useSuspenseQuery({
-        queryKey: queryKeys.station.all(),
+        queryKey: queryKeys.station.allForCurrentUser(),
         queryFn: getStationsForCurrentUserAction,
     });
 }
@@ -88,6 +110,13 @@ export function useUserStationSuspense({ id }: { id: number }) {
     });
 }
 
+export function useUserStationChannelsSuspense({ id }: { id: number }) {
+    return useSuspenseQuery({
+        queryKey: queryKeys.channel.byStationId(id),
+        queryFn: async () => await getStationChannelsForCurrentUserAction(id),
+    });
+}
+
 // Mutation hooks
 export function useCreateUserStation() {
     const queryClient = useQueryClient();
@@ -95,10 +124,8 @@ export function useCreateUserStation() {
     return useMutation({
         mutationFn: createStationForUserAction,
         onSuccess: (station) => {
-            // Update the users list cache
-            queryClient.setQueryData<RZStation>(queryKeys.station.current(), station);
-            // Invalidate to refetch from server
-            queryClient.invalidateQueries({ queryKey: queryKeys.station.current() });
+            queryClient.setQueryData<RZStation>(queryKeys.station.byId(station.id), station);
+            queryClient.invalidateQueries({ queryKey: queryKeys.station.allForCurrentUser() });
         },
     });
 }
@@ -110,10 +137,27 @@ export function useUpdateUserStation() {
     return useMutation({
         mutationFn: updateStationForUserAction,
         onSuccess: (station) => {
-            // Update the users list cache
-            queryClient.setQueryData<RZStation>(queryKeys.station.current(), station);
-            // Invalidate to refetch from server
-            queryClient.invalidateQueries({ queryKey: queryKeys.station.current() });
+            queryClient.setQueryData<RZStation>(queryKeys.station.byId(station.id), station);
+        },
+    });
+}
+
+export function useAddChannelToStation() {
+    const queryClient = useQueryClient();
+    const { showInfo, showAlert } = useNotification();
+
+    return useMutation({
+        mutationFn: async ({ stationId, channelId }: { stationId: number, channelId: number }) => {
+            return addChannelToStationAction(stationId, channelId);
+        },
+        onSuccess: (_, { stationId }) => {
+            // Invalidate the station channels query to refetch the updated list
+            queryClient.invalidateQueries({ queryKey: queryKeys.channel.byStationId(stationId) });
+            showInfo("Channel added to station successfully");
+        },
+        onError: (error) => {
+            console.error("Error adding channel to station:", error);
+            showAlert(error instanceof Error ? error.message : "Failed to add channel to station");
         },
     });
 }

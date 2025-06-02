@@ -1,19 +1,21 @@
 'use server';
 
-import { and, desc, inArray } from 'drizzle-orm';
+import { PlayableFeedMode, RZChannel, RZStation, RZUser, RZUserType } from '@/components/webplayer/data/model';
 import { TfIdfDocument } from '@/components/webplayer/tfidf/types';
 import logger from '@/components/webplayer/utils/logger';
-import { PlayableFeedMode, RZStation, RZUser, RZUserType } from '@/components/webplayer/data/model';
 import { withErrorHandler } from '@/lib/serverActionWrapper';
+import { and, desc, inArray } from 'drizzle-orm';
 
 import { db } from '@/lib/db/drizzle';
 import {
     activityLogs,
+    channels,
     FrontendAudio,
     frontendAudios,
     frontendAuthors,
     frontendChannels,
     frontendUsers,
+    stationChannels,
     stations,
     Subscription,
     subscriptions,
@@ -21,8 +23,8 @@ import {
     users
 } from '@/lib/db/schema';
 import { eq, lte } from 'drizzle-orm';
-import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserPermissionDTO } from './interfaces';
 import { getAuthenticatedAppForUser } from '../server/firebase';
+import { ActivityLogDTO, FrontendAudioDTO, FrontendAuthorDTO, FrontendChannelDTO, FrontendUserDTO, UserPermissionDTO } from './interfaces';
 
 
 export const getAuthorAction = async (id: string): Promise<FrontendAuthorDTO> => {
@@ -288,6 +290,80 @@ export const getStationForCurrentUserAction = async (stationId: number): Promise
     return dbStation.length > 0 ? dbStation[0] : null;
 }
 
+export const getStationChannelsForCurrentUserAction = async (stationId: number): Promise<RZChannel[]> => {
+    const { currentUser } = await getAuthenticatedAppForUser();
+    if (!currentUser) {
+        throw new Error("No user found");
+    }
+
+    const dbChannels = await db
+        .select({
+            id: channels.id,
+            name: channels.name,
+            description: channels.description,
+            imageUrl: channels.imageUrl,
+            isPublic: channels.isPublic,
+            createdAt: channels.createdAt,
+            updatedAt: channels.updatedAt,
+        })
+        .from(stationChannels)
+        .innerJoin(channels, eq(stationChannels.channelId, channels.id))
+        .where(
+            and(
+                eq(stationChannels.stationId, stationId),
+            )
+        );
+
+    return dbChannels.map((dbChannel) => ({
+        id: dbChannel.id,
+        name: dbChannel.name || '',
+        description: dbChannel.description || '',
+        imageUrl: dbChannel.imageUrl || '',
+        isPublic: dbChannel.isPublic || false,
+        createdAt: dbChannel.createdAt,
+        updatedAt: dbChannel.updatedAt,
+    }));
+}
+
+export const addChannelToStationAction = withErrorHandler(async (stationId: number, channelId: number): Promise<void> => {
+    const { currentUser } = await getAuthenticatedAppForUser();
+    if (!currentUser) {
+        throw new Error("No user found");
+    }
+
+    // Check if the channel is already added to the station
+    const existing = await db
+        .select()
+        .from(stationChannels)
+        .where(
+            and(
+                eq(stationChannels.stationId, stationId),
+                eq(stationChannels.channelId, channelId)
+            )
+        )
+        .limit(1);
+
+    if (existing.length > 0) {
+        throw new Error("Channel is already added to this station");
+    }
+
+    // Add channel to station
+    await db.insert(stationChannels).values({
+        stationId,
+        channelId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    });
+
+    // Log the activity
+    await db.insert(activityLogs).values({
+        userId: currentUser.uid === 'anonymous' ? null : (await getCurrentUserAction()).id,
+        action: `Added channel ${channelId} to station ${stationId}`,
+        ipAddress: '', // You might want to get this from the request
+        createdAt: new Date(),
+    });
+});
+
 export const createStationForUserAction = async (station: RZStation): Promise<RZStation> => {
     const user = await getCurrentUserAction();
     if (!user) {
@@ -329,6 +405,8 @@ export const updateStationForUserAction = async (station: RZStation): Promise<RZ
     const result = await db.update(stations).set({
         name: station.name,
         description: station.description,
+        imageUrl: station.imageUrl,
+        isPublic: station.isPublic,
         updatedAt: new Date()
     }).returning({
         id: stations.id,
@@ -530,6 +608,23 @@ export const getUserPermissionsForCurrentUserAction = async (): Promise<UserPerm
     }));
 }
 
+export const getUserPermissionsForTargetAction = async (permissionTargetName: string, permissionTargetId: number): Promise<UserPermissionDTO[]> => {
+    const dbUserPermissions = await db
+        .select()
+        .from(userPermissions)
+        .where(
+            and(eq(userPermissions.permissionTargetName, permissionTargetName),
+                eq(userPermissions.permissionTargetId, permissionTargetId))
+        );
+    return dbUserPermissions.map(dbUserPermission => ({
+        userId: dbUserPermission.userId,
+        permissionTargetName: dbUserPermission.permissionTargetName,
+        permissionTargetId: dbUserPermission.permissionTargetId,
+        permission: dbUserPermission.permission
+    }));
+}
+
+
 export const getActivityLogsForCurrentUserAction = async (): Promise<ActivityLogDTO[]> => {
 
     const user = await getCurrentUserAction();
@@ -569,31 +664,80 @@ export const getSubscriptionByStripeCustomerIdAction = async (stripeCustomerId: 
     return null;
 }
 
-export const getSubscriptionForCurrentUserAction = async (): Promise<Subscription | null> => {
+export const getSubscriptionUsersForSubscriptionAction = async (subscriptionId: number): Promise<RZUser[]> => {
+    const permissions = await getUserPermissionsForTargetAction("subscription", subscriptionId);
+    const userIds = permissions.map(permission => permission.userId);
+
+    const dbUsers = await db.select({
+        id: users.id,
+        firebaseUserId: users.firebaseUserId,
+        name: users.name,
+        description: users.description,
+        email: users.email,
+        imageUrl: users.imageUrl,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        is_enabled: users.is_enabled,
+    }).from(users).where(inArray(users.id, userIds));
+    return dbUsers.map(dbUser => ({
+        ...dbUser,
+        userType: RZUserType.AUTH_USER
+    }));
+}
+
+export const getSubscriptionsForCurrentUserAction = async (): Promise<Subscription[]> => {
+
     const user = await getCurrentUserAction();
     if (!user) {
+        throw new Error("No user found");
+    }
+
+    const permission = await getUserPermissionsForCurrentUserAction();
+    if (!permission || permission.length === 0) {
+        return [];
+    }
+    const subscriptionIds = permission.filter(p => p.permissionTargetName === "subscription").map(p => p.permissionTargetId);
+
+    const dbSubscriptions = await db.select({
+        id: subscriptions.id,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        stripeProductId: subscriptions.stripeProductId,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripePlanName: subscriptions.stripePlanName,
+        stripeSubscriptionStatus: subscriptions.stripeSubscriptionStatus,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt
+    }).from(subscriptions).where(inArray(subscriptions.id, subscriptionIds)).limit(1);
+    return dbSubscriptions;
+}
+
+export const getSubscriptionForCurrentUserAction = async (subscriptionId: number): Promise<Subscription | null> => {
+
+    const user = await getCurrentUserAction();
+    if (!user) {
+        throw new Error("No user found");
+    }
+
+    const permission = await checkViewUserPermission(user.id, "subscription", subscriptionId);
+    if (!permission) {
         return null;
     }
-    return await getSubscriptionByUserIdAction(user.id);
-}
 
-export const getSubscriptionUsersForSubscriptionAction = async (): Promise<RZUser[]> => {
-    return [];
-}
-
-export const getSubscriptionByUserIdAction = async (userId: number): Promise<Subscription | null> => {
-    const dbSubscription = await db
-        .select()
-        .from(subscriptions)
-        .where(
-            eq(subscriptions.adminUserId, userId)
-        )
-        .limit(1);
-
-    if (dbSubscription.length > 0) {
-        return dbSubscription[0];
-    }
-    return null;
+    const dbSubscriptions = await db.select({
+        id: subscriptions.id,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        stripeCustomerId: subscriptions.stripeCustomerId,
+        stripeProductId: subscriptions.stripeProductId,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        stripePlanName: subscriptions.stripePlanName,
+        stripeSubscriptionStatus: subscriptions.stripeSubscriptionStatus,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt
+    }).from(subscriptions).where(eq(subscriptions.id, subscriptionId)).limit(1);
+    return dbSubscriptions.length > 0 ? dbSubscriptions[0] : null;
 }
 
 export const updateSubscriptionAction = async (subscriptionId: number, data: Partial<Subscription>): Promise<Subscription> => {

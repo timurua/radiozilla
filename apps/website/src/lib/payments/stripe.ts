@@ -5,6 +5,8 @@ import {
   getSubscriptionByStripeCustomerId,
   updateSubscription
 } from '@/lib/db/client';
+import { getCurrentUserAction } from '../db/actions';
+import { RZPlanDTO, RZSubscriptionDTO } from '../db/interfaces';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-03-31.basil'
@@ -14,12 +16,19 @@ export async function createCheckoutSession({
   subscription,
   priceId
 }: {
-  subscription: Subscription | null;
+  subscription: RZSubscriptionDTO | null;
   priceId: string;
 }) {
 
-  if (!subscription) {
+  const user = await getCurrentUserAction();
+  if (!user) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
+    return;
+  }
+
+  if (subscription) {
+    redirect(`/dashboard/subscriptions`);
+    return;
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -172,9 +181,30 @@ export async function getStripeProducts() {
     id: product.id,
     name: product.name,
     description: product.description,
+    planId: product.metadata.planId,
     defaultPriceId:
       typeof product.default_price === 'string'
         ? product.default_price
         : product.default_price?.id
   }));
+}
+
+export async function getStripePlans(): Promise<RZPlanDTO[]> {
+  const products = await stripe.products.list({
+    active: true,
+    expand: ['data.default_price']
+  });
+
+  return products.data.map((product) => ({
+    id: product.id,
+    name: product.name,
+    description: product.description!,
+    planId: product.metadata.planId,
+    price_per_month:
+      Number(typeof product.default_price === 'string'
+        ? product.default_price
+        : product.default_price?.unit_amount),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })).sort((a, b) => (a.price_per_month! as number) - (b.price_per_month! as number));
 }

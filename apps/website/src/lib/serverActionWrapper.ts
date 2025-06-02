@@ -1,6 +1,6 @@
-type ServerActionFunction<T extends any[], R> = (...args: T) => Promise<R>;
+type ServerActionFunction<T extends unknown[], R> = (...args: T) => Promise<R>;
 
-export function withErrorHandler<T extends any[], R>(
+export function withErrorHandler<T extends unknown[], R>(
     action: ServerActionFunction<T, R>,
     context?: string
 ) {
